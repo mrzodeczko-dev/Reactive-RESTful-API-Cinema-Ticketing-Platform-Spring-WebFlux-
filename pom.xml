@@ -41,21 +41,22 @@
             <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
 
+        <!-- jackson-dataformat-yaml: version managed by Spring Boot BOM -->
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
-            <version>2.9.8</version>
         </dependency>
+        <!-- jackson-databind: version managed by Spring Boot BOM -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.11.3</version>
         </dependency>
 
+        <!-- commons-validator: upgraded 1.6 -> 1.7 (security fix) -->
         <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>
-            <version>1.6</version>
+            <version>1.7</version>
         </dependency>
 
         <dependency>
@@ -115,10 +116,11 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- BlockHound: upgraded 1.0.1 -> 1.0.6 (Java 17 strong-encapsulation compat) -->
         <dependency>
             <groupId>io.projectreactor.tools</groupId>
             <artifactId>blockhound</artifactId>
-            <version>1.0.1.RELEASE</version>
+            <version>1.0.6.RELEASE</version>
         </dependency>
 
         <dependency>
@@ -145,10 +147,11 @@
             <artifactId>spring-data-mongodb</artifactId>
         </dependency>
 
+        <!-- jasypt: upgraded 2.0.0 -> 3.0.5 (Java 17 compat, Spring Boot 2.4+ compat) -->
         <dependency>
             <groupId>com.github.ulisesbocchio</groupId>
             <artifactId>jasypt-spring-boot-starter</artifactId>
-            <version>2.0.0</version>
+            <version>3.0.5</version>
         </dependency>
 
         <dependency>
@@ -187,25 +190,25 @@
     <repositories>
         <repository>
             <id>spring-snapshots</id>
-            <url>http://repo.spring.io/snapshot</url>
+            <url>https://repo.spring.io/snapshot</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
         </repository>
         <repository>
             <id>spring-milestones</id>
-            <url>http://repo.spring.io/milestone</url>
+            <url>https://repo.spring.io/milestone</url>
         </repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
             <id>spring-snapshots</id>
-            <url>http://repo.spring.io/snapshot</url>
+            <url>https://repo.spring.io/snapshot</url>
         </pluginRepository>
-        <pluginRepository>
+        <pluginPlugin>
             <id>spring-milestones</id>
-            <url>http://repo.spring.io/milestone</url>
-        </pluginRepository>
+            <url>https://repo.spring.io/milestone</url>
+        </pluginPlugin>
 
     </pluginRepositories>
 
@@ -239,14 +242,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <jvmArguments>
-                        --enable-preview
-                    </jvmArguments>
-                    <image>
-                        <env>
-                            <JAVA_OPTS>--enable-preview</JAVA_OPTS>
-                        </env>
-                    </image>
                     <fork>true</fork>
                     <mainClass>${start-class}</mainClass>
                 </configuration>
