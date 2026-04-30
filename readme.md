@@ -1,62 +1,153 @@
-# Reactive RESTful API with Spring Webflux!
+# Reactive RESTful API — Spring WebFlux
 
-Application developed in **Domain Driven Design** (DDD) pattern on top of reactive streams provided by Spring Webflux dependency with the **Netty** -  an asynchronous event-driven network application framework. The technology stack includes **Mongo** - NoSQL database implementation with reactive driver enabled, so the application flow is ansynchronous with fully non-blocking back pressure.
+> Archived project. Fixed for Spring Boot 2.x / Java 17 compatibility — see [fix commit](https://github.com/mrzodeczko-dev/Archived-Reactive-RESTful-API-with-Spring-Webflux/commit/0bac2c97082c9db635f06e1275dacf682869012a).
 
-As mentioned [webflux performance ](https://filia-aleks.medium.com/microservice-performance-battle-spring-mvc-vs-webflux-80d39fd81bf0) there is one thing, I believe, that we should bear in mind:
+A reactive REST API built with **Domain-Driven Design (DDD)** on top of Spring WebFlux and Netty. The full I/O pipeline is non-blocking: WebFlux router + reactive MongoDB driver + replica set transactions — no blocking thread is ever held during a request.
 
-> Spring Webflux with WebClient and Apache clients wins in all cases. The most significant difference(4 times faster than blocking Servlet) when underlying service is slow(500ms). It 15–20% faster then Non-blocking Servlet with CompetableFuture. Also, it doesn’t create a lot of threads comparing with Servlet(20 vs 220).
-Unfortunately, we cannot use WebFlux everywhere, because we need asynchronous drivers/clients for it. Otherwise, we have to create custom thread pools/wrappers.
+---
 
-Reactive approch uses much more less resources (20 vs 220 threads) and also it is faster than non-blocking servlet with CompleteableFuture approach, **BUT**
+## Table of Contents
 
-We should NOT use reactive approach everywhere, as reactive programming **complitates** the code, very complex in such cases like transactional scoped methods, where you are modifying multiple documents. Also you'll have a much tougher time reasoning about the order of execution and debugging your reactive streams.
-## Prerequisites:
-- all you need is Docker and docker compose with docker swarm mode enabled :)
-# Application architecture
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Architecture](#architecture)
+- [MongoDB Replica Set](#mongodb-replica-set)
+- [Docker Commands](#docker-commands)
+- [OpenAPI / Swagger UI](#openapi--swagger-ui)
+- [Why Reactive?](#why-reactive)
 
-The whole application is containerized with **docker compose** technology  - this includes the code, the runtime, the system tools and libraries
+---
 
-Docker files are:
-- [ ] docker-compose.yml - used by me mostly for development purposes
+## Tech Stack
 
+| Layer | Technology | Version |
+|---|---|---|
+| Framework | Spring Boot | 2.4.4 |
+| Reactive web | Spring WebFlux + Netty | via Boot |
+| Database | MongoDB (reactive driver) | 4.4.4 |
+| DB migrations | Mongock | 4.2.8.BETA |
+| Security | Spring Security + JJWT | 0.11.2 |
+| API docs | springdoc-openapi WebFlux | 1.5.2 |
+| Encryption | Jasypt | 3.0.5 |
+| Tooling | Lombok, BlockHound | 1.0.6.RELEASE |
+| Java | Eclipse Temurin | 17 |
+| Containerization | Docker / Docker Compose / Docker Swarm | — |
 
+---
 
-- Execute command: `docker-compose up -d --build` to start the containers defined in the file in the   background and leaves them running
-- Execute command:  `docker-compose logs -f` to follow logs of all containers participating in a service
-- Execute command: `docker-compose down` to stop containers and remove containers, networks, volumes created by `up`command
+## Prerequisites
 
-To speed up development, I decided to not pack FAT JAR into my docker image everytime I recompile the project. Instead, I used **maven-dependency-plugin** to split FAT jar into dependencies and classes packages
+- **Docker** and **Docker Compose** (Docker Swarm mode enabled for swarm deployment)
+- **Java 17** + **Maven 3.8+** (for local build)
 
+---
 
-- [ ] docker-swarm.yml - used by me to deploy an application on a docker swarm mode
--  Execute command: `docker stack deploy -c docker-swarm.yml <applicationName>` to deploy a cluster of docker containers through docker swarm
+## Quick Start
 
-- Execute command: `docker stack ps  <applicationName>` to list the tasks in the stack
-- Execute command: `docker stack rm <applicationName>` to remove `<applicationName>` stack
+```bash
+# 1. Build the application (skip tests for speed)
+mvn clean package -DskipTests
 
-## **Architecture of the replica set**
+# 2. Start all containers (app + MongoDB replica set)
+docker-compose up -d --build
+```
 
-The applications utilizes MongoDB distributed transactions, which adds support for multi-document transactions on sharded clusters and incorporates the existing support for multi-document transactions on replica sets. The application consists of 2 slave (secondary) mongo nodes, and 1 master (primary) node as show below.
+Swagger UI available at: [http://localhost:8080/docs](http://localhost:8080/docs)
+
+---
+
+## Architecture
+
+The entire application is containerised. The layered Docker image build uses `maven-dependency-plugin` to split the fat JAR into **dependencies** and **classes** — dependencies are cached between builds, only changed classes are re-copied:
+
+```
+┌──────────────────────────────┐
+│  CLASSES  (changes each build)│
+├──────────────────────────────┤
+│  DEPENDENCIES  (cached)      │
+├──────────────────────────────┤
+│  JRE (eclipse-temurin:17)    │
+└──────────────────────────────┘
+```
+
+Two Docker Compose files are provided:
+
+| File | Purpose |
+|---|---|
+| `docker-compose.yml` | Local development — builds image from source |
+| `docker-swarm.yml` | Production — deploys a stack to Docker Swarm |
+
+---
+
+## MongoDB Replica Set
+
+The app uses **MongoDB distributed transactions**, which require a replica set. Three nodes are configured:
+
+- **1 Primary** — receives all write operations
+- **2 Secondaries** — replicate the primary's oplog asynchronously
+
+Read preference is set to `primaryPreferred` to maximise consistency while allowing reads from secondaries if the primary is unavailable.
 
 ![MongoDB replica set](https://docs.mongodb.com/manual/images/replica-set-primary-with-two-secondaries.bakedsvg.svg)
 
+All replica nodes are containerised with persistent volumes:
 
-- The primary node receives all write operations
-- The secondaries replicate the primary's oplog and apply the operations to their data sets such that the secondaries' data sets reflect the primary's data set. If the primary is unavailable, an eligible secondary will hold an election to elect itself the new primary
-- the application is configured to read from the primary, but if it is unavailable, operations read are allowed also from secondary members (read from primary node is set to  prefered to maximize data consistency due to the fact that the data replication between primary and secondaries is asynchronous)
+![MongoDB replica set with Docker](https://i.imgur.com/eQS28HV.png)
 
-## Architecture for replica set with docker
+---
 
-All replica set nodes are containarized as shown below:
+## Docker Commands
 
-![MongoDB replica set with docker](https://i.imgur.com/eQS28HV.png)
+### Docker Compose (development)
 
-The volumes are attached to every mongo node instance as it is the preferred mechanism for persisting data generated by and used by Docker containers
+```bash
+# Start all containers in the background
+docker-compose up -d --build
 
+# Follow logs
+docker-compose logs -f
 
-## OpenApi 3.0 UI
+# Stop and remove containers, networks, volumes
+docker-compose down
+```
 
-Swagger webflux UI is enabled on: {server_host:8080}/docs e.g. on local machine: localhost:8080/docs 
+### Docker Swarm (production)
 
-![MongoDB replica set with docker](https://i.imgur.com/5V8h10G.png)
+```bash
+# Deploy stack
+docker stack deploy -c docker-swarm.yml <appName>
 
+# List stack tasks
+docker stack ps <appName>
+
+# Remove stack
+docker stack rm <appName>
+```
+
+---
+
+## OpenAPI / Swagger UI
+
+Interactive API documentation is available at:
+
+```
+http://localhost:8080/docs
+```
+
+![Swagger UI](https://i.imgur.com/5V8h10G.png)
+
+---
+
+## Why Reactive?
+
+According to [Spring MVC vs WebFlux performance benchmarks](https://filia-aleks.medium.com/microservice-performance-battle-spring-mvc-vs-webflux-80d39fd81bf0):
+
+> Spring WebFlux with WebClient wins in all cases. The most significant difference (4× faster than blocking Servlet) appears when the underlying service is slow (500 ms). It is 15–20% faster than a non-blocking Servlet with `CompletableFuture`, and uses far fewer threads (20 vs 220).
+
+### When to use reactive
+
+- ✅ High-concurrency, I/O-bound workloads
+- ✅ All dependencies have async/reactive drivers (MongoDB reactive, WebClient, etc.)
+- ❌ Avoid where blocking calls are unavoidable without custom thread-pool wrappers
+- ❌ Avoid when transactional complexity (multi-document updates) outweighs the concurrency benefit
