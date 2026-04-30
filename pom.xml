@@ -17,6 +17,9 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <start-class>com.app.CinemaApplication</start-class>
+        <!-- Overrides Spring Boot BOM 2.4.4 (which pins 1.18.18).
+             1.18.36 adds support for javac internals used in Java 21-25. -->
+        <lombok.version>1.18.36</lombok.version>
     </properties>
 
     <dependencies>
@@ -278,7 +281,8 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.20</version>
+                            <!-- Use the same version as the property above -->
+                            <version>${lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
