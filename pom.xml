@@ -17,6 +17,11 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <start-class>com.app.CinemaApplication</start-class>
+        <!-- Override Spring Boot BOM's managed Lombok version.
+             1.18.34 removes the sun.misc.Unsafe::objectFieldOffset call in
+             lombok.permit.Permit that triggers "terminally deprecated" JDK warnings
+             on Java 17+ and will crash on a future JDK that removes the method. -->
+        <lombok.version>1.18.34</lombok.version>
     </properties>
 
     <dependencies>
@@ -295,7 +300,8 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.20</version>
+                            <!-- Must match ${lombok.version} in <properties> -->
+                            <version>${lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
