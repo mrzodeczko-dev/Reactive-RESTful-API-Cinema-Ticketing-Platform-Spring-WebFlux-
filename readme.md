@@ -58,7 +58,6 @@ A reactive REST API built with **Domain-Driven Design (DDD)** on top of Spring W
 |---|---|---|
 | Security | Spring Security (WebFlux) | via Boot |
 | JWT | JJWT (api / impl / jackson) | 0.11.2 |
-| Config encryption | Jasypt Spring Boot Starter | 3.0.5 |
 
 ### Observability & Tooling
 
