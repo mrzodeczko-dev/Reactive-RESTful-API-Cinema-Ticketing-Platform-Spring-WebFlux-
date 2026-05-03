@@ -1,5 +1,5 @@
-# eclipse-temurin:17-jre replaces deprecated openjdk:17
-FROM eclipse-temurin:17-jre
+# eclipse-temurin:25-jre — Java 25 LTS base image
+FROM eclipse-temurin:25-jre
 MAINTAINER CoderNoOne firelight.code@gmail.com
 
 ARG DEPENDENCY=target/dependency
@@ -7,15 +7,12 @@ COPY ${DEPENDENCY}/BOOT-INF/lib /app/lib
 COPY ${DEPENDENCY}/META-INF /app/META-INF
 COPY ${DEPENDENCY}/BOOT-INF/classes /app
 
-# --add-opens flags are required for BlockHound 1.0.6 and Reactor instrumentation
-# to work correctly under Java 17's strong encapsulation
+# Java 25 has full module encapsulation; --add-opens are no longer needed
+# BlockHound was removed (incompatible with Java 25 internals)
 ENTRYPOINT ["java", \
   "-cp", "app:app/lib/*", \
   "-Xdebug", \
   "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005", \
-  "--add-opens", "java.base/java.lang=ALL-UNNAMED", \
-  "--add-opens", "java.base/java.util=ALL-UNNAMED", \
-  "--add-opens", "java.base/java.lang.reflect=ALL-UNNAMED", \
   "-Dspring.profiles.active=docker", \
   "-Djava.net.preferIPv4Stack=true", \
   "com.app.CinemaApplication"]

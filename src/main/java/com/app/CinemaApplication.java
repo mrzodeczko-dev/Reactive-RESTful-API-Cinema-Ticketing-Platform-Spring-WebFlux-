@@ -1,7 +1,6 @@
 package com.app;
 
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.Jwts;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -11,7 +10,6 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import javax.crypto.SecretKey;
 
-
 @SpringBootApplication
 @EnableAspectJAutoProxy
 public class CinemaApplication {
@@ -20,16 +18,17 @@ public class CinemaApplication {
         SpringApplication.run(CinemaApplication.class, args);
     }
 
+    /**
+     * jjwt 0.12+ — Keys.secretKeyFor(SignatureAlgorithm) is removed.
+     * Use Jwts.SIG.HS512.key().build() instead.
+     */
     @Bean
     public SecretKey secretKey() {
-        return Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        return Jwts.SIG.HS512.key().build();
     }
 
     @Bean
     public JavaMailSender mailSender() {
         return new JavaMailSenderImpl();
     }
-
-
 }
-

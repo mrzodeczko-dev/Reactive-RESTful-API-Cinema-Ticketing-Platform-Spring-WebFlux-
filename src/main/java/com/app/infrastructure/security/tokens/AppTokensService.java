@@ -46,19 +46,21 @@ public class AppTokensService {
                     var accessTokenExpirationTime = new Date(accessTokenExpirationTimeMillis);
                     var refreshTokenExpirationTime = new Date(System.currentTimeMillis() + refreshTokenExpirationTimeInMs);
 
+                    // jjwt 0.12+: setSubject → subject, setExpiration → expiration,
+                    //              setIssuedAt → issuedAt, signWith(key) stays the same
                     var accessToken = Jwts
                             .builder()
-                            .setSubject(String.valueOf(id))
-                            .setExpiration(accessTokenExpirationTime)
-                            .setIssuedAt(createdDate)
+                            .subject(String.valueOf(id))
+                            .expiration(accessTokenExpirationTime)
+                            .issuedAt(createdDate)
                             .signWith(secretKey)
                             .compact();
 
                     var refreshToken = Jwts
                             .builder()
-                            .setSubject(String.valueOf(id))
-                            .setExpiration(refreshTokenExpirationTime)
-                            .setIssuedAt(createdDate)
+                            .subject(String.valueOf(id))
+                            .expiration(refreshTokenExpirationTime)
+                            .issuedAt(createdDate)
                             .signWith(secretKey)
                             .claim(refreshTokenAccessTokenKey, accessTokenExpirationTimeMillis)
                             .compact();
@@ -71,13 +73,17 @@ public class AppTokensService {
                 });
     }
 
+    /**
+     * jjwt 0.12+: parserBuilder() → parser(), setSigningKey → verifyWith,
+     *             parseClaimsJws → parseSignedClaims, getBody → getPayload
+     */
     private Claims claims(String token) {
         return Jwts
-                .parserBuilder()
-                .setSigningKey(secretKey)
+                .parser()
+                .verifyWith(secretKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     public String getId(String token) {

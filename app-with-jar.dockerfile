@@ -1,8 +1,10 @@
-FROM openjdk:16
+# eclipse-temurin:25-jre — Java 25 LTS base image
+FROM eclipse-temurin:25-jre
 MAINTAINER CoderNoOne firelight.code@gmail.com
 
-EXPOSE 8080
-WORKDIR ./usr/webflux-app
-ADD target/cinema_webflux_ddd-0.0.1.jar app.jar
+ARG JAR_FILE=target/*.jar
+COPY ${JAR_FILE} app.jar
 
-ENTRYPOINT ["java", "-jar", "--enable-preview", "-Dspring.profiles.active=docker", "-Djava.net.preferIPv4Stack=true", "app.jar"]
+ENTRYPOINT ["java", \
+  "-jar", "/app.jar", \
+  "-Dspring.profiles.active=docker"]
