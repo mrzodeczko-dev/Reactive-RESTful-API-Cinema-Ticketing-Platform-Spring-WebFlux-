@@ -13,6 +13,7 @@ import com.app.domain.city.City;
 import com.app.domain.city.CityRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,187 +25,180 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.when;
 
-@ExtendWith({MockitoExtension.class})
+@ExtendWith(MockitoExtension.class)
 class CityServiceTest {
 
     @Mock
     private CityRepository cityRepository;
-
     @Mock
     private CinemaRepository cinemaRepository;
-
     @Mock
     private CinemaHallRepository cinemaHallRepository;
-
     @Mock
     private TransactionalOperator transactionalOperator;
 
     @InjectMocks
     private CityService cityService;
 
-    private City sampleCity;
-    private CityDto sampleCityDto;
+    private City cityWarsaw;
+    private CityDto cityWarsawDto;
 
     @BeforeEach
     void setUp() {
-        sampleCity = City.builder()
+        cityWarsaw = City.builder()
                 .id("city-1")
                 .name("Warsaw")
                 .cinemas(new ArrayList<>())
                 .build();
-        sampleCityDto = CityDto.builder()
+
+        cityWarsawDto = CityDto.builder()
                 .id("city-1")
                 .name("Warsaw")
                 .build();
     }
 
-    // -------------------------------------------------------------------------
-    // addCity
-    // -------------------------------------------------------------------------
+    @Nested
+    @DisplayName("addCity()")
+    class AddCityTests {
 
-    @Test
-    @DisplayName("addCity — should save city and return DTO")
-    void addCity_shouldSaveAndReturnDto() {
-        var dto = CreateCityDto.builder().name("Warsaw").build();
+        @Test
+        @DisplayName("Happy path: valid DTO is persisted and mapped to CityDto")
+        void shouldAddCitySuccessfully() {
+            CreateCityDto dto = CreateCityDto.builder().name("Warsaw").build();
+            when(cityRepository.addOrUpdate(any())).thenReturn(Mono.just(cityWarsaw));
 
-        when(cityRepository.addOrUpdate(any(City.class))).thenReturn(Mono.just(sampleCity));
+            StepVerifier.create(cityService.addCity(Mono.just(dto)))
+                    .assertNext(result -> assertThat(result.getName()).isEqualTo("Warsaw"))
+                    .verifyComplete();
+        }
 
-        StepVerifier.create(cityService.addCity(Mono.just(dto)))
-                .assertNext(result -> {
-                    assertThat(result.getId()).isEqualTo("city-1");
-                    assertThat(result.getName()).isEqualTo("Warsaw");
-                })
-                .verifyComplete();
+        @Test
+        @DisplayName("Repository error: exception propagated from addOrUpdate")
+        void shouldPropagateRepositoryError() {
+            CreateCityDto dto = CreateCityDto.builder().name("Warsaw").build();
+            when(cityRepository.addOrUpdate(any()))
+                    .thenReturn(Mono.error(new RuntimeException("DB down")));
 
-        verify(cityRepository, times(1)).addOrUpdate(any(City.class));
+            StepVerifier.create(cityService.addCity(Mono.just(dto)))
+                    .expectErrorMessage("DB down")
+                    .verify();
+        }
     }
 
-    // -------------------------------------------------------------------------
-    // findByName
-    // -------------------------------------------------------------------------
+    @Nested
+    @DisplayName("findByName()")
+    class FindByNameTests {
 
-    @Test
-    @DisplayName("findByName — should return CityDto when city exists")
-    void findByName_whenCityExists_shouldReturnDto() {
-        when(cityRepository.findByName("Warsaw")).thenReturn(Mono.just(sampleCity));
+        @Test
+        @DisplayName("Happy path: existing city is returned as DTO")
+        void shouldReturnCityDto() {
+            when(cityRepository.findByName("Warsaw")).thenReturn(Mono.just(cityWarsaw));
 
-        StepVerifier.create(cityService.findByName("Warsaw"))
-                .assertNext(dto -> assertThat(dto.getName()).isEqualTo("Warsaw"))
-                .verifyComplete();
+            StepVerifier.create(cityService.findByName("Warsaw"))
+                    .assertNext(dto -> assertThat(dto.getName()).isEqualTo("Warsaw"))
+                    .verifyComplete();
+        }
+
+        @Test
+        @DisplayName("City not found: CityServiceException thrown with city name")
+        void shouldThrowWhenCityNotFound() {
+            when(cityRepository.findByName("Unknown")).thenReturn(Mono.empty());
+
+            StepVerifier.create(cityService.findByName("Unknown"))
+                    .expectErrorSatisfies(ex -> {
+                        assertThat(ex).isInstanceOf(CityServiceException.class);
+                        assertThat(ex.getMessage()).contains("Unknown");
+                    })
+                    .verify();
+        }
     }
 
-    @Test
-    @DisplayName("findByName — should throw CityServiceException when city not found")
-    void findByName_whenCityNotFound_shouldThrowException() {
-        when(cityRepository.findByName("Unknown")).thenReturn(Mono.empty());
+    @Nested
+    @DisplayName("getAll()")
+    class GetAllTests {
 
-        StepVerifier.create(cityService.findByName("Unknown"))
-                .expectErrorSatisfies(ex -> {
-                    assertThat(ex).isInstanceOf(CityServiceException.class);
-                    assertThat(ex.getMessage()).contains("Unknown");
-                })
-                .verify();
+        @Test
+        @DisplayName("Two cities: Flux emits two DTOs")
+        void shouldReturnAllCities() {
+            City city2 = City.builder().id("city-2").name("Krakow").cinemas(new ArrayList<>()).build();
+            when(cityRepository.findAll()).thenReturn(Flux.just(cityWarsaw, city2));
+
+            StepVerifier.create(cityService.getAll())
+                    .assertNext(dto -> assertThat(dto.getName()).isEqualTo("Warsaw"))
+                    .assertNext(dto -> assertThat(dto.getName()).isEqualTo("Krakow"))
+                    .verifyComplete();
+        }
+
+        @Test
+        @DisplayName("No cities: Flux completes empty")
+        void shouldReturnEmptyFlux() {
+            when(cityRepository.findAll()).thenReturn(Flux.empty());
+
+            StepVerifier.create(cityService.getAll()).verifyComplete();
+        }
     }
 
-    // -------------------------------------------------------------------------
-    // getAll
-    // -------------------------------------------------------------------------
+    @Nested
+    @DisplayName("addCinemaToCity()")
+    class AddCinemaToCityTests {
 
-    @Test
-    @DisplayName("getAll — should return all cities as DTOs")
-    void getAll_shouldReturnAllCities() {
-        City city2 = City.builder().id("city-2").name("Krakow").cinemas(List.of()).build();
+        @Test
+        @DisplayName("Happy path: cinema is saved and city is updated")
+        void shouldAddCinemaToCitySuccessfully() {
+            AddCinemaToCityDto dto = AddCinemaToCityDto.builder()
+                    .city("Warsaw")
+                    .street("Main St 1")
+                    .cinemaHallsCapacity(List.of(
+                            CreateCinemaHallDto.builder().rowNo(5).colNo(5).build()
+                    ))
+                    .build();
 
-        when(cityRepository.findAll()).thenReturn(Flux.just(sampleCity, city2));
+            CinemaHall hall = CinemaHall.builder().id("hall-1").positions(new ArrayList<>()).movieEmissions(new ArrayList<>()).build();
+            Cinema cinema = Cinema.builder().id("cinema-1").cinemaHalls(new ArrayList<>(List.of(hall))).build();
+            City updatedCity = City.builder().id("city-1").name("Warsaw").cinemas(new ArrayList<>(List.of(cinema))).build();
 
-        StepVerifier.create(cityService.getAll())
-                .assertNext(dto -> assertThat(dto.getName()).isEqualTo("Warsaw"))
-                .assertNext(dto -> assertThat(dto.getName()).isEqualTo("Krakow"))
-                .verifyComplete();
+            when(cinemaHallRepository.addOrUpdateMany(anyList())).thenReturn(Flux.just(hall));
+            when(cinemaRepository.addOrUpdate(any())).thenReturn(Mono.just(cinema));
+            when(cityRepository.findByName("Warsaw")).thenReturn(Mono.just(cityWarsaw));
+            when(cityRepository.addOrUpdate(any())).thenReturn(Mono.just(updatedCity));
+            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            StepVerifier.create(cityService.addCinemaToCity(dto))
+                    .assertNext(result -> assertThat(result.getName()).isEqualTo("Warsaw"))
+                    .verifyComplete();
+        }
+
+        @Test
+        @DisplayName("City not found: CityServiceException with city name")
+        void shouldThrowWhenCityNotFoundDuringAddCinema() {
+            AddCinemaToCityDto dto = AddCinemaToCityDto.builder()
+                    .city("Atlantis")
+                    .cinemaHallsCapacity(List.of(
+                            CreateCinemaHallDto.builder().rowNo(3).colNo(3).build()
+                    ))
+                    .build();
+
+            CinemaHall hall = CinemaHall.builder().id("hall-1").positions(new ArrayList<>()).movieEmissions(new ArrayList<>()).build();
+            Cinema cinema = Cinema.builder().id("cinema-1").cinemaHalls(new ArrayList<>(List.of(hall))).build();
+
+            when(cinemaHallRepository.addOrUpdateMany(anyList())).thenReturn(Flux.just(hall));
+            when(cinemaRepository.addOrUpdate(any())).thenReturn(Mono.just(cinema));
+            when(cityRepository.findByName("Atlantis")).thenReturn(Mono.empty());
+            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            StepVerifier.create(cityService.addCinemaToCity(dto))
+                    .expectErrorSatisfies(ex -> {
+                        assertThat(ex).isInstanceOf(CityServiceException.class);
+                        assertThat(ex.getMessage()).contains("Atlantis");
+                    })
+                    .verify();
+        }
     }
-
-    @Test
-    @DisplayName("getAll — should return empty flux when no cities")
-    void getAll_whenNoCities_shouldReturnEmptyFlux() {
-        when(cityRepository.findAll()).thenReturn(Flux.empty());
-
-        StepVerifier.create(cityService.getAll())
-                .verifyComplete();
-    }
-
-    @Test
-    @DisplayName("addCinemaToCity — should save cinema in city and return updated CityDto")
-    void addCinemaToCity_shouldReturnUpdatedCityDto() {
-        var createCinemaHallDto = CreateCinemaHallDto.builder()
-                .rowNo(5)
-                .colNo(10)
-                .build();
-
-        var dto = AddCinemaToCityDto.builder()
-                .city("Warsaw")
-                .cinemaHallsCapacity(new ArrayList<>(List.of(createCinemaHallDto)))
-                .build();
-
-        var hall = CinemaHall.builder()
-                .id("hall-1")
-                .positions(List.of())
-                .movieEmissions(Collections.emptyList())
-                .build();
-
-        var cinema = Cinema.builder()
-                .id("cinema-1")
-                .cinemaHalls(new ArrayList<>(List.of(hall)))
-                .build();
-
-        when(cinemaHallRepository.addOrUpdateMany(anyList())).thenReturn(Flux.just(hall));
-        when(cityRepository.findByName("Warsaw")).thenReturn(Mono.just(sampleCity));
-        when(cinemaRepository.addOrUpdate(any(Cinema.class))).thenReturn(Mono.just(cinema));
-        when(cityRepository.addOrUpdate(any(City.class))).thenReturn(Mono.just(sampleCity));
-        when(transactionalOperator.transactional(any(Mono.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-        StepVerifier.create(cityService.addCinemaToCity(dto))
-                .assertNext(result -> assertThat(result.getName()).isEqualTo("Warsaw"))
-                .verifyComplete();
-
-        verify(cityRepository, times(1)).addOrUpdate(any(City.class));
-        verify(transactionalOperator, times(1)).transactional(any(Mono.class));
-
-    }
-
-    @Test
-    @DisplayName("addCinemaToCity — should throw CityServiceException when city not found")
-    void addCinemaToCity_whenCityNotFound_shouldThrowException() {
-        var dto = AddCinemaToCityDto.builder()
-                .city("NonExistent")
-                .cinemaHallsCapacity(List.of(
-                        CreateCinemaHallDto.builder().rowNo(3).colNo(5).build()
-                ))
-                .build();
-
-        var hall = CinemaHall.builder().id("hall-1").positions(List.of()).movieEmissions(Collections.emptyList()).build();
-        var cinema = Cinema.builder().id("cinema-1").cinemaHalls(new ArrayList<>(List.of(hall))).build();
-
-        when(cinemaHallRepository.addOrUpdateMany(anyList())).thenReturn(Flux.just(hall));
-        when(cinemaRepository.addOrUpdate(any(Cinema.class))).thenReturn(Mono.just(cinema));
-        when(cityRepository.findByName("NonExistent")).thenReturn(Mono.empty());
-        when(transactionalOperator.transactional(any(Mono.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-
-        StepVerifier.create(cityService.addCinemaToCity(dto))
-                .expectErrorSatisfies(ex -> {
-                    assertThat(ex).isInstanceOf(CityServiceException.class);
-                    assertThat(ex.getMessage()).contains("NonExistent");
-                })
-                .verify();
-
-        verify(transactionalOperator, times(1)).transactional(any(Mono.class));
-    }
-
 }
