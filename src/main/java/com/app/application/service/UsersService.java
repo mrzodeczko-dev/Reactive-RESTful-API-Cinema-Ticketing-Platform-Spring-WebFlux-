@@ -10,18 +10,15 @@ import com.app.application.validator.util.Validations;
 import com.app.domain.security.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.reactivestreams.Subscriber;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.Optional;
 import java.util.function.Function;
 
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 @Service
@@ -46,25 +43,27 @@ public class UsersService {
         return returnMonoErrorIfExists(userRepository::findByUsername, UserField.USERNAME, createUserDto.getUsername())
                 .then(returnMonoErrorIfExists(userRepository::findByEmail, UserField.EMAIL, createUserDto.getEmail()))
                 .then(createUser(createUserDto).map(User::toDto));
-
     }
 
+    /**
+     * Returns Mono.error if the given field value already exists in the repository.
+     * The nonNull guard inside flatMap was removed — values emitted by flatMap are
+     * always non-null by the Reactive Streams specification.
+     */
     private Mono<?> returnMonoErrorIfExists(Function<String, Mono<User>> function, UserField userField, String arg) {
-
         return function.apply(arg)
-                .flatMap(user -> {
-                    if (nonNull(user)) {
-                        return Mono.error(new RegistrationUserException("User with %s: %s already exists".formatted(userField.getDesc(), arg)));
-                    }
-                    return Mono.empty();
-                });
+                .flatMap(user -> Mono.<Void>error(
+                        new RegistrationUserException(
+                                "User with %s: %s already exists".formatted(userField.getDesc(), arg))));
     }
 
     private Mono<User> createUser(final CreateUserDto createUserDto) {
-
         return userRepository
-                .addOrUpdate(createUserDto.setPassword(nonNull(createUserDto.getPassword()) ? passwordEncoder.encode(createUserDto.getPassword()) : null).toEntity());
-
+                .addOrUpdate(createUserDto
+                        .setPassword(nonNull(createUserDto.getPassword())
+                                ? passwordEncoder.encode(createUserDto.getPassword())
+                                : null)
+                        .toEntity());
     }
 
     public Flux<UserDto> getAll() {
@@ -81,7 +80,6 @@ public class UsersService {
     }
 
     public Mono<UserDto> promoteUserToAdminRole(String username) {
-
         return userRepository
                 .findByUsername(username)
                 .switchIfEmpty(Mono.error(() -> new UserServiceException("No user with username: %s".formatted(username))))

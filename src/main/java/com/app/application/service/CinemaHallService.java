@@ -16,12 +16,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static java.util.Objects.isNull;
 
 @Service
 @RequiredArgsConstructor
@@ -34,20 +30,18 @@ public class CinemaHallService {
     public Mono<CinemaHallDto> addCinemaHallToCinema(Mono<AddCinemaHallToCinemaDto> addCinemaHallToCinemaDtoMono) {
 
         return addCinemaHallToCinemaDtoMono
-                .map(dto -> {
+                .flatMap(dto -> {
+                    // Validation propagated as Mono.error to stay within the reactive pipeline
                     var errors = new AddCinemaHallToCinemaDtoValidator().validate(dto);
                     if (Validations.hasErrors(errors)) {
-                        throw new CinemaHallServiceException(Validations.createErrorMessage(errors));
+                        return Mono.error(new CinemaHallServiceException(Validations.createErrorMessage(errors)));
                     }
-                    return dto;
+                    return Mono.just(dto);
                 })
                 .flatMap(dto -> cinemaRepository.findById(dto.getCinemaId())
-                        .map(cinema -> {
-                            if (isNull(cinema)) {
-                                throw new CinemaHallServiceException("No cinema with id: %s".formatted(dto.getCinemaId()));
-                            }
-                            return cinema;
-                        })
+                        // switchIfEmpty replaces the isNull-inside-map anti-pattern
+                        .switchIfEmpty(Mono.error(new CinemaHallServiceException(
+                                "No cinema with id: %s".formatted(dto.getCinemaId()))))
                         .flatMap(cinema -> cinemaHallRepository.addOrUpdate(CinemaHall.builder()
                                 .cinemaId(cinema.getId())
                                 .movieEmissions(new ArrayList<>())
@@ -56,7 +50,7 @@ public class CinemaHallService {
                                 .flatMap(savedCinemaHall -> {
                                     cinema.getCinemaHalls().add(savedCinemaHall);
                                     return cinemaRepository.addOrUpdate(cinema)
-                                            .then(Mono.just(savedCinemaHall));
+                                            .thenReturn(savedCinemaHall);
                                 })
                         )
                 )
@@ -65,7 +59,6 @@ public class CinemaHallService {
     }
 
     private List<Position> createPositions(Integer colNo, Integer rowNo) {
-
         return IntStream.rangeClosed(1, colNo)
                 .boxed()
                 .collect(ArrayList::new, (list, col) -> IntStream
@@ -75,8 +68,8 @@ public class CinemaHallService {
                                         .colNo(col)
                                         .rowNo(row)
                                         .build())
-                                .forEach(list::add)
-                        , List::addAll);
+                                .forEach(list::add),
+                        List::addAll);
     }
 
     public Flux<CinemaHallDto> getAll() {
@@ -86,14 +79,13 @@ public class CinemaHallService {
     }
 
     public Flux<CinemaHallDto> getAllForCinema(String cinemaId) {
-
         return cinemaRepository.findById(cinemaId)
-                .switchIfEmpty(Mono.error(() -> new CinemaHallServiceException("No cinema with id: %s".formatted(cinemaId))))
+                .switchIfEmpty(Mono.error(() -> new CinemaHallServiceException(
+                        "No cinema with id: %s".formatted(cinemaId))))
                 .flatMapMany(cinema ->
                         cinemaHallRepository
                                 .getAllForCinemaById(cinemaId)
                                 .map(CinemaHall::toDto)
                 );
-
     }
 }

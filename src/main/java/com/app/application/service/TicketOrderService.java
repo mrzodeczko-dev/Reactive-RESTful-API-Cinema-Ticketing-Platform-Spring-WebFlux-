@@ -36,7 +36,6 @@ public class TicketOrderService {
     private final CreateTicketsOrderDtoValidator createTicketsOrderDtoValidator;
     private final TransactionalOperator transactionalOperator;
 
-
     public Mono<TicketOrderDto> addTicketOrder(Mono<? extends Principal> principal, CreateTicketOrderDto createTicketOrderDto) {
 
         var errors = createTicketsOrderDtoValidator.validate(createTicketOrderDto);
@@ -50,6 +49,7 @@ public class TicketOrderService {
                         .findById(createTicketOrderDto.getMovieEmissionId())
                         .switchIfEmpty(Mono.error(() -> new TicketOrderServiceException(
                                 "No movie emission with id: %s".formatted(createTicketOrderDto.getMovieEmissionId()))))
+                        // Replaced throw inside flatMap with Mono.error
                         .flatMap(movieEmission ->
                                 createTicketOrderDto.areAllPositionsAvailable(movieEmission.getFreePositions())
                                         ? Mono.just(movieEmission)
@@ -81,27 +81,26 @@ public class TicketOrderService {
                 .as(transactionalOperator::transactional);
     }
 
-
     public Mono<TicketOrderDto> cancelOrder(String username, String orderId) {
-
+        // Synchronous null-check returned as Mono.error instead of throwing directly
         if (isNull(orderId)) {
-            throw new TicketOrderServiceException("Order id is null");
+            return Mono.error(new TicketOrderServiceException("Order id is null"));
         }
 
         return ticketOrderRepository.findById(orderId)
-                .map(ticketOrder -> {
+                .switchIfEmpty(Mono.error(new TicketOrderServiceException("No order with id: %s".formatted(orderId))))
+                // Replaced throw inside .map() with flatMap + Mono.error
+                .flatMap(ticketOrder -> {
                     if (!Objects.equals(ticketOrder.getUser().getUsername(), username)) {
-                        throw new TicketOrderServiceException("That ticker order does not belong to you");
+                        return Mono.error(new TicketOrderServiceException("That ticket order does not belong to you"));
                     }
-                    return ticketOrder.changeOrderStatusToCancelled();
+                    return Mono.just(ticketOrder.changeOrderStatusToCancelled());
                 })
                 .map(TicketOrder::toDto);
     }
 
     public Flux<TicketOrderDto> getAllTicketOrdersForLoggedUser(String username) {
-
         return ticketOrderRepository.findAllByUsername(username)
                 .map(TicketOrder::toDto);
     }
-
 }
