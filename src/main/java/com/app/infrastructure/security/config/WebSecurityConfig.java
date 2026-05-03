@@ -89,45 +89,50 @@ public class WebSecurityConfig {
         };
     }
 
+    /**
+     * Spring Security 6+ / Spring Boot 3+ removed the deprecated chained DSL.
+     * Every security feature must now be configured via lambda DSL.
+     * Spring Security 7 (Spring Boot 4) enforces this — the old .csrf().disable() etc.
+     * no longer compile.
+     */
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
-                .csrf().disable()
-                .formLogin().disable()
-                .httpBasic().disable()
+                .csrf(csrf -> csrf.disable())
+                .formLogin(formLogin -> formLogin.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())
 
                 .authenticationManager(authenticationManager)
                 .securityContextRepository(securityContextRepository)
 
-                .exceptionHandling()
-                .authenticationEntryPoint(serverAuthenticationEntryPoint())
-                .accessDeniedHandler(serverAccessDeniedHandler())
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(serverAuthenticationEntryPoint())
+                        .accessDeniedHandler(serverAccessDeniedHandler())
+                )
+                .authorizeExchange(exchanges -> exchanges
+                        .pathMatchers(HttpMethod.OPTIONS).permitAll()
+                        .pathMatchers("/register").permitAll()
+                        .pathMatchers("/login").permitAll()
 
-                .and()
-                .authorizeExchange()
-                .pathMatchers(HttpMethod.OPTIONS).permitAll()
-                .pathMatchers("/register").permitAll()
-                .pathMatchers("/login").permitAll()
+                        .pathMatchers("/users/**").hasRole("ADMIN")
+                        .pathMatchers("/statistics/**").permitAll()
 
-                .pathMatchers("/users/**").hasRole("ADMIN")
-                .pathMatchers("/statistics/**").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/cinemas").hasRole("USER")
+                        .pathMatchers("/cinemas/**").hasRole("ADMIN")
+                        .pathMatchers("/cities/**").hasRole("USER")
 
-                .pathMatchers(HttpMethod.GET, "/cinemas").hasRole("USER")
-                .pathMatchers("/cinemas/**").hasRole("ADMIN")
-                .pathMatchers("/cities/**").hasRole("USER")
+                        .pathMatchers(HttpMethod.POST, "/movies/csv").hasRole("ADMIN")
+                        .pathMatchers("/movies/**").hasAnyRole("USER", "ADMIN")
+                        .pathMatchers("/tickets/**").hasRole("USER")
+                        .pathMatchers("/ticketOrders/**").hasRole("USER")
+                        .pathMatchers(HttpMethod.POST, "/movieEmissions").hasRole("ADMIN")
 
-                .pathMatchers(HttpMethod.POST, "/movies/csv").hasRole("ADMIN")
-                .pathMatchers("/movies/**").hasAnyRole("USER", "ADMIN")
-                .pathMatchers("/tickets/**").hasRole("USER")
-                .pathMatchers("/ticketOrders/**").hasRole("USER")
-                .pathMatchers(HttpMethod.POST, "/movieEmissions").hasRole("ADMIN")
+                        .pathMatchers("/docs/**").permitAll()
+                        .pathMatchers("/v3/api-docs/**").permitAll()
+                        .pathMatchers("/webjars/swagger-ui/**").permitAll()
 
-                .pathMatchers("/docs/**").permitAll()
-                .pathMatchers("/v3/api-docs/**").permitAll()
-                .pathMatchers("/webjars/swagger-ui/**").permitAll()
-
-                .anyExchange().denyAll()
-                .and()
+                        .anyExchange().denyAll()
+                )
                 .build();
     }
 }
