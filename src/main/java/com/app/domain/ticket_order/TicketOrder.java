@@ -18,11 +18,10 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.concurrent.RecursiveTask;
 import java.util.stream.Collectors;
 
 
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Document("ticket_orders")
@@ -70,7 +69,7 @@ public class TicketOrder implements GenericEntity {
         return this;
     }
 
-    public TicketOrderDto toDto(){
+    public TicketOrderDto toDto() {
         return TicketOrderDto.builder()
                 .id(id)
                 .username(user.getUsername())

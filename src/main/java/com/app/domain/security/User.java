@@ -6,6 +6,7 @@ import com.app.domain.security.enums.Role;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;

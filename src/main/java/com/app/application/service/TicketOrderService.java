@@ -1,7 +1,6 @@
 package com.app.application.service;
 
 import com.app.application.dto.CreateTicketOrderDto;
-import com.app.application.dto.TicketDetailsDto;
 import com.app.application.dto.TicketOrderDto;
 import com.app.application.exception.TicketOrderServiceException;
 import com.app.application.validator.CreateTicketsOrderDtoValidator;
@@ -23,7 +22,6 @@ import reactor.core.publisher.Mono;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 
@@ -42,46 +40,45 @@ public class TicketOrderService {
     public Mono<TicketOrderDto> addTicketOrder(Mono<? extends Principal> principal, CreateTicketOrderDto createTicketOrderDto) {
 
         var errors = createTicketsOrderDtoValidator.validate(createTicketOrderDto);
-
         if (Validations.hasErrors(errors)) {
-            return Mono.error(() -> new TicketOrderServiceException("Validation errors: %s".formatted(Validations.createErrorMessage(errors))));
+            return Mono.error(() -> new TicketOrderServiceException(
+                    "Validation errors: %s".formatted(Validations.createErrorMessage(errors))));
         }
 
-        return Mono.justOrEmpty(createTicketOrderDto)
-                .switchIfEmpty(Mono.error(() -> new TicketOrderServiceException("empty createTickerOrderDto")))
-                .flatMap(value -> movieEmissionRepository
-                        .findById(value.getMovieEmissionId())
-                        .switchIfEmpty(Mono.error(() -> new TicketOrderServiceException("No movie emission with id: %s".formatted(createTicketOrderDto.getMovieEmissionId()))))
-                        .map(movieEmission -> {
-                            if (createTicketOrderDto.areAllPositionsAvailable(movieEmission.getFreePositions())) {
-                                return movieEmission;
-                            }
-                            throw new TicketOrderServiceException("Positions are not valid");
-                        })
-                        .flatMap(movieEmission ->  movieEmissionRepository.addOrUpdate(movieEmission.removeFreePositions(createTicketOrderDto.getTicketsDetails()))
-                                .then(principal)
-                                .flatMap(val -> userRepository.findByUsername(val.getName()))
+        return principal
+                .flatMap(p -> movieEmissionRepository
+                        .findById(createTicketOrderDto.getMovieEmissionId())
+                        .switchIfEmpty(Mono.error(() -> new TicketOrderServiceException(
+                                "No movie emission with id: %s".formatted(createTicketOrderDto.getMovieEmissionId()))))
+                        .flatMap(movieEmission ->
+                                createTicketOrderDto.areAllPositionsAvailable(movieEmission.getFreePositions())
+                                        ? Mono.just(movieEmission)
+                                        : Mono.error(new TicketOrderServiceException("Positions are not valid")))
+                        .flatMap(movieEmission -> movieEmissionRepository
+                                .addOrUpdate(movieEmission.removeFreePositions(createTicketOrderDto.getTicketsDetails()))
+                                .flatMap(ignored -> userRepository.findByUsername(p.getName()))
                                 .map(user -> TicketOrder.builder()
                                         .orderDate(LocalDate.now())
                                         .movieEmission(movieEmission)
-                                        .ticketGroupType(value.getTicketGroupType())
+                                        .ticketGroupType(createTicketOrderDto.getTicketGroupType())
                                         .ticketOrderStatus(TicketOrderStatus.ORDERED)
                                         .user(user)
-                                        .tickets(value.getTicketsDetails()
-                                                .stream()
-                                                .map(ticketDetailsDto -> Ticket.builder()
-                                                        .position(ticketDetailsDto.getPosition())
-                                                        .type(ticketDetailsDto.getIndividualTicketType())
+                                        .tickets(createTicketOrderDto.getTicketsDetails().stream()
+                                                .map(td -> Ticket.builder()
+                                                        .position(td.getPosition())
+                                                        .type(td.getIndividualTicketType())
                                                         .ticketStatus(TicketStatus.PURCHASED)
-                                                        .discount(createTicketOrderDto.getBaseDiscount().add(ticketDetailsDto.getIndividualTicketType().getDiscount()))
+                                                        .discount(createTicketOrderDto.getBaseDiscount()
+                                                                .add(td.getIndividualTicketType().getDiscount()))
                                                         .build())
-                                                .collect(Collectors.toList()))
+                                                .toList())
                                         .build())))
                 .flatMap(ticketOrder -> ticketRepository.addOrUpdateMany(ticketOrder.getTickets())
-                        .then(ticketOrderRepository.addOrUpdate(ticketOrder))
+                        .collectList()
+                        .flatMap(savedTickets -> ticketOrderRepository.addOrUpdate(
+                                ticketOrder.toBuilder().tickets(savedTickets).build()))
                         .map(TicketOrder::toDto))
                 .as(transactionalOperator::transactional);
-
     }
 
 
