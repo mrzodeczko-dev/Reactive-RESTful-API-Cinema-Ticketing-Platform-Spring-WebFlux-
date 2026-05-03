@@ -20,7 +20,7 @@
     <properties>
         <java.version>25</java.version>
         <start-class>com.app.CinemaApplication</start-class>
-        <lombok.version>1.18.36</lombok.version>
+        <lombok.version>1.18.38</lombok.version>
         <jjwt.version>0.13.0</jjwt.version>
         <commons-validator.version>1.9.0</commons-validator.version>
         <joda-time.version>2.13.0</joda-time.version>
