@@ -31,6 +31,7 @@ import reactor.core.publisher.Mono;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -66,7 +67,6 @@ public class TicketPurchaseService {
                 .findById(createPurchaseDto.getMovieEmissionId())
                 .switchIfEmpty(Mono.error(() -> new TicketOrderServiceException(
                         "No movie emission with id: %s".formatted(createPurchaseDto.getMovieEmissionId()))))
-                // Replaced throw inside .map() with flatMap + Mono.error
                 .flatMap(movieEmission ->
                         createPurchaseDto.areAllPositionsAvailable(movieEmission.getFreePositions())
                                 ? Mono.just(movieEmission)
@@ -99,7 +99,6 @@ public class TicketPurchaseService {
     }
 
     public Mono<TicketPurchaseDto> purchaseTicketFromOrder(String username, String ticketOrderId) {
-        // Synchronous null-check returned as Mono.error instead of throwing directly
         if (isNull(ticketOrderId)) {
             return Mono.error(new TicketPurchaseServiceException("Ticket order id is null"));
         }
@@ -107,7 +106,6 @@ public class TicketPurchaseService {
         return ticketOrderRepository.findById(ticketOrderId)
                 .switchIfEmpty(Mono.error(new TicketPurchaseServiceException(
                         "No ticket order with id: %s".formatted(ticketOrderId))))
-                // Replaced throw inside .map() with flatMap + Mono.error
                 .flatMap(ticketOrder -> validateTicketOrderOwnership(ticketOrder, username))
                 .flatMap(ticketOrder ->
                         ticketOrderRepository.addOrUpdate(ticketOrder.changeOrderStatusToDone())
@@ -116,17 +114,11 @@ public class TicketPurchaseService {
                 .as(transactionalOperator::transactional);
     }
 
-    /**
-     * Validates that the ticket order belongs to the given user and is not expired.
-     * Returns Mono.error instead of throwing synchronously so errors are properly
-     * propagated as onError signals in the reactive pipeline.
-     */
     private Mono<TicketOrder> validateTicketOrderOwnership(TicketOrder ticketOrder, String username) {
         if (!Objects.equals(username, ticketOrder.getUser().getUsername())) {
             return Mono.error(new TicketPurchaseServiceException("Ticket order is not done by you!"));
         }
-        if (ticketOrder.getMovieEmission().getStartDateTime().toLocalDate()
-                .compareTo(LocalDate.now().minusDays(1)) < 0) {
+        if (ticketOrder.getMovieEmission().getStartDateTime().toLocalDate().isBefore(LocalDate.now().minusDays(1))) {
             return Mono.error(new TicketPurchaseServiceException("You cannot purchase ticket 1 day before emission"));
         }
         return Mono.just(ticketOrder);
@@ -152,7 +144,6 @@ public class TicketPurchaseService {
         }
 
         return cityRepository.findByName(cityName)
-                // Replaced .flatMapMany(Flux::just).switchIfEmpty with the idiomatic pattern
                 .switchIfEmpty(Mono.error(() -> new TicketPurchaseServiceException(
                         "No city with name %s".formatted(cityName))))
                 .flatMapMany(city ->
@@ -166,7 +157,7 @@ public class TicketPurchaseService {
                 .collectList()
                 .flatMapMany(cinemaHallsIds -> ticketPurchases
                         .collect(
-                                java.util.ArrayList::new,
+                                ArrayList<TicketPurchase>::new,
                                 (list, nextItem) -> cinemaHallsIds.forEach(id -> {
                                     if (id.equals(nextItem.getMovieEmission().getCinemaHallId())) {
                                         list.add(nextItem);
@@ -185,7 +176,6 @@ public class TicketPurchaseService {
         return cinemaRepository.findById(cinemaId)
                 .switchIfEmpty(Mono.error(() -> new TicketPurchaseServiceException(
                         "No cinema with id: %s".formatted(cinemaId))))
-                // Removed collectList()+flatMapMany(fromIterable) unnecessary buffering
                 .flatMapMany(cinema -> ticketPurchaseRepository
                         .findAllByCinemaHallsIds(
                                 cinema.getCinemaHalls().stream()
@@ -202,7 +192,6 @@ public class TicketPurchaseService {
         return cinemaRepository.findById(cinemaId)
                 .switchIfEmpty(Mono.error(() -> new TicketPurchaseServiceException(
                         "No cinema with id: %s".formatted(cinemaId))))
-                // Removed collectList()+flatMapMany(fromIterable) unnecessary buffering
                 .flatMapMany(cinema -> ticketPurchaseRepository
                         .findAllByCinemaHallsIdsAndUsername(
                                 cinema.getCinemaHalls().stream()
@@ -217,10 +206,6 @@ public class TicketPurchaseService {
                 .map(TicketPurchase::toDto);
     }
 
-    /**
-     * Replaced AtomicReference + ifPresentOrElse imperative mutation with
-     * a clean declarative approach — parse, validate, delegate to repository.
-     */
     public Flux<TicketPurchaseDto> getAllTicketPurchasesByDate(Optional<String> from, Optional<String> to) {
         final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
@@ -229,7 +214,7 @@ public class TicketPurchaseService {
         }
 
         boolean validFrom = from.map(s -> GenericValidator.isDate(s, "dd-MM-yyyy", true)).orElse(true);
-        boolean validTo   = to.map(s -> GenericValidator.isDate(s, "dd-MM-yyyy", true)).orElse(true);
+        boolean validTo = to.map(s -> GenericValidator.isDate(s, "dd-MM-yyyy", true)).orElse(true);
 
         if (!validFrom && !validTo) {
             return Flux.error(new TicketPurchaseServiceException("Date from and date to has not valid format"));
@@ -242,9 +227,9 @@ public class TicketPurchaseService {
         }
 
         LocalDate fromDate = from.map(s -> LocalDate.parse(s, fmt)).orElse(null);
-        LocalDate toDate   = to.map(s -> LocalDate.parse(s, fmt)).orElse(null);
+        LocalDate toDate = to.map(s -> LocalDate.parse(s, fmt)).orElse(null);
 
-        if (fromDate != null && toDate != null && fromDate.compareTo(toDate) > 0) {
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
             return Flux.error(new TicketPurchaseServiceException("From date cannot be after to date!"));
         }
 
