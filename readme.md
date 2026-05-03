@@ -2,8 +2,7 @@
 
 > **Archived project** — built a few years ago as a learning exercise and left untouched since.
 > It was **not** migrated to Spring Boot 3 or 4. Instead, the codebase was refreshed just enough
-> to compile and run on its original **Spring Boot 2.4.4 / Java 17** baseline
-> (compatibility fixes: [pom.xml overhaul](https://github.com/mrzodeczko-dev/Archived-Reactive-RESTful-API-with-Spring-Webflux/commit/0bac2c97082c9db635f06e1275dacf682869012a)).
+> to compile and run on its original **Spring Boot 2.4.4 / Java 17** baseline.
 >
 > ⚠️ **Migration note:** The Spring ecosystem changed significantly between Spring Boot 2.x and
 > Spring Boot 3.x / 4.x. A real migration would require:
@@ -19,6 +18,105 @@ A reactive REST API built with **Domain-Driven Design (DDD)** on top of Spring W
 
 ---
 
+## Business Domain
+
+This is a **cinema ticketing system** — a backend API for managing a network of cinemas and handling the full ticket purchasing flow.
+
+### User Flow
+
+A typical user journey looks like this:
+
+1. Browse cinemas available in their city
+2. Pick a movie and find available screenings
+3. Choose seats and place an order
+4. Complete the purchase
+
+Authentication via JWT supports user accounts with two distinct roles: **USER** and **ADMIN**.
+
+### Domain Model
+
+```mermaid
+erDiagram
+    CITY {
+        string id
+        string name
+    }
+    CINEMA {
+        string id
+        string name
+    }
+    CINEMA_HALL {
+        string id
+        string name
+    }
+    MOVIE {
+        string id
+        string title
+        string genre
+    }
+    MOVIE_EMISSION {
+        string id
+        datetime startTime
+        decimal price
+    }
+    TICKET {
+        string id
+        int row
+        int seat
+        string status
+    }
+    TICKET_ORDER {
+        string id
+        datetime orderedAt
+        string status
+    }
+    TICKET_PURCHASE {
+        string id
+        datetime purchasedAt
+        decimal totalPrice
+    }
+    USER {
+        string id
+        string email
+        string role
+    }
+
+    CITY ||--o{ CINEMA : "1 city has many cinemas"
+    CINEMA ||--o{ CINEMA_HALL : "1 cinema has many halls"
+    CINEMA_HALL ||--o{ MOVIE_EMISSION : "1 hall hosts many screenings"
+    MOVIE ||--o{ MOVIE_EMISSION : "1 movie has many screenings"
+    MOVIE_EMISSION ||--o{ TICKET : "1 screening generates many tickets"
+    TICKET_ORDER ||--o{ TICKET : "1 order contains many tickets"
+    TICKET_ORDER ||--|| TICKET_PURCHASE : "1 order has 1 purchase"
+    USER ||--o{ TICKET_ORDER : "1 user places many orders"
+```
+
+### Role-Based Access Control
+
+| Endpoint | Public | USER | ADMIN |
+|---|:---:|:---:|:---:|
+| `POST /register` | ✅ | | |
+| `POST /login` | ✅ | | |
+| `GET /cities/**` | ✅ | | |
+| `GET /statistics/**` | ✅ | | |
+| `GET /cinemas` | | ✅ | |
+| `GET /movies/**` | | ✅ | ✅ |
+| `GET /tickets/**` | | ✅ | |
+| `GET /ticketOrders/**` | | ✅ | |
+| `POST /movies/csv` (bulk import) | | | ✅ |
+| `POST /movieEmissions` | | | ✅ |
+| `POST/PUT/DELETE /cinemas/**` | | | ✅ |
+| `GET/POST/PUT/DELETE /users/**` | ✅ | | |
+
+**Summary:**
+- **Public** — registration, login, city browsing, statistics, Swagger docs
+- **USER** — browsing cinemas and movies, managing own tickets and orders
+- **ADMIN** — managing cinemas, importing movies via CSV, creating screenings
+
+---
+
+[↑ Back to top](#table-of-contents)
+
 ## Table of Contents
 
 - [Tech Stack](#tech-stack)
@@ -31,6 +129,8 @@ A reactive REST API built with **Domain-Driven Design (DDD)** on top of Spring W
 - [Why Reactive?](#why-reactive)
 
 ---
+
+[↑ Back to top](#table-of-contents)
 
 ## Tech Stack
 
@@ -68,17 +168,6 @@ A reactive REST API built with **Domain-Driven Design (DDD)** on top of Spring W
 | Blocking detector | BlockHound | 1.0.6.RELEASE |
 | Code generation | Lombok | 1.18.34 |
 
-### Utilities
-
-| Library | Purpose | Version |
-|---|---|---|
-| opencsv | CSV parsing | 5.0 |
-| commons-validator | Input validation | 1.7 |
-| joda-time | Date/time handling | 2.10.8 |
-| jackson-databind | JSON serialisation | via Boot |
-| jackson-dataformat-yaml | YAML config support | via Boot |
-| spring-aspects | AOP / AspectJ | 5.3.1 |
-
 ### Infrastructure
 
 | Layer | Technology |
@@ -90,12 +179,16 @@ A reactive REST API built with **Domain-Driven Design (DDD)** on top of Spring W
 
 ---
 
+[↑ Back to top](#table-of-contents)
+
 ## Prerequisites
 
 - **Docker** and **Docker Compose** (Docker Swarm mode enabled for swarm deployment)
 - **Java 17** + **Maven 3.8+** (for local build)
 
 ---
+
+[↑ Back to top](#table-of-contents)
 
 ## Quick Start
 
@@ -110,6 +203,8 @@ docker-compose up -d --build
 Swagger UI available at: [http://localhost:8080/docs](http://localhost:8080/docs)
 
 ---
+
+[↑ Back to top](#table-of-contents)
 
 ## Architecture
 
@@ -135,6 +230,8 @@ Two Docker Compose files are provided:
 | `docker-swarm.yml` | Production — deploys a stack to Docker Swarm |
 
 ---
+
+[↑ Back to top](#table-of-contents)
 
 ## MongoDB Replica Set
 
@@ -162,6 +259,8 @@ flowchart LR
 All replica nodes are containerised with persistent Docker volumes.
 
 ---
+
+[↑ Back to top](#table-of-contents)
 
 ## Docker Commands
 
@@ -193,6 +292,8 @@ docker stack rm <appName>
 
 ---
 
+[↑ Back to top](#table-of-contents)
+
 ## OpenAPI / Swagger UI
 
 Interactive API documentation is available at:
@@ -203,58 +304,13 @@ http://localhost:8080/docs
 
 ---
 
+[↑ Back to top](#table-of-contents)
+
 ## Why Reactive?
 
 ### WebFlux vs Project Loom — Virtual Threads
 
-Java 21 (released September 2023) introduced **Virtual Threads** (Project Loom, JEP 444) as a production-ready feature. This changed the calculus around reactive programming significantly — it is worth understanding where WebFlux still makes sense and where Virtual Threads are the better fit.
-
-#### How they work
-
-```mermaid
-flowchart TB
-    subgraph WebFlux["Spring WebFlux — Event Loop Model"]
-        direction LR
-        EL["⚙️ Event Loop\n(fixed thread pool)"]
-        NB["Non-blocking I/O\n(Reactor Mono / Flux)"]
-        EL --> NB
-    end
-
-    subgraph Loom["Spring MVC + Virtual Threads — Project Loom"]
-        direction LR
-        VT["🪡 Virtual Threads\n(millions, ~few KB each)"]
-        BL["Blocking I/O\n(looks synchronous)"]
-        VT --> BL
-    end
-```
-
-- **WebFlux** uses a small, fixed event-loop thread pool (usually `2 × CPU cores`). All I/O must be non-blocking — a single blocking call stalls the entire loop.
-- **Virtual Threads** are lightweight threads managed by the JVM, not the OS. Each request gets its own thread. When it blocks on I/O, the JVM parks the virtual thread and reuses the carrier (OS) thread for other work — making blocking cheap.
-
-#### Performance benchmarks
-
-| Scenario | WebFlux (Netty) | Virtual Threads (Netty) | Winner |
-|---|---|---|---|
-| REST API, 100 ms DB latency | ~48 000 req/s | ~51 000 req/s | Virtual Threads |
-| High concurrency (10 000+ users) | ~48 000 req/s | ~51 000 req/s | Virtual Threads |
-| Memory (10 000 idle connections) | ~200 MB | ~250 MB | WebFlux |
-| JWT verify + MySQL query | faster | 57% slower | WebFlux |
-| DB-heavy microservice (Red Hat) | baseline | +40% throughput | Virtual Threads |
-
-> Benchmarks: Spring Boot 3.2–3.4, 4–16 core machines. Results vary by workload — always measure your own case.
-
-In independent benchmarks comparing Virtual Threads on Netty vs WebFlux on Netty, Virtual Threads won ~45% of scenarios vs ~30% for WebFlux, with no clear winner in the remaining cases.
-
-#### Decision guide
-
-```mermaid
-flowchart TD
-    A["New project or refactor?"] --> B{"Entire stack\nnon-blocking?\nWebClient, R2DBC,\nreactive Mongo…"}
-    B -- "Yes, fully reactive" --> C{"Streaming /\nSSE / WebSockets\nor backpressure?"}
-    C -- "Yes" --> D["✅ Spring WebFlux"]
-    C -- "No" --> E["⚖️ WebFlux or\nVirtual Threads — benchmark it"]
-    B -- "No — JDBC, JPA,\nblocking SDKs" --> F["✅ Spring MVC\n+ Virtual Threads"]
-```
+Java 21 introduced **Virtual Threads** (Project Loom, JEP 444) as a production-ready feature, which changed the calculus around reactive programming significantly.
 
 | Use WebFlux when… | Use Virtual Threads (Spring MVC) when… |
 |---|---|
@@ -264,18 +320,14 @@ flowchart TD
 | API gateway / BFF / fan-out edge service | Using blocking third-party SDKs |
 | Team is experienced with `Mono`/`Flux` | New project on Java 21+ |
 
-> **Bottom line (2025–2026):** For most CRUD microservices touching a relational database, **Spring MVC + Virtual Threads** is now the pragmatic default — simpler to write, test, and debug with comparable or better throughput. WebFlux remains the right choice for streaming workloads and fully non-blocking stacks.
-
-### Raw throughput: WebFlux vs blocking Servlet
-
-According to [Spring MVC vs WebFlux benchmarks](https://filia-aleks.medium.com/microservice-performance-battle-spring-mvc-vs-webflux-80d39fd81bf0):
-
-> Spring WebFlux with WebClient wins in all cases over *classic* blocking Servlet. The most significant difference (4× faster) appears when the underlying service is slow (500 ms). It uses far fewer threads (20 vs 220).
-
-This advantage largely disappears when comparing WebFlux against Spring MVC + Virtual Threads, which is why the choice in 2025 is less clear-cut than it was when this project was built.
-
-### Summary
+> **Bottom line (2025–2026):** For most CRUD microservices touching a relational database, **Spring MVC + Virtual Threads** is now the pragmatic default. WebFlux remains the right choice for streaming workloads and fully non-blocking stacks.
 
 - ✅ This project uses WebFlux **correctly** — the full stack is non-blocking (reactive MongoDB driver, no JDBC)
 - ✅ Reactive Mongo with replica set transactions is a legitimate use case for WebFlux
 - ⚠️ If this project were greenfield today and used a relational DB, **Spring MVC + Virtual Threads** would likely be the better choice
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+[↑ Back to top](#table-of-contents)
