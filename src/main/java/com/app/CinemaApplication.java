@@ -18,10 +18,6 @@ public class CinemaApplication {
         SpringApplication.run(CinemaApplication.class, args);
     }
 
-    /**
-     * jjwt 0.12+ — Keys.secretKeyFor(SignatureAlgorithm) is removed.
-     * Use Jwts.SIG.HS512.key().build() instead.
-     */
     @Bean
     public SecretKey secretKey() {
         return Jwts.SIG.HS512.key().build();

@@ -21,14 +21,11 @@
         <java.version>25</java.version>
         <start-class>com.app.CinemaApplication</start-class>
         <lombok.version>1.18.36</lombok.version>
-        <!-- jjwt 0.13.x — builder API changed (subject/expiration methods renamed) -->
         <jjwt.version>0.13.0</jjwt.version>
         <commons-validator.version>1.9.0</commons-validator.version>
         <joda-time.version>2.13.0</joda-time.version>
         <opencsv.version>5.9</opencsv.version>
-        <!-- springdoc 2.x is required for Spring Boot 3+/4+ (jakarta.* namespace) -->
         <springdoc.version>2.8.9</springdoc.version>
-        <!-- mongock 5.x replaces com.github.cloudyrock groupId -->
         <mongock.version>5.4.4</mongock.version>
     </properties>
 
@@ -45,7 +42,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- ===== Spring Boot starters ===== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-log4j2</artifactId>
@@ -95,13 +91,6 @@
             </exclusions>
         </dependency>
 
-        <!-- ===== Jackson ===== -->
-        <!--
-            Boot 4 ships Jackson 3 by default. The YAML dataformat artifact
-            was renamed in Jackson 3 — groupId stays com.fasterxml.jackson.dataformat.
-            If you need Jackson 2 behaviour during migration you can add:
-              spring.jackson.use-jackson2-defaults=true  (application.yml)
-        -->
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
@@ -112,7 +101,6 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
-        <!-- ===== Utilities ===== -->
         <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>
@@ -131,7 +119,6 @@
             <version>${opencsv.version}</version>
         </dependency>
 
-        <!-- spring-aspects version is managed by Spring Boot BOM (Spring Framework 7) -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-aspects</artifactId>
@@ -144,7 +131,6 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- ===== JWT — 0.13.x API (builder methods renamed) ===== -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -163,7 +149,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ===== Mongock 5 — new groupId io.mongock ===== -->
         <dependency>
             <groupId>io.mongock</groupId>
             <artifactId>mongock-springboot</artifactId>
@@ -183,14 +168,12 @@
             <artifactId>spring-data-mongodb</artifactId>
         </dependency>
 
-        <!-- ===== SpringDoc 2.x (Spring Boot 3+/4+, jakarta.* namespace) ===== -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
             <version>${springdoc.version}</version>
         </dependency>
 
-        <!-- ===== Test ===== -->
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
@@ -211,7 +194,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>${start-class}</mainClass>
-                    <!-- fork=true removed — deprecated in Boot 4 -->
                 </configuration>
             </plugin>
             <plugin>

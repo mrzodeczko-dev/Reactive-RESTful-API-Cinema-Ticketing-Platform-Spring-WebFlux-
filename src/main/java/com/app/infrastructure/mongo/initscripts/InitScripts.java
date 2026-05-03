@@ -9,10 +9,6 @@ import io.mongock.api.annotations.RollbackExecution;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-/**
- * Mongock 5: @ChangeLog + @ChangeSet replaced by @ChangeUnit + @Execution + @RollbackExecution.
- * groupId changed from com.github.cloudyrock.mongock to io.mongock.
- */
 @ChangeUnit(id = "createAdmin", order = "1", author = "CoderNoOne")
 @Slf4j
 public class InitScripts {

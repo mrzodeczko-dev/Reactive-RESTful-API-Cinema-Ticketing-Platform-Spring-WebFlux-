@@ -89,12 +89,6 @@ public class WebSecurityConfig {
         };
     }
 
-    /**
-     * Spring Security 6+ / Spring Boot 3+ removed the deprecated chained DSL.
-     * Every security feature must now be configured via lambda DSL.
-     * Spring Security 7 (Spring Boot 4) enforces this — the old .csrf().disable() etc.
-     * no longer compile.
-     */
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http

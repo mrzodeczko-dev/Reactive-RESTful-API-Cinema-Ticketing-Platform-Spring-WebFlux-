@@ -46,8 +46,6 @@ public class AppTokensService {
                     var accessTokenExpirationTime = new Date(accessTokenExpirationTimeMillis);
                     var refreshTokenExpirationTime = new Date(System.currentTimeMillis() + refreshTokenExpirationTimeInMs);
 
-                    // jjwt 0.12+: setSubject → subject, setExpiration → expiration,
-                    //              setIssuedAt → issuedAt, signWith(key) stays the same
                     var accessToken = Jwts
                             .builder()
                             .subject(String.valueOf(id))
@@ -73,10 +71,6 @@ public class AppTokensService {
                 });
     }
 
-    /**
-     * jjwt 0.12+: parserBuilder() → parser(), setSigningKey → verifyWith,
-     *             parseClaimsJws → parseSignedClaims, getBody → getPayload
-     */
     private Claims claims(String token) {
         return Jwts
                 .parser()

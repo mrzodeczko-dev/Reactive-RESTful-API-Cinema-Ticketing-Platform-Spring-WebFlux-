@@ -1,4 +1,3 @@
-# eclipse-temurin:25-jre — Java 25 LTS base image
 FROM eclipse-temurin:25-jre
 MAINTAINER CoderNoOne firelight.code@gmail.com
 
@@ -7,8 +6,6 @@ COPY ${DEPENDENCY}/BOOT-INF/lib /app/lib
 COPY ${DEPENDENCY}/META-INF /app/META-INF
 COPY ${DEPENDENCY}/BOOT-INF/classes /app
 
-# Java 25 has full module encapsulation; --add-opens are no longer needed
-# BlockHound was removed (incompatible with Java 25 internals)
 ENTRYPOINT ["java", \
   "-cp", "app:app/lib/*", \
   "-Xdebug", \

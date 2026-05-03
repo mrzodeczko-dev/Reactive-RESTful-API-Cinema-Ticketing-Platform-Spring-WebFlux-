@@ -9,14 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-/**
- * Mongock 5 migration:
- *   - groupId: com.github.cloudyrock.mongock  ->  io.mongock
- *   - driver:  SpringDataMongoV3Driver        ->  SpringDataMongoV4Driver
- *   - builder: MongockSpring5.builder()       ->  MongockSpringboot.builder()
- *   - runner type: SpringInitializingBeanRunner -> MongockInitializingBeanRunner
- *   - addChangeLogsScanPackage()              stays the same
- */
 @Configuration
 public class MongoMigrationConfiguration {
 
