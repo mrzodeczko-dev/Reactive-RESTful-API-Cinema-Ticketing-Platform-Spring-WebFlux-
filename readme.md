@@ -349,7 +349,6 @@ mvn test
 
 [↑ Back to top](#table-of-contents)
 
-[↑ Back to top](#table-of-contents)
 
 ## Why Reactive?
 
