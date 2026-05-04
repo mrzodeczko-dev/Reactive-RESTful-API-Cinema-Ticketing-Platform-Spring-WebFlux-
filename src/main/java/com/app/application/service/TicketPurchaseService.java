@@ -31,6 +31,7 @@ import reactor.core.publisher.Mono;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -166,7 +167,7 @@ public class TicketPurchaseService {
                 .collectList()
                 .flatMapMany(cinemaHallsIds -> ticketPurchases
                         .collect(
-                                java.util.ArrayList::new,
+                                ArrayList<TicketPurchase>::new,
                                 (list, nextItem) -> cinemaHallsIds.forEach(id -> {
                                     if (id.equals(nextItem.getMovieEmission().getCinemaHallId())) {
                                         list.add(nextItem);
@@ -229,7 +230,7 @@ public class TicketPurchaseService {
         }
 
         boolean validFrom = from.map(s -> GenericValidator.isDate(s, "dd-MM-yyyy", true)).orElse(true);
-        boolean validTo   = to.map(s -> GenericValidator.isDate(s, "dd-MM-yyyy", true)).orElse(true);
+        boolean validTo = to.map(s -> GenericValidator.isDate(s, "dd-MM-yyyy", true)).orElse(true);
 
         if (!validFrom && !validTo) {
             return Flux.error(new TicketPurchaseServiceException("Date from and date to has not valid format"));
@@ -242,7 +243,7 @@ public class TicketPurchaseService {
         }
 
         LocalDate fromDate = from.map(s -> LocalDate.parse(s, fmt)).orElse(null);
-        LocalDate toDate   = to.map(s -> LocalDate.parse(s, fmt)).orElse(null);
+        LocalDate toDate = to.map(s -> LocalDate.parse(s, fmt)).orElse(null);
 
         if (fromDate != null && toDate != null && fromDate.compareTo(toDate) > 0) {
             return Flux.error(new TicketPurchaseServiceException("From date cannot be after to date!"));
