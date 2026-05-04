@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -44,8 +45,10 @@ public class MoviesHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> addMovieToFavorites(final ServerRequest serverRequest) {
+
         return serverRequest.principal()
                 .flatMap(principal -> movieService.addMovieToFavorites(serverRequest.pathVariable("id"), principal.getName()))
                 .flatMap(movie -> ServerResponse
@@ -66,8 +69,10 @@ public class MoviesHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> getById(final ServerRequest serverRequest) {
+
         return movieService.getById(serverRequest.pathVariable("id"))
                 .switchIfEmpty(Mono.error(() -> new MovieServiceException("No movie with id : %s".formatted(serverRequest.pathVariable("id")))))
                 .flatMap(movie -> ServerResponse
@@ -88,13 +93,16 @@ public class MoviesHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> addMovieToDatabase(final ServerRequest serverRequest) {
+
         return movieService.addMovie(serverRequest.bodyToMono(CreateMovieDto.class))
                 .flatMap(movie -> ServerResponse
                         .status(HttpStatus.CREATED)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(movie)));
+                        .body(BodyInserters.fromValue(movie))
+                );
     }
 
     @Loggable
@@ -110,12 +118,14 @@ public class MoviesHandler {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })})
     public Mono<ServerResponse> addMovieToDatabaseWithCsvFile(final ServerRequest serverRequest) {
+
         return movieService.uploadCSVFile(serverRequest.bodyToMono(Resource.class))
                 .collectList()
                 .flatMap(addedMovieList -> ServerResponse
                         .status(HttpStatus.CREATED)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(addedMovieList)));
+                        .body(BodyInserters.fromValue(addedMovieList))
+                );
     }
 
     @Loggable
@@ -130,13 +140,16 @@ public class MoviesHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> deleteMovieById(final ServerRequest serverRequest) {
-        return movieService.deleteMovieById(serverRequest.pathVariable("id"))
+
+        return movieService.deleteMovieById(serverRequest.pathVariable(serverRequest.pathVariable("id")))
                 .flatMap(movie -> ServerResponse
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(movie)));
+                        .body(BodyInserters.fromValue(movie))
+                );
     }
 
     @Loggable
@@ -150,14 +163,16 @@ public class MoviesHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> getAllMovies(ServerRequest serverRequest) {
         return movieService.getAll()
                 .collectList()
-                .flatMap(movies -> ServerResponse
+                .flatMap(movie -> ServerResponse
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(movies)));
+                        .body(BodyInserters.fromValue(movie))
+                );
     }
 
     @Loggable
@@ -172,16 +187,19 @@ public class MoviesHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> getMoviesFilteredByPremiereDate(ServerRequest serverRequest) {
+
         return serverRequest.bodyToMono(MovieFilteredByPremiereDate.class)
-                .switchIfEmpty(Mono.error(() -> new MovieServiceException("Request body is empty")))
                 .flatMap(dto -> movieService.getFilteredByPremiereDate(dto.getDateFrom(), dto.getDateTo())
                         .collectList()
-                        .flatMap(movies -> ServerResponse
+                        .flatMap(movie -> ServerResponse
                                 .status(HttpStatus.OK)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .body(BodyInserters.fromValue(movies))));
+                                .body(BodyInserters.fromValue(movie))
+                        ));
+
     }
 
     @Loggable
@@ -196,16 +214,19 @@ public class MoviesHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> getMoviesFilteredByDuration(ServerRequest serverRequest) {
+
         return serverRequest.bodyToMono(MovieFilteredByDuration.class)
-                .switchIfEmpty(Mono.error(() -> new MovieServiceException("Request body is empty")))
                 .flatMap(dto -> movieService.getFilteredByDuration(dto.getMinDuration(), dto.getMaxDuration())
                         .collectList()
-                        .flatMap(movies -> ServerResponse
+                        .flatMap(movie -> ServerResponse
                                 .status(HttpStatus.OK)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .body(BodyInserters.fromValue(movies))));
+                                .body(BodyInserters.fromValue(movie))
+                        ));
+
     }
 
     @Loggable
@@ -220,14 +241,19 @@ public class MoviesHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> getMoviesFilteredByName(ServerRequest serverRequest) {
-        return movieService.getFilteredByName(serverRequest.pathVariable("name"))
-                .collectList()
-                .flatMap(movies -> ServerResponse
-                        .status(HttpStatus.OK)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(movies)));
+
+        return
+                movieService.getFilteredByName(serverRequest.pathVariable("name"))
+                        .collectList()
+                        .flatMap(movie -> ServerResponse
+                                .status(HttpStatus.OK)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(BodyInserters.fromValue(movie))
+                        );
+
     }
 
     @Loggable
@@ -242,14 +268,19 @@ public class MoviesHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> getMoviesFilteredByGenre(ServerRequest serverRequest) {
-        return movieService.getFilteredByGenre(serverRequest.pathVariable("genre"))
-                .collectList()
-                .flatMap(movies -> ServerResponse
-                        .status(HttpStatus.OK)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(movies)));
+
+        return
+                movieService.getFilteredByGenre(serverRequest.pathVariable("genre"))
+                        .collectList()
+                        .flatMap(movie -> ServerResponse
+                                .status(HttpStatus.OK)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(BodyInserters.fromValue(movie))
+                        );
+
     }
 
     @Loggable
@@ -264,14 +295,19 @@ public class MoviesHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> getMoviesFilteredByKeyword(ServerRequest serverRequest) {
-        return movieService.getFilteredByKeyword(serverRequest.pathVariable("keyword"))
-                .collectList()
-                .flatMap(movies -> ServerResponse
-                        .status(HttpStatus.OK)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(movies)));
+
+        return
+                movieService.getFilteredByKeyword(serverRequest.pathVariable("keyword"))
+                        .collectList()
+                        .flatMap(movie -> ServerResponse
+                                .status(HttpStatus.OK)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(BodyInserters.fromValue(movie))
+                        );
+
     }
 
     @Loggable
@@ -285,15 +321,20 @@ public class MoviesHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> getFavoriteMovies(ServerRequest serverRequest) {
+
         return serverRequest.principal()
                 .flatMap(principal -> movieService
                         .getFavoriteMovies(principal.getName())
                         .collectList())
+                .flatMapMany(Flux::fromIterable)
+                .collectList()
                 .flatMap(movieList -> ServerResponse
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(movieList)));
+                        .body(BodyInserters.fromValue(movieList))
+                );
     }
 }

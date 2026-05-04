@@ -1,7 +1,6 @@
 package com.app.infrastructure.routing.handlers;
 
 import com.app.application.dto.*;
-import com.app.application.exception.CinemaServiceException;
 import com.app.application.service.CinemaService;
 import com.app.infrastructure.aspect.annotations.Loggable;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,15 +42,17 @@ public class CinemasHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> addCinema(ServerRequest serverRequest) {
+
         return serverRequest.bodyToMono(CreateCinemaDto.class)
-                .switchIfEmpty(Mono.error(() -> new CinemaServiceException("Request body is empty")))
                 .flatMap(cinemaService::addCinema)
                 .flatMap(savedCinema -> ServerResponse
                         .status(HttpStatus.CREATED)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(savedCinema)));
+                        .body(BodyInserters.fromValue(savedCinema))
+                );
     }
 
     @Loggable
@@ -65,14 +66,17 @@ public class CinemasHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> getAll(ServerRequest serverRequest) {
+
         return cinemaService.getAll()
                 .collectList()
                 .flatMap(cinemas -> ServerResponse
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(cinemas)));
+                        .body(BodyInserters.fromValue(cinemas)
+                        ));
     }
 
     @Loggable
@@ -87,21 +91,24 @@ public class CinemasHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
     public Mono<ServerResponse> getAllCinemasByCity(ServerRequest serverRequest) {
+
         return cinemaService.getAllByCity(serverRequest.pathVariable("city"))
                 .collectList()
                 .flatMap(cinemas -> ServerResponse
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(ResponseDto.<List<CinemaDto>>builder().data(cinemas).build())));
+                        .body(BodyInserters.fromValue(ResponseDto.<List<CinemaDto>>builder().data(cinemas).build()))
+                );
     }
 
     @Loggable
     @Operation(
             summary = "PUT add cinemaHall to existing cinema",
             parameters = {@Parameter(name = "id", in = ParameterIn.PATH, description = "cinema id")},
-            requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = CreateCinemaHallDto.class))),
+            requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = CreateCinemaHallDto.class), mediaType = "application/json")),
             security = @SecurityRequirement(name = "JwtAuthToken"))
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Success", content = {
@@ -110,14 +117,16 @@ public class CinemasHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
+
     })
-    public Mono<ServerResponse> addCinemaHallToExistingCinema(ServerRequest serverRequest) {
+    public Mono<ServerResponse> addCinemaHall(ServerRequest serverRequest) {
+
         return serverRequest.bodyToMono(CreateCinemaHallDto.class)
-                .switchIfEmpty(Mono.error(() -> new CinemaServiceException("Request body is empty")))
                 .flatMap(createCinemaHallDto -> cinemaService.addCinemaHallToCinema(serverRequest.pathVariable("id"), createCinemaHallDto))
-                .flatMap(cinema -> ServerResponse
+                .flatMap(cinemaDto -> ServerResponse
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(cinema)));
+                        .body(BodyInserters.fromValue(cinemaDto))
+                );
     }
 }
