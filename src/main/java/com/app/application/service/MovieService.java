@@ -22,7 +22,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -174,34 +174,40 @@ public class MovieService {
     }
 
     public Flux<MovieDto> uploadCSVFile(final Mono<Resource> resourceMono) {
-        var errorsList = new ArrayList<String>();
+        // fix #3: use thread-safe list to avoid race condition when flatMap interleaves
+        var errorsList = Collections.synchronizedList(new java.util.ArrayList<String>());
         var counter = new AtomicInteger(1);
 
+        // fix #4: wrap BufferedReader in Mono.using() to guarantee it is closed after use
         return resourceMono
-                .flatMap(resource -> Mono.fromCallable(() -> convertResourceToBufferedReader(resource))
-                        .subscribeOn(Schedulers.boundedElastic()))
-                .flatMap(bufferedReader -> Mono.fromCallable(() -> collectMoviesToAddFromCsvFile(bufferedReader, errorsList))
-                        .subscribeOn(Schedulers.boundedElastic()))
-                .flatMapIterable(Function.identity())
-                .flatMap(movie -> doMovieExistsInDb(movie, errorsList, counter))
-                .collectList()
-                .map(movies -> saveMovies(movies, errorsList))
-                .flatMapMany(Function.identity());
+                .flatMapMany(resource ->
+                        Mono.using(
+                                () -> new BufferedReader(new InputStreamReader(resource.getInputStream())),
+                                bufferedReader -> Mono.fromCallable(() -> collectMoviesToAddFromCsvFile(bufferedReader, errorsList))
+                                        .subscribeOn(Schedulers.boundedElastic())
+                                        .flatMapIterable(Function.identity())
+                                        .flatMap(movie -> doMovieExistsInDb(movie, errorsList, counter))
+                                        .collectList()
+                                        // fix #5: use flatMap + Mono.error instead of throw inside map
+                                        .flatMap(movies -> saveMovies(movies, errorsList))
+                                        .flatMapMany(Function.identity()),
+                                bufferedReader -> {
+                                    try {
+                                        bufferedReader.close();
+                                    } catch (IOException e) {
+                                        log.warn("Failed to close BufferedReader", e);
+                                    }
+                                }
+                        )
+                );
     }
 
-    private Flux<MovieDto> saveMovies(List<Movie> movies, List<String> errorsList) {
+    private Mono<Flux<MovieDto>> saveMovies(List<Movie> movies, List<String> errorsList) {
+        // fix #5: return Mono.error idiomatically instead of throwing inside map
         if (!errorsList.isEmpty()) {
-            throw new MovieServiceException("Errors are: %s".formatted(errorsList));
+            return Mono.error(new MovieServiceException("Errors are: %s".formatted(errorsList)));
         }
-        return movieRepository.addOrUpdateMany(movies).map(Movie::toDto);
-    }
-
-    private BufferedReader convertResourceToBufferedReader(Resource resource) {
-        try {
-            return new BufferedReader(new InputStreamReader(resource.getInputStream()));
-        } catch (IOException e) {
-            throw new MovieServiceException("Cannot parse csv file");
-        }
+        return Mono.just(movieRepository.addOrUpdateMany(movies).map(Movie::toDto));
     }
 
     private List<Movie> collectMoviesToAddFromCsvFile(BufferedReader bufferedReader, List<String> errorsList) {

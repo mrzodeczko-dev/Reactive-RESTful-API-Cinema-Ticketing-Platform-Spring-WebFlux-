@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -52,12 +53,15 @@ public class UsersService {
     }
 
     private Mono<User> createUser(final CreateUserDto createUserDto) {
-        return userRepository
-                .addOrUpdate(createUserDto
-                        .setPassword(nonNull(createUserDto.getPassword())
-                                ? passwordEncoder.encode(createUserDto.getPassword())
-                                : null)
-                        .toEntity());
+        // fix #1: BCrypt is CPU-intensive (~100ms), offload to boundedElastic to avoid blocking event-loop
+        return Mono.fromCallable(() -> nonNull(createUserDto.getPassword())
+                        ? passwordEncoder.encode(createUserDto.getPassword())
+                        : null)
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(encodedPassword -> userRepository
+                        .addOrUpdate(createUserDto
+                                .setPassword(encodedPassword)
+                                .toEntity()));
     }
 
     public Flux<UserDto> getAll() {
