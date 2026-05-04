@@ -320,10 +320,13 @@ docker stack rm <appName>
 
 ## Non-Blocking Integrations
 
-Two features rely on inherently blocking third-party APIs and are integrated without blocking the event loop:
+Every code path that touches an inherently blocking or CPU-bound API is wrapped in `Mono.fromCallable(...)` and offloaded to Reactor's `Schedulers.boundedElastic()`. The Netty event-loop is never held by hashing, signing, parsing, file I/O, or SMTP work.
 
-- **Email sending** — `JavaMailSender` calls are offloaded to Reactor's bounded elastic scheduler. A retry policy (up to 2 attempts with exponential back-off) handles transient SMTP failures; authentication errors are excluded from retries.
-- **CSV movie import** — OpenCSV file I/O is wrapped and submitted to the bounded elastic scheduler. Each row is validated and checked for uniqueness against MongoDB before writing. If any row fails, the entire import is rejected atomically — no partial saves occur.
+- **BCrypt password hashing** — both `PasswordEncoder.encode` (registration) and `PasswordEncoder.matches` (login) run on the bounded elastic scheduler. BCrypt is ~50–100 ms CPU-bound and would otherwise stall the event-loop on every login.
+- **JWT issuance and verification** — HS512 signing in `AppTokensService.generateTokens` and claim parsing in `AppTokensService.getId` / `isTokenValid` (called by `AuthenticationManager` on every authenticated request) are executed on the bounded elastic scheduler.
+- **Email sending** — `JavaMailSender.send` calls are offloaded to the bounded elastic scheduler. A retry policy (up to 2 attempts with exponential back-off) handles transient SMTP failures; authentication errors are excluded from retries.
+- **CSV movie import** — OpenCSV parsing is offloaded via `Flux.using` (which guarantees `BufferedReader` closure even on cancellation) to the bounded elastic scheduler. Each row is validated and checked for uniqueness against MongoDB before writing. If any row fails, the entire import is rejected atomically — no partial saves occur.
+- **Reactive MongoDB** — all persistence operations use the reactive driver natively, so no offload is required.
 
 ---
 
