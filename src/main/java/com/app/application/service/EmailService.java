@@ -71,7 +71,7 @@ public class EmailService {
                         "Retrying mail send, attempt [{}], reason: {}",
                         signal.totalRetries() + 1,
                         signal.failure().getMessage()))
-                .onRetryExhausted(signal -> new EmailServiceException(
+                .onRetryExhaustedThrow((spec, signal) -> new EmailServiceException(
                         "Mail sending failed after [%d] attempts. Last error: [%s]"
                                 .formatted(MAX_RETRY_ATTEMPTS, signal.failure().getMessage())));
     }
