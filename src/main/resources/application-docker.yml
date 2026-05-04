@@ -10,7 +10,7 @@ spring:
   mail:
     host: smtp.gmail.com
     username: firelight.code@gmail.com
-    password: rxzbacwpboqvjllq
+    password: ${MAIL_PASSWORD}
     port: 587
     properties:
       mail:
