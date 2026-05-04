@@ -1,8 +1,12 @@
 # Reactive RESTful API — Spring WebFlux
 
-> **Archived project** — built a few years ago as a learning exercise and left untouched since.
-> It was **not** migrated to Spring Boot 3 or 4. Instead, the codebase was refreshed just enough
-> to compile and run on its original **Spring Boot 2.4.4 / Java 17** baseline.
+> **Archived project** — built a few years ago as a learning exercise. It was **not** migrated
+> to Spring Boot 3 or 4 and stays on its original **Spring Boot 2.4.4 / Java 17** baseline.
+>
+> Recent revisions kept on that baseline:
+> - Restored compilation on Java 17 / Spring Boot 2.4.4
+> - Closed several reactive-correctness gaps so the Netty event-loop is never blocked (BCrypt, JWT signing/parsing, CSV import, email — all offloaded to `Schedulers.boundedElastic()`)
+> - Added 120 unit tests across all application services (Mockito + `StepVerifier`)
 >
 > ⚠️ **Migration note:** The Spring ecosystem changed significantly between Spring Boot 2.x and
 > Spring Boot 3.x / 4.x. A real migration would require:
@@ -12,7 +16,7 @@
 > - Spring Data MongoDB reactive API updates
 > - Minimum Java version bumped to 17 (Boot 3) / 21 (Boot 4)
 >
-> The project is kept as-is for reference and portfolio purposes.
+> The project is kept on its original baseline for reference and portfolio purposes.
 
 ---
 
