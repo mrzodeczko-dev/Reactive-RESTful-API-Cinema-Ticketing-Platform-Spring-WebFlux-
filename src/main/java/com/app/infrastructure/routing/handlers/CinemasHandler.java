@@ -22,8 +22,6 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 @Component
 @RequiredArgsConstructor
 public class CinemasHandler {
@@ -42,10 +40,8 @@ public class CinemasHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
-
     })
     public Mono<ServerResponse> addCinema(ServerRequest serverRequest) {
-
         return serverRequest.bodyToMono(CreateCinemaDto.class)
                 .flatMap(cinemaService::addCinema)
                 .flatMap(savedCinema -> ServerResponse
@@ -66,17 +62,14 @@ public class CinemasHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
-
     })
     public Mono<ServerResponse> getAll(ServerRequest serverRequest) {
-
         return cinemaService.getAll()
-                .collectList()
-                .flatMap(cinemas -> ServerResponse
+                .as(flux -> ServerResponse
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(cinemas)
-                        ));
+                        .body(flux, CinemaDto.class)
+                );
     }
 
     @Loggable
@@ -91,16 +84,13 @@ public class CinemasHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
-
     })
     public Mono<ServerResponse> getAllCinemasByCity(ServerRequest serverRequest) {
-
         return cinemaService.getAllByCity(serverRequest.pathVariable("city"))
-                .collectList()
-                .flatMap(cinemas -> ServerResponse
+                .as(flux -> ServerResponse
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(ResponseDto.<List<CinemaDto>>builder().data(cinemas).build()))
+                        .body(flux, CinemaDto.class)
                 );
     }
 
@@ -117,10 +107,8 @@ public class CinemasHandler {
             @ApiResponse(responseCode = "500", description = "Error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
-
     })
     public Mono<ServerResponse> addCinemaHall(ServerRequest serverRequest) {
-
         return serverRequest.bodyToMono(CreateCinemaHallDto.class)
                 .flatMap(createCinemaHallDto -> cinemaService.addCinemaHallToCinema(serverRequest.pathVariable("id"), createCinemaHallDto))
                 .flatMap(cinemaDto -> ServerResponse
