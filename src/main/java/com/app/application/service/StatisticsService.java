@@ -2,14 +2,11 @@ package com.app.application.service;
 
 import com.app.application.dto.*;
 import com.app.application.exception.StatisticsServiceException;
-import com.app.domain.cinema.CinemaRepository;
 import com.app.domain.cinema_hall.CinemaHall;
-import com.app.domain.cinema_hall.CinemaHallRepository;
 import com.app.domain.city.CityRepository;
 import com.app.domain.movie.MovieRepository;
-import com.app.domain.movie_emission.MovieEmissionRepository;
 import com.app.domain.ticket.Ticket;
-import com.app.domain.ticket_order.TicketOrderRepository;
+import com.app.domain.ticket_purchase.TicketPurchase;
 import com.app.domain.ticket_purchase.TicketPurchaseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,24 +23,25 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class StatisticsService {
 
-    private final CinemaHallRepository cinemaHallRepository;
-    private final TicketOrderRepository ticketOrderRepository;
     private final TicketPurchaseRepository ticketPurchaseRepository;
-    private final CinemaRepository cinemaRepository;
     private final CityRepository cityRepository;
     private final MovieRepository movieRepository;
-    private final MovieEmissionRepository movieEmissionRepository;
+
+    private List<String> cinemaHallIdsForCity(com.app.domain.city.City city) {
+        return city.getCinemas()
+                .stream()
+                .flatMap(cinema -> cinema.getCinemaHalls().stream().map(CinemaHall::getId))
+                .collect(Collectors.toList());
+    }
 
     public Flux<CityFrequencyDto> findCitiesFrequency() {
         final var currentDate = LocalDate.now();
 
         return cityRepository.findAll()
-                .flatMap(city -> ticketPurchaseRepository.findAllByMovieEmissionInDateAndByCinemaHallsIdIn(
+                .flatMap(city -> ticketPurchaseRepository
+                        .findAllByMovieEmissionInDateAndByCinemaHallsIdIn(
                                 currentDate,
-                                city.getCinemas()
-                                        .stream()
-                                        .flatMap(cinema -> cinema.getCinemaHalls().stream().map(CinemaHall::getId))
-                                        .collect(Collectors.toList()))
+                                cinemaHallIdsForCity(city))
                         .map(ticketPurchase -> ticketPurchase.getTickets().size())
                         .map(ticketsNumber -> CityFrequencyDto.builder()
                                 .city(city.getName())
@@ -85,41 +83,32 @@ public class StatisticsService {
         return cityRepository.findByName(cityName)
                 .switchIfEmpty(Mono.error(() -> new StatisticsServiceException(
                         "No city with name: %s".formatted(cityName))))
-                .flatMap(city -> cinemaRepository.findAllByCity(city.getName())
-                        .flatMap(cinema -> cinemaHallRepository.getAllForCinemaById(cinema.getId()))
-                        .flatMap(cinemaHall -> movieEmissionRepository.findMovieEmissionsByCinemaHallId(cinemaHall.getId()))
-                        .flatMap(movieEmission -> ticketPurchaseRepository
-                                .findAllByMovieId(movieEmission.getMovie().getId())
-                                .collectMultimap(
-                                        tp -> tp.getMovieEmission().getMovie().getGenre(),
-                                        tp -> tp.getTickets().size())
-                                .map(this::reduceMultiMapToMapWithMaxElementOf))
-                        .reduce(new ArrayList<MovieFrequencyByGenreDto>(), (list, subMap) -> {
-                            list.addAll(subMap.entrySet().stream()
-                                    .map(e -> MovieFrequencyByGenreDto.builder()
-                                            .genre(e.getKey())
-                                            .frequency(e.getValue())
-                                            .build())
-                                    .collect(Collectors.toList()));
-                            return list;
-                        }))
-                .flatMapMany(Flux::fromIterable);
+                .flatMapMany(city -> ticketPurchaseRepository
+                        .findAllByCinemaHallsIds(cinemaHallIdsForCity(city))
+                        .collectMultimap(
+                                tp -> tp.getMovieEmission().getMovie().getGenre(),
+                                tp -> tp.getTickets().size())
+                        .map(this::reduceMultiMapToMapWithMaxElementOf)
+                        .flatMapMany(maxByGenre -> Flux.fromIterable(
+                                maxByGenre.entrySet().stream()
+                                        .map(e -> MovieFrequencyByGenreDto.builder()
+                                                .genre(e.getKey())
+                                                .frequency(e.getValue())
+                                                .build())
+                                        .collect(Collectors.toList()))));
     }
 
     public Flux<MostPopularMovieGroupedByCityDto> findMostPopularMovieGroupedByCity() {
         return cityRepository.findAll()
-                .flatMap(city -> cinemaRepository.findAllByCity(city.getName())
-                        .flatMap(cinema -> cinemaHallRepository.getAllForCinemaById(cinema.getId()))
-                        .flatMap(cinemaHall -> movieEmissionRepository.findMovieEmissionsByCinemaHallId(cinemaHall.getId()))
-                        .flatMap(movieEmission -> ticketPurchaseRepository
-                                .findAllByMovieId(movieEmission.getMovie().getId())
-                                .collectMultimap(
-                                        tp -> tp.getMovieEmission().getMovie(),
-                                        tp -> tp.getTickets().size())
-                                .map(this::reduceMultiMapToMapWithMaxElementOf))
-                        .map(movieFrequencyMap -> MostPopularMovieGroupedByCityDto.builder()
+                .flatMap(city -> ticketPurchaseRepository
+                        .findAllByCinemaHallsIds(cinemaHallIdsForCity(city))
+                        .collectMultimap(
+                                tp -> tp.getMovieEmission().getMovie(),
+                                tp -> tp.getTickets().size())
+                        .map(this::reduceMultiMapToMapWithMaxElementOf)
+                        .map(maxByMovie -> MostPopularMovieGroupedByCityDto.builder()
                                 .city(city.getName())
-                                .movieFrequency(movieFrequencyMap.entrySet().stream()
+                                .movieFrequency(maxByMovie.entrySet().stream()
                                         .map(e -> MovieFrequencyDto.builder()
                                                 .movie(e.getKey().toDto())
                                                 .frequency(e.getValue())
@@ -150,9 +139,7 @@ public class StatisticsService {
     public Flux<AverageTicketPriceByCityDto> getAverageTicketPriceGroupedByCity() {
         return cityRepository.findAll()
                 .flatMap(city -> ticketPurchaseRepository
-                        .findAllByCinemaHallsIds(city.getCinemas().stream()
-                                .flatMap(cinema -> cinema.getCinemaHalls().stream().map(CinemaHall::getId))
-                                .collect(Collectors.toList()))
+                        .findAllByCinemaHallsIds(cinemaHallIdsForCity(city))
                         .flatMap(tp -> Flux.fromIterable(tp.getTickets()))
                         .collectList()
                         .map(tickets -> AverageTicketPriceByCityDto.builder()
