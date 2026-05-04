@@ -53,7 +53,6 @@ public class UsersService {
     }
 
     private Mono<User> createUser(final CreateUserDto createUserDto) {
-        // fix #1: BCrypt is CPU-intensive (~100ms), offload to boundedElastic to avoid blocking event-loop
         return Mono.fromCallable(() -> nonNull(createUserDto.getPassword())
                         ? passwordEncoder.encode(createUserDto.getPassword())
                         : null)

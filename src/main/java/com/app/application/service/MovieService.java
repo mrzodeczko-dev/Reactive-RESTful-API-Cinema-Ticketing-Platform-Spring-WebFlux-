@@ -174,11 +174,9 @@ public class MovieService {
     }
 
     public Flux<MovieDto> uploadCSVFile(final Mono<Resource> resourceMono) {
-        // fix #3: use thread-safe list to avoid race condition when flatMap interleaves
         var errorsList = Collections.synchronizedList(new java.util.ArrayList<String>());
         var counter = new AtomicInteger(1);
 
-        // fix #4: wrap BufferedReader in Mono.using() to guarantee it is closed after use
         return resourceMono
                 .flatMapMany(resource ->
                         Mono.using(
@@ -188,7 +186,6 @@ public class MovieService {
                                         .flatMapIterable(Function.identity())
                                         .flatMap(movie -> doMovieExistsInDb(movie, errorsList, counter))
                                         .collectList()
-                                        // fix #5: use flatMap + Mono.error instead of throw inside map
                                         .flatMap(movies -> saveMovies(movies, errorsList))
                                         .flatMapMany(Function.identity()),
                                 bufferedReader -> {
@@ -203,7 +200,6 @@ public class MovieService {
     }
 
     private Mono<Flux<MovieDto>> saveMovies(List<Movie> movies, List<String> errorsList) {
-        // fix #5: return Mono.error idiomatically instead of throwing inside map
         if (!errorsList.isEmpty()) {
             return Mono.error(new MovieServiceException("Errors are: %s".formatted(errorsList)));
         }
