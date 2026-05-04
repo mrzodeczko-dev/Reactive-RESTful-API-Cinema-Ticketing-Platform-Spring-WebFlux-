@@ -84,7 +84,7 @@ public class MovieService {
             return Flux.error(() -> new MovieServiceException(
                     """
                             Movie duration is not set correctly!
-                                                
+                            
                             Conditions to met:
                             1) At least one boundary movie duration should be set,
                             2) Variable minDuration must not be greater than maxDuration (if defined),
@@ -179,7 +179,7 @@ public class MovieService {
 
         return resourceMono
                 .flatMapMany(resource ->
-                        Mono.using(
+                        Flux.using(
                                 () -> new BufferedReader(new InputStreamReader(resource.getInputStream())),
                                 bufferedReader -> Mono.fromCallable(() -> collectMoviesToAddFromCsvFile(bufferedReader, errorsList))
                                         .subscribeOn(Schedulers.boundedElastic())
