@@ -15,8 +15,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.javamail.JavaMailSender;
 import reactor.test.StepVerifier;
 
-import javax.mail.Session;
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +54,6 @@ class EmailServiceTest {
                 .htmlContent("<p>hi</p>")
                 .build();
 
-        // Create a real MimeMessage with empty session — simpler than mocking every method call
         mimeMessage = new MimeMessage(Session.getInstance(new Properties()));
     }
 

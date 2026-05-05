@@ -204,7 +204,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>${start-class}</mainClass>
-                    <fork>true</fork>
                 </configuration>
             </plugin>
             <plugin>
@@ -214,7 +213,9 @@
                     <execution>
                         <id>unpack</id>
                         <phase>package</phase>
-                        <goals><goal>unpack</goal></goals>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
