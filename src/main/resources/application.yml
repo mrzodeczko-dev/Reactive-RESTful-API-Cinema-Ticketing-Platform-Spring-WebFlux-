@@ -2,10 +2,9 @@ server:
   port: 8080
 
 spring:
-  data:
-    mongodb:
-      uri: mongodb://mongo1:30001,mongo2:30002,mongo3:30003/?replicaSet=rs0
-      database: cinema_db
+  mongodb:
+    uri: mongodb://mongo1:30001,mongo2:30002,mongo3:30003/?replicaSet=rs0
+    database: cinema_db
 
   mail:
     host: smtp.gmail.com

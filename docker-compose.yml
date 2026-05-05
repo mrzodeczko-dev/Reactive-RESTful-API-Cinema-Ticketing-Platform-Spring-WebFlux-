@@ -21,6 +21,10 @@ services:
     image: mongo:4.4.4
     container_name: mongo2
     restart: on-failure
+    healthcheck:
+      test: test $$(echo "rs.status().ok" | mongo --port 30002 --quiet) -eq 1
+      interval: 10s
+      start_period: 10s
     command: [ "--replSet", "rs0", "--bind_ip_all", "--port", "30002" ]
     volumes:
       - ./data/mongo-2:/data/db
@@ -32,6 +36,10 @@ services:
   mongo3:
     container_name: mongo3
     image: mongo:4.4.4
+    healthcheck:
+      test: test $$(echo "rs.status().ok" | mongo --port 30003 --quiet) -eq 1
+      interval: 10s
+      start_period: 10s
     restart: on-failure
     command: [ "--replSet", "rs0", "--bind_ip_all", "--port", "30003" ]
     volumes:
@@ -45,13 +53,15 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
-    #    image: codernnoone/webflux_reactive_restflul_api
     restart: on-failure
     container_name: app
     depends_on:
-      - mongo1
-      - mongo2
-      - mongo3
+      mongo1:
+        condition: service_healthy
+      mongo2:
+        condition: service_started
+      mongo3:
+        condition: service_started
     ports:
       - "8080:8080"
       - "5005:5005"
