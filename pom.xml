@@ -13,14 +13,14 @@
 
     <groupId>com.app</groupId>
     <artifactId>cinema_webflux_ddd</artifactId>
-    <version>0.0.1-sb-4-jdk-21</version>
+    <version>0.0.1-sb-4-jdk-25</version>
     <name>cinema_webflux_ddd</name>
     <description>cinema_webflux_ddd</description>
 
     <properties>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <start-class>com.app.CinemaApplication</start-class>
-        <lombok.version>1.18.34</lombok.version>
+        <lombok.version>1.18.38</lombok.version>
         <jjwt.version>0.12.6</jjwt.version>
         <commons-validator.version>1.9.0</commons-validator.version>
         <joda-time.version>2.12.7</joda-time.version>
@@ -213,7 +213,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <release>21</release>
+                    <release>25</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
