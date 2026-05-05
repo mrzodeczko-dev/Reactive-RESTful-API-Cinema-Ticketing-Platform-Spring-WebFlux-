@@ -1,5 +1,5 @@
-# eclipse-temurin:17-jre replaces deprecated openjdk:17
-FROM eclipse-temurin:17-jre
+# eclipse-temurin:21-jre replaces eclipse-temurin:17-jre
+FROM eclipse-temurin:21-jre
 MAINTAINER CoderNoOne firelight.code@gmail.com
 
 ARG DEPENDENCY=target/dependency
@@ -7,8 +7,8 @@ COPY ${DEPENDENCY}/BOOT-INF/lib /app/lib
 COPY ${DEPENDENCY}/META-INF /app/META-INF
 COPY ${DEPENDENCY}/BOOT-INF/classes /app
 
-# --add-opens flags are required for BlockHound 1.0.6 and Reactor instrumentation
-# to work correctly under Java 17's strong encapsulation
+# --add-opens flags are required for BlockHound and Reactor instrumentation
+# to work correctly under Java 21's strong encapsulation
 ENTRYPOINT ["java", \
   "-cp", "app:app/lib/*", \
   "-Xdebug", \
