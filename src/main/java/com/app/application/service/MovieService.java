@@ -13,7 +13,6 @@ import com.opencsv.bean.CsvToBeanBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -34,7 +33,6 @@ import static java.util.Objects.nonNull;
 
 
 @RequiredArgsConstructor
-@Service
 @Slf4j
 public class MovieService {
 

@@ -10,7 +10,6 @@ import com.app.domain.cinema_hall.CinemaHall;
 import com.app.domain.cinema_hall.CinemaHallRepository;
 import com.app.domain.vo.Position;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
-@Service
 @RequiredArgsConstructor
 public class CinemaHallService {
 

@@ -1,4 +1,4 @@
-package com.app.application.exception.handler;
+package com.app.infrastructure.exception;
 
 import com.app.application.dto.ErrorMessageDto;
 import com.app.application.dto.ResponseErrorDto;
@@ -57,4 +57,3 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
         return dataBufferFactory.wrap(new byte[]{});
     }
 }
-

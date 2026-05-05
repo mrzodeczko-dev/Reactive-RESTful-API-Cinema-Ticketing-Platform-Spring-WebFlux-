@@ -4,13 +4,11 @@ import com.app.application.dto.CreateTicketOrderDto;
 import com.app.application.validator.generic.Validator;
 import com.app.application.validator.util.TicketBaseValidationUtils;
 import com.app.domain.ticket_order.enums.TicketGroupType;
-import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
 import static java.util.Objects.nonNull;
 
-@Component
 public class CreateTicketsOrderDtoValidator implements Validator<CreateTicketOrderDto, String> {
 
     @Override

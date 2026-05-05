@@ -14,7 +14,6 @@ import com.app.domain.ticket_order.TicketOrder;
 import com.app.domain.ticket_order.TicketOrderRepository;
 import com.app.domain.ticket_order.enums.TicketOrderStatus;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -25,7 +24,6 @@ import java.util.Objects;
 
 import static java.util.Objects.isNull;
 
-@Service
 @RequiredArgsConstructor
 public class TicketOrderService {
 

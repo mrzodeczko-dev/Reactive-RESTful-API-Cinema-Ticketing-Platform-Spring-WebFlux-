@@ -14,7 +14,6 @@ import com.app.domain.cinema_hall.CinemaHall;
 import com.app.domain.cinema_hall.CinemaHallRepository;
 import com.app.domain.city.CityRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,7 +21,6 @@ import reactor.core.publisher.Mono;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
-@Service
 @RequiredArgsConstructor
 public class CinemaService {
 

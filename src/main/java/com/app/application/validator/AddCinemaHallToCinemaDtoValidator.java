@@ -2,14 +2,12 @@ package com.app.application.validator;
 
 import com.app.application.dto.AddCinemaHallToCinemaDto;
 import com.app.application.validator.generic.Validator;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Objects.isNull;
 
-@Component
 public class AddCinemaHallToCinemaDtoValidator implements Validator<AddCinemaHallToCinemaDto, String> {
 
     private static final Integer MIN_NUM_OF_POSITIONS = 50;

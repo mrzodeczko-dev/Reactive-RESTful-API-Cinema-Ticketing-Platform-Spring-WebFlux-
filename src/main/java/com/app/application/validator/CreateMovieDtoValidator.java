@@ -5,7 +5,6 @@ import com.app.application.validator.generic.Validator;
 import com.app.domain.movie.enums.MovieGenre;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.validator.GenericValidator;
-import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,7 +16,6 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
-@Component
 public class CreateMovieDtoValidator implements Validator<CreateMovieDto, String> {
 
     @Override

@@ -26,7 +26,6 @@ import com.app.domain.vo.Money;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.GenericValidator;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -41,7 +40,6 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 
-@Service
 @RequiredArgsConstructor
 public class TicketPurchaseService {
 

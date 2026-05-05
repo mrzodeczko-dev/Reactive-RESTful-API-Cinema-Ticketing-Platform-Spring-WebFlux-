@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -23,7 +22,6 @@ import jakarta.mail.internet.MimeMessage;
 import java.time.Duration;
 import java.util.List;
 
-@Service
 @Slf4j
 @RequiredArgsConstructor
 public class EmailService {

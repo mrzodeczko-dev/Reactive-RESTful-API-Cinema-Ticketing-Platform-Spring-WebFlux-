@@ -12,7 +12,6 @@ import com.app.domain.cinema_hall.CinemaHallRepository;
 import com.app.domain.city.City;
 import com.app.domain.city.CityRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 
-@Service
 @RequiredArgsConstructor
 public class CityService {
 
