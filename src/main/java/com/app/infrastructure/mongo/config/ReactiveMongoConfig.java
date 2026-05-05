@@ -1,6 +1,7 @@
 package com.app.infrastructure.mongo.config;
 
 import com.mongodb.ReadPreference;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,8 +10,6 @@ import org.springframework.data.mongodb.ReactiveMongoTransactionManager;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.transaction.ReactiveTransactionManager;
 import org.springframework.transaction.reactive.TransactionalOperator;
-
-import javax.annotation.PostConstruct;
 
 @Configuration
 @RequiredArgsConstructor
