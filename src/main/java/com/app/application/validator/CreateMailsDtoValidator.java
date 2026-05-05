@@ -2,7 +2,6 @@ package com.app.application.validator;
 
 import com.app.application.dto.CreateMailsDto;
 import com.app.application.validator.generic.Validator;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -12,7 +11,6 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 
-@Component
 public class CreateMailsDtoValidator implements Validator<CreateMailsDto, Object> {
 
     private final CreateMailDtoValidator singleEmailValidator = new CreateMailDtoValidator();

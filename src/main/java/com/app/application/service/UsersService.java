@@ -11,7 +11,6 @@ import com.app.domain.security.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,7 +21,6 @@ import java.util.function.Function;
 
 import static java.util.Objects.nonNull;
 
-@Service
 @RequiredArgsConstructor
 @Slf4j
 public class UsersService {

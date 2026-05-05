@@ -4,14 +4,12 @@ import com.app.application.dto.CreateMailDto;
 import com.app.application.validator.generic.Validator;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Objects.isNull;
 
-@Component
 public class CreateMailDtoValidator implements Validator<CreateMailDto, String> {
 
     private final EmailValidator emailValidator = EmailValidator.getInstance();

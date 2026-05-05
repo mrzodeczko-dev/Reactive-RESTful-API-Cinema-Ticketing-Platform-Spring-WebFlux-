@@ -1,12 +1,9 @@
 package com.app.application.dto;
 
-import lombok.*;
-import org.springframework.core.NestedRuntimeException;
-
-import java.time.LocalDateTime;
+import lombok.Getter;
 
 @Getter
-public class ExceptionResponseDto extends NestedRuntimeException {
+public class ExceptionResponseDto extends RuntimeException {
 
     public ExceptionResponseDto(String msg) {
         super(msg);

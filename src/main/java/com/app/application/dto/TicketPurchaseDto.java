@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,6 +22,5 @@ public class TicketPurchaseDto {
 
     private List<TicketDto> tickets;
 
-    @Field("ticket_order_type")
     private TicketGroupType ticketGroupType;
 }

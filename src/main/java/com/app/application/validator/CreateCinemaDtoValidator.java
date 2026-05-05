@@ -4,7 +4,6 @@ import com.app.application.dto.CreateCinemaDto;
 import com.app.application.dto.CreateCinemaHallDto;
 import com.app.application.validator.generic.Validator;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -15,7 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.util.Objects.isNull;
 import static org.apache.logging.log4j.util.Strings.isBlank;
 
-@Component
 public class CreateCinemaDtoValidator implements Validator<CreateCinemaDto, String> {
 
     @Override

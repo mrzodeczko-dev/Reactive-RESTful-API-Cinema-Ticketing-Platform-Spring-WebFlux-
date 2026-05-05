@@ -4,7 +4,6 @@ import com.app.application.dto.CreateUserDto;
 import com.app.application.validator.generic.Validator;
 import org.apache.commons.validator.GenericValidator;
 import org.apache.commons.validator.routines.EmailValidator;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -13,7 +12,6 @@ import java.util.Map;
 
 import static java.util.Objects.isNull;
 
-@Component
 public class CreateUserDtoValidator implements Validator<CreateUserDto, String> {
 
     private final String DATE_FORMAT = "dd-MM-yyyy";

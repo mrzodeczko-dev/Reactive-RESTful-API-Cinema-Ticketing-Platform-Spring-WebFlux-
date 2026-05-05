@@ -3,7 +3,6 @@ package com.app.application.validator;
 
 import com.app.application.dto.CreateCinemaHallDto;
 import com.app.application.validator.generic.Validator;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +10,6 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
-@Component
 public class CreateCinemaHallDtoValidator implements Validator<CreateCinemaHallDto, String> {
 
     private static final Integer MIN_NUMBER_OF_ROWS_AND_COL = 5;
