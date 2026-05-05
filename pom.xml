@@ -7,13 +7,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.14</version>
+        <version>4.0.6</version>
         <relativePath/>
     </parent>
 
     <groupId>com.app</groupId>
     <artifactId>cinema_webflux_ddd</artifactId>
-    <version>0.0.1-sb-3-jdk-21</version>
+    <version>0.0.1-sb-4-jdk-21</version>
     <name>cinema_webflux_ddd</name>
     <description>cinema_webflux_ddd</description>
 
@@ -21,42 +21,16 @@
         <java.version>21</java.version>
         <start-class>com.app.CinemaApplication</start-class>
         <lombok.version>1.18.34</lombok.version>
-        <jjwt.version>0.12.5</jjwt.version>
-        <commons-validator.version>1.7</commons-validator.version>
-        <joda-time.version>2.10.8</joda-time.version>
-        <opencsv.version>5.0</opencsv.version>
+        <jjwt.version>0.12.6</jjwt.version>
+        <commons-validator.version>1.9.0</commons-validator.version>
+        <joda-time.version>2.12.7</joda-time.version>
+        <opencsv.version>5.9</opencsv.version>
         <springdoc.version>2.8.13</springdoc.version>
+        <mongock.version>5.4.4</mongock.version>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.github.cloudyrock.mongock</groupId>
-                <artifactId>mongock-bom</artifactId>
-                <version>4.2.8.BETA</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-log4j2</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
+        <!-- Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
@@ -68,6 +42,19 @@
             </exclusions>
         </dependency>
 
+        <!-- MongoDB reactive -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Security -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
@@ -79,6 +66,7 @@
             </exclusions>
         </dependency>
 
+        <!-- Mail -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
@@ -90,39 +78,59 @@
             </exclusions>
         </dependency>
 
+        <!-- Logging -->
         <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
+
+        <!--
+            Jackson 3 — Spring Boot 4 ships with Jackson 3 by default (group: tools.jackson).
+            spring-boot-starter-webflux already pulls in jackson-databind transitively.
+            Explicit declarations below are needed only for jackson-dataformat-yaml
+            which is not included by default.
+
+            NOTE: If you still need Jackson 2 compatibility (e.g. third-party libs),
+            add the spring-boot-jackson2 bridge (deprecated, will be removed in a future release):
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-jackson2</artifactId>
+            </dependency>
+        -->
+        <dependency>
+            <groupId>tools.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-
+        <!-- Validation -->
         <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>
             <version>${commons-validator.version}</version>
         </dependency>
 
+        <!-- Date/Time -->
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
             <version>${joda-time.version}</version>
         </dependency>
 
+        <!-- CSV -->
         <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
             <version>${opencsv.version}</version>
         </dependency>
 
+        <!-- AOP -->
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-aspects</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aspectj</artifactId>
         </dependency>
 
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -130,6 +138,7 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -148,23 +157,19 @@
             <scope>runtime</scope>
         </dependency>
 
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
+        <!-- Mongock 5 -->
         <dependency>
             <groupId>io.mongock</groupId>
             <artifactId>mongock-springboot-v3</artifactId>
-            <version>5.4.4</version>
+            <version>${mongock.version}</version>
         </dependency>
         <dependency>
             <groupId>io.mongock</groupId>
             <artifactId>mongodb-reactive-driver</artifactId>
-            <version>5.4.4</version>
+            <version>${mongock.version}</version>
         </dependency>
 
+        <!-- OpenAPI / Swagger -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
@@ -176,18 +181,19 @@
             <version>${springdoc.version}</version>
         </dependency>
 
+        <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.junit.vintage</groupId>
-                    <artifactId>junit-vintage-engine</artifactId>
-                </exclusion>
-            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
