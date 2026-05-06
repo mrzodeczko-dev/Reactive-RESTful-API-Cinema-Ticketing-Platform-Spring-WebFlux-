@@ -1,47 +1,48 @@
-package com.app.application.service;
+package com.rzodeczko.application.service;
 
-import com.app.application.dto.CreateUserDto;
-import com.app.application.dto.UserDto;
-import com.app.application.exception.RegistrationUserException;
-import com.app.application.exception.UserServiceException;
-import com.app.application.validator.CreateUserDtoValidator;
-import com.app.domain.security.Admin;
-import com.app.domain.security.AdminRepository;
-import com.app.domain.security.User;
-import com.app.domain.security.UserRepository;
-import org.junit.jupiter.api.*;
+import com.rzodeczko.application.dto.CreateUserDto;
+import com.rzodeczko.application.exception.RegistrationUserException;
+import com.rzodeczko.application.exception.UserServiceException;
+import com.rzodeczko.application.port.out.AdminPort;
+import com.rzodeczko.application.port.out.TransactionPort;
+import com.rzodeczko.application.port.out.UserPort;
+import com.rzodeczko.application.service.UsersService;
+import com.rzodeczko.application.validator.CreateUserDtoValidator;
+import com.rzodeczko.domain.security.Admin;
+import com.rzodeczko.domain.security.User;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UsersServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    private UserPort userPort;
     @Mock
     private CreateUserDtoValidator createUserDtoValidator;
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
-    private AdminRepository adminRepository;
+    private AdminPort adminPort;
     @Mock
-    private TransactionalOperator transactionalOperator;
+    private TransactionPort transactionPort;
 
     @InjectMocks
     private UsersService usersService;
@@ -74,10 +75,10 @@ class UsersServiceTest {
         @DisplayName("Happy path: new user registered, password encoded")
         void shouldRegisterSuccessfully() {
             when(createUserDtoValidator.validate(validCreateDto)).thenReturn(Map.of());
-            when(userRepository.findByUsername("jan@example.com")).thenReturn(Mono.empty());
-            when(userRepository.findByEmail("jan@example.com")).thenReturn(Mono.empty());
+            when(userPort.findByUsername("jan@example.com")).thenReturn(Mono.empty());
+            when(userPort.findByEmail("jan@example.com")).thenReturn(Mono.empty());
             when(passwordEncoder.encode("Secret123!")).thenReturn("hashed-pass");
-            when(userRepository.addOrUpdate(any())).thenReturn(Mono.just(userJan));
+            when(userPort.addOrUpdate(any())).thenReturn(Mono.just(userJan));
 
             StepVerifier.create(usersService.register(validCreateDto))
                     .assertNext(dto -> assertThat(dto.getUsername()).isEqualTo("jan@example.com"))
@@ -96,21 +97,18 @@ class UsersServiceTest {
                     .expectErrorSatisfies(ex -> assertThat(ex).isInstanceOf(RegistrationUserException.class))
                     .verify();
 
-            verifyNoInteractions(userRepository, passwordEncoder);
+            verifyNoInteractions(userPort, passwordEncoder);
         }
 
         @Test
         @DisplayName("Username already exists: RegistrationUserException with username")
         void shouldErrorWhenUsernameExists() {
-            // Service queries by the DTO username, not a hard-coded one.
             when(createUserDtoValidator.validate(validCreateDto)).thenReturn(Map.of());
-            when(userRepository.findByUsername("jan@example.com"))
+            when(userPort.findByUsername("jan@example.com"))
                     .thenReturn(Mono.just(userJan));
-            // Reactor evaluates the `.then(...)` chain eagerly to build the pipeline,
-            // so downstream stubs must return non-null Monos even though they aren't subscribed.
-            // Stubbed leniently because they may not be invoked depending on the early termination point.
-            org.mockito.Mockito.lenient().when(userRepository.findByEmail("jan@example.com")).thenReturn(Mono.empty());
-            org.mockito.Mockito.lenient().when(userRepository.addOrUpdate(any())).thenReturn(Mono.just(userJan));
+
+            org.mockito.Mockito.lenient().when(userPort.findByEmail("jan@example.com")).thenReturn(Mono.empty());
+            org.mockito.Mockito.lenient().when(userPort.addOrUpdate(any())).thenReturn(Mono.just(userJan));
 
             StepVerifier.create(usersService.register(validCreateDto))
                     .expectErrorSatisfies(ex -> {
@@ -124,11 +122,9 @@ class UsersServiceTest {
         @DisplayName("Email already exists: RegistrationUserException with email")
         void shouldErrorWhenEmailExists() {
             when(createUserDtoValidator.validate(validCreateDto)).thenReturn(Map.of());
-            when(userRepository.findByUsername("jan@example.com")).thenReturn(Mono.empty());
-            when(userRepository.findByEmail("jan@example.com")).thenReturn(Mono.just(userJan));
-            // The chain of Mono.then(...) evaluates createUser eagerly to build the pipeline,
-            // so addOrUpdate must return a non-null Mono even though it should never be subscribed.
-            org.mockito.Mockito.lenient().when(userRepository.addOrUpdate(any())).thenReturn(Mono.just(userJan));
+            when(userPort.findByUsername("jan@example.com")).thenReturn(Mono.empty());
+            when(userPort.findByEmail("jan@example.com")).thenReturn(Mono.just(userJan));
+            org.mockito.Mockito.lenient().when(userPort.addOrUpdate(any())).thenReturn(Mono.just(userJan));
 
             StepVerifier.create(usersService.register(validCreateDto))
                     .expectErrorSatisfies(ex -> {
@@ -147,7 +143,7 @@ class UsersServiceTest {
         @DisplayName("Two users: Flux emits two DTOs")
         void shouldReturnAllUsers() {
             User user2 = User.builder().username("anna@example.com").email("anna@example.com").password("hash").build();
-            when(userRepository.findAll()).thenReturn(Flux.just(userJan, user2));
+            when(userPort.findAll()).thenReturn(Flux.just(userJan, user2));
 
             StepVerifier.create(usersService.getAll())
                     .assertNext(dto -> assertThat(dto.getUsername()).isEqualTo("jan@example.com"))
@@ -158,7 +154,7 @@ class UsersServiceTest {
         @Test
         @DisplayName("No users: Flux completes empty")
         void shouldReturnEmptyFlux() {
-            when(userRepository.findAll()).thenReturn(Flux.empty());
+            when(userPort.findAll()).thenReturn(Flux.empty());
             StepVerifier.create(usersService.getAll()).verifyComplete();
         }
     }
@@ -170,7 +166,7 @@ class UsersServiceTest {
         @Test
         @DisplayName("Happy path: existing user returned as DTO")
         void shouldReturnUser() {
-            when(userRepository.findByUsername("jan@example.com")).thenReturn(Mono.just(userJan));
+            when(userPort.findByUsername("jan@example.com")).thenReturn(Mono.just(userJan));
 
             StepVerifier.create(usersService.getByUsername("jan@example.com"))
                     .assertNext(dto -> assertThat(dto.getUsername()).isEqualTo("jan@example.com"))
@@ -180,7 +176,7 @@ class UsersServiceTest {
         @Test
         @DisplayName("User not found: UserServiceException with username")
         void shouldThrowWhenUserNotFound() {
-            when(userRepository.findByUsername("ghost")).thenReturn(Mono.empty());
+            when(userPort.findByUsername("ghost")).thenReturn(Mono.empty());
 
             StepVerifier.create(usersService.getByUsername("ghost"))
                     .expectErrorSatisfies(ex -> {
@@ -200,24 +196,24 @@ class UsersServiceTest {
         void shouldPromoteUserToAdmin() {
             Admin admin = new Admin("jan@example.com", "hashed-pass");
 
-            when(userRepository.findByUsername("jan@example.com")).thenReturn(Mono.just(userJan));
-            when(userRepository.deleteById(userJan.getId())).thenReturn(Mono.just(userJan));
-            when(adminRepository.addOrUpdate(any())).thenReturn(Mono.just(admin));
-            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(userPort.findByUsername("jan@example.com")).thenReturn(Mono.just(userJan));
+            when(userPort.deleteById(userJan.getId())).thenReturn(Mono.just(userJan));
+            when(adminPort.addOrUpdate(any())).thenReturn(Mono.just(admin));
+            when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
             StepVerifier.create(usersService.promoteUserToAdminRole("jan@example.com"))
                     .assertNext(dto -> assertThat(dto.getUsername()).isEqualTo("jan@example.com"))
                     .verifyComplete();
 
-            verify(userRepository).deleteById(userJan.getId());
-            verify(adminRepository).addOrUpdate(any());
+            verify(userPort).deleteById(userJan.getId());
+            verify(adminPort).addOrUpdate(any());
         }
 
         @Test
         @DisplayName("User not found: UserServiceException with username")
         void shouldThrowWhenUserNotFound() {
-            when(userRepository.findByUsername("ghost")).thenReturn(Mono.empty());
-            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(userPort.findByUsername("ghost")).thenReturn(Mono.empty());
+            when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
             StepVerifier.create(usersService.promoteUserToAdminRole("ghost"))
                     .expectErrorSatisfies(ex -> {
@@ -226,23 +222,23 @@ class UsersServiceTest {
                     })
                     .verify();
 
-            verifyNoInteractions(adminRepository);
+            verifyNoInteractions(adminPort);
         }
 
         @Test
         @DisplayName("Transaction: pipeline wrapped exactly once")
         void shouldWrapInTransaction() {
             Admin admin = new Admin("jan@example.com", "hashed-pass");
-            when(userRepository.findByUsername("jan@example.com")).thenReturn(Mono.just(userJan));
-            when(userRepository.deleteById(userJan.getId())).thenReturn(Mono.just(userJan));
-            when(adminRepository.addOrUpdate(any())).thenReturn(Mono.just(admin));
-            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(userPort.findByUsername("jan@example.com")).thenReturn(Mono.just(userJan));
+            when(userPort.deleteById(userJan.getId())).thenReturn(Mono.just(userJan));
+            when(adminPort.addOrUpdate(any())).thenReturn(Mono.just(admin));
+            when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
             StepVerifier.create(usersService.promoteUserToAdminRole("jan@example.com"))
                     .expectNextCount(1)
                     .verifyComplete();
 
-            verify(transactionalOperator, times(1)).transactional(any(Mono.class));
+            verify(transactionPort, times(1)).inTransaction(any(Mono.class));
         }
     }
 }

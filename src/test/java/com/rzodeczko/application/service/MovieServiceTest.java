@@ -1,12 +1,13 @@
-package com.app.application.service;
+package com.rzodeczko.application.service;
 
-import com.app.application.dto.CreateMovieDto;
-import com.app.application.exception.MovieServiceException;
-import com.app.application.validator.CreateMovieDtoValidator;
-import com.app.domain.movie.Movie;
-import com.app.domain.movie.MovieRepository;
-import com.app.domain.security.User;
-import com.app.domain.security.UserRepository;
+import com.rzodeczko.application.dto.CreateMovieDto;
+import com.rzodeczko.application.exception.MovieServiceException;
+import com.rzodeczko.application.port.out.MoviePort;
+import com.rzodeczko.application.port.out.UserPort;
+import com.rzodeczko.application.service.MovieService;
+import com.rzodeczko.application.validator.CreateMovieDtoValidator;
+import com.rzodeczko.domain.movie.Movie;
+import com.rzodeczko.domain.security.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -33,9 +34,9 @@ import static org.mockito.Mockito.when;
 class MovieServiceTest {
 
     @Mock
-    private MovieRepository movieRepository;
+    private MoviePort movieRepository;
     @Mock
-    private UserRepository userRepository;
+    private UserPort userRepository;
     @Mock
     private CreateMovieDtoValidator createMovieDtoValidator;
 

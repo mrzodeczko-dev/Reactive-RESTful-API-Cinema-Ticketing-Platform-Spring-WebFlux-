@@ -1,15 +1,17 @@
-package com.app.application.service;
+package com.rzodeczko.application.service;
 
-import com.app.application.dto.CreateMovieEmissionDto;
-import com.app.application.exception.MovieEmissionServiceException;
-import com.app.domain.cinema_hall.CinemaHall;
-import com.app.domain.cinema_hall.CinemaHallRepository;
-import com.app.domain.movie.Movie;
-import com.app.domain.movie.MovieRepository;
-import com.app.domain.movie_emission.MovieEmission;
-import com.app.domain.movie_emission.MovieEmissionRepository;
-import com.app.domain.vo.Money;
-import com.app.domain.vo.Position;
+import com.rzodeczko.application.dto.CreateMovieEmissionDto;
+import com.rzodeczko.application.exception.MovieEmissionServiceException;
+import com.rzodeczko.application.port.out.CinemaHallPort;
+import com.rzodeczko.application.port.out.MovieEmissionPort;
+import com.rzodeczko.application.port.out.MoviePort;
+import com.rzodeczko.application.port.out.TransactionPort;
+import com.rzodeczko.application.service.MovieEmissionService;
+import com.rzodeczko.domain.cinema_hall.CinemaHall;
+import com.rzodeczko.domain.movie.Movie;
+import com.rzodeczko.domain.movie_emission.MovieEmission;
+import com.rzodeczko.domain.vo.Money;
+import com.rzodeczko.domain.vo.Position;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +20,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -37,13 +38,13 @@ import static org.mockito.Mockito.when;
 class MovieEmissionServiceTest {
 
     @Mock
-    private MovieEmissionRepository movieEmissionRepository;
+    private MovieEmissionPort movieEmissionRepository;
     @Mock
-    private CinemaHallRepository cinemaHallRepository;
+    private CinemaHallPort cinemaHallRepository;
     @Mock
-    private MovieRepository movieRepository;
+    private MoviePort movieRepository;
     @Mock
-    private TransactionalOperator transactionalOperator;
+    private TransactionPort transactionPort;
 
     @InjectMocks
     private MovieEmissionService movieEmissionService;
@@ -69,7 +70,7 @@ class MovieEmissionServiceTest {
                 .build();
 
         // Mock TransactionalOperator: pass the publisher through unchanged.
-        Mockito.lenient().when(transactionalOperator.transactional(any(Mono.class)))
+        Mockito.lenient().when(transactionPort.inTransaction(any(Mono.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
     }
 
@@ -203,7 +204,7 @@ class MovieEmissionServiceTest {
     @Test
     @DisplayName("deleteMovieEmission — emits error when emission not found")
     void deleteMovieEmission_whenNotFound_shouldEmitError() {
-        Mockito.lenient().when(transactionalOperator.transactional(any(Mono.class)))
+        Mockito.lenient().when(transactionPort.inTransaction(any(Mono.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
         when(movieEmissionRepository.deleteById("missing"))
                 .thenReturn(Mono.empty());

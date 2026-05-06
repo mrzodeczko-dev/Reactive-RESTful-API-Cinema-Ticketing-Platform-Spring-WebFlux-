@@ -1,15 +1,17 @@
-package com.app.application.service;
+package com.rzodeczko.application.service;
 
-import com.app.application.dto.CreateCinemaDto;
-import com.app.application.dto.CreateCinemaHallDto;
-import com.app.application.exception.CinemaServiceException;
-import com.app.application.validator.CreateCinemaDtoValidator;
-import com.app.domain.cinema.Cinema;
-import com.app.domain.cinema.CinemaRepository;
-import com.app.domain.cinema_hall.CinemaHall;
-import com.app.domain.cinema_hall.CinemaHallRepository;
-import com.app.domain.model.City;
-import com.app.domain.repository.CityRepository;
+import com.rzodeczko.application.dto.CreateCinemaDto;
+import com.rzodeczko.application.dto.CreateCinemaHallDto;
+import com.rzodeczko.application.exception.CinemaServiceException;
+import com.rzodeczko.application.port.out.CinemaHallPort;
+import com.rzodeczko.application.port.out.CinemaPort;
+import com.rzodeczko.application.port.out.CityPort;
+import com.rzodeczko.application.port.out.TransactionPort;
+import com.rzodeczko.application.service.CinemaService;
+import com.rzodeczko.application.validator.CreateCinemaDtoValidator;
+import com.rzodeczko.domain.cinema.Cinema;
+import com.rzodeczko.domain.cinema_hall.CinemaHall;
+import com.rzodeczko.domain.city.City;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -18,7 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -37,15 +38,15 @@ import static org.mockito.Mockito.when;
 class CinemaServiceTest {
 
     @Mock
-    private CinemaRepository cinemaRepository;
+    private CinemaPort cinemaRepository;
     @Mock
-    private CinemaHallRepository cinemaHallRepository;
+    private CinemaHallPort cinemaHallRepository;
     @Mock
-    private CityRepository cityRepository;
+    private CityPort cityRepository;
     @Mock
     private CreateCinemaDtoValidator createCinemaDtoValidator;
     @Mock
-    private TransactionalOperator transactionalOperator;
+    private TransactionPort transactionPort;
 
     @InjectMocks
     private CinemaService cinemaService;
@@ -79,7 +80,7 @@ class CinemaServiceTest {
             when(cinemaRepository.addOrUpdate(any())).thenReturn(Mono.just(cinema));
             when(cityRepository.findByName("Warsaw")).thenReturn(Mono.just(city));
             when(cityRepository.addOrUpdate(any())).thenReturn(Mono.just(city));
-            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
             StepVerifier.create(cinemaService.addCinema(dto))
                     .assertNext(result -> {
@@ -115,7 +116,7 @@ class CinemaServiceTest {
             when(cinemaHallRepository.addOrUpdateMany(anyList())).thenReturn(Flux.just(cinemaHall));
             when(cinemaRepository.addOrUpdate(any())).thenReturn(Mono.just(cinema));
             when(cityRepository.findByName("Atlantis")).thenReturn(Mono.empty());
-            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
             StepVerifier.create(cinemaService.addCinema(dto))
                     .expectErrorSatisfies(ex -> {
@@ -202,7 +203,7 @@ class CinemaServiceTest {
             when(cinemaRepository.findById("cinema-1")).thenReturn(Mono.just(emptyCinema));
             when(cinemaHallRepository.addOrUpdate(any())).thenReturn(Mono.just(newHall));
             when(cinemaRepository.addOrUpdate(any())).thenReturn(Mono.just(updatedCinema));
-            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
             StepVerifier.create(cinemaService.addCinemaHallToCinema("cinema-1", dto))
                     .assertNext(result -> assertThat(result.getId()).isEqualTo("cinema-1"))
@@ -230,7 +231,7 @@ class CinemaServiceTest {
             CreateCinemaHallDto dto = CreateCinemaHallDto.builder().rowNo(6).colNo(6).build();
 
             when(cinemaRepository.findById("missing")).thenReturn(Mono.empty());
-            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
             StepVerifier.create(cinemaService.addCinemaHallToCinema("missing", dto))
                     .expectErrorSatisfies(ex -> {

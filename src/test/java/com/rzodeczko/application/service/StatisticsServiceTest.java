@@ -1,18 +1,19 @@
-package com.app.application.service;
+package com.rzodeczko.application.service;
 
-import com.app.application.exception.StatisticsServiceException;
-import com.app.domain.cinema.Cinema;
-import com.app.domain.cinema_hall.CinemaHall;
-import com.app.domain.model.City;
-import com.app.domain.repository.CityRepository;
-import com.app.domain.movie.Movie;
-import com.app.domain.movie.MovieRepository;
-import com.app.domain.movie_emission.MovieEmission;
-import com.app.domain.ticket.Ticket;
-import com.app.domain.ticket_purchase.TicketPurchase;
-import com.app.domain.ticket_purchase.TicketPurchaseRepository;
-import com.app.domain.vo.Discount;
-import com.app.domain.vo.Money;
+import com.rzodeczko.application.exception.StatisticsServiceException;
+import com.rzodeczko.application.port.out.CityPort;
+import com.rzodeczko.application.port.out.MoviePort;
+import com.rzodeczko.application.port.out.TicketPurchasePort;
+import com.rzodeczko.application.service.StatisticsService;
+import com.rzodeczko.domain.cinema.Cinema;
+import com.rzodeczko.domain.cinema_hall.CinemaHall;
+import com.rzodeczko.domain.city.City;
+import com.rzodeczko.domain.movie.Movie;
+import com.rzodeczko.domain.movie_emission.MovieEmission;
+import com.rzodeczko.domain.ticket.Ticket;
+import com.rzodeczko.domain.ticket_purchase.TicketPurchase;
+import com.rzodeczko.domain.vo.Discount;
+import com.rzodeczko.domain.vo.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,18 +32,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class StatisticsServiceTest {
 
     @Mock
-    private TicketPurchaseRepository ticketPurchaseRepository;
+    private TicketPurchasePort ticketPurchaseRepository;
     @Mock
-    private CityRepository cityRepository;
+    private CityPort cityRepository;
     @Mock
-    private MovieRepository movieRepository;
+    private MoviePort movieRepository;
 
     @InjectMocks
     private StatisticsService statisticsService;

@@ -1,17 +1,18 @@
-package com.app.application.service;
+package com.rzodeczko.application.service;
 
-import com.app.application.exception.TicketOrderServiceException;
-import com.app.application.validator.CreateTicketsOrderDtoValidator;
-import com.app.domain.movie.Movie;
-import com.app.domain.movie_emission.MovieEmission;
-import com.app.domain.movie_emission.MovieEmissionRepository;
-import com.app.domain.security.User;
-import com.app.domain.security.UserRepository;
-import com.app.domain.ticket.TicketRepository;
-import com.app.domain.ticket_order.TicketOrder;
-import com.app.domain.ticket_order.TicketOrderRepository;
-import com.app.domain.ticket_order.enums.TicketOrderStatus;
-import com.app.domain.vo.Money;
+import com.rzodeczko.application.exception.TicketOrderServiceException;
+import com.rzodeczko.application.port.out.MovieEmissionPort;
+import com.rzodeczko.application.port.out.TicketOrderPort;
+import com.rzodeczko.application.port.out.TicketPort;
+import com.rzodeczko.application.port.out.UserPort;
+import com.rzodeczko.application.service.TicketOrderService;
+import com.rzodeczko.application.validator.CreateTicketsOrderDtoValidator;
+import com.rzodeczko.domain.movie.Movie;
+import com.rzodeczko.domain.movie_emission.MovieEmission;
+import com.rzodeczko.domain.security.User;
+import com.rzodeczko.domain.ticket_order.TicketOrder;
+import com.rzodeczko.domain.ticket_order.enums.TicketOrderStatus;
+import com.rzodeczko.domain.vo.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,15 +35,15 @@ import static org.mockito.Mockito.when;
 class TicketOrderServiceTest {
 
     @Mock
-    private TicketOrderRepository ticketOrderRepository;
+    private TicketOrderPort ticketOrderRepository;
     @Mock
-    private TicketRepository ticketRepository;
+    private TicketPort ticketRepository;
     @Mock
-    private UserRepository userRepository;                          // bez 's'
+    private UserPort userRepository;
     @Mock
-    private MovieEmissionRepository movieEmissionRepository;        // NOWY
+    private MovieEmissionPort movieEmissionRepository;
     @Mock
-    private CreateTicketsOrderDtoValidator createTicketsOrderDtoValidator; // NOWY
+    private CreateTicketsOrderDtoValidator createTicketsOrderDtoValidator;
     @Mock
     private TransactionalOperator transactionalOperator;
 

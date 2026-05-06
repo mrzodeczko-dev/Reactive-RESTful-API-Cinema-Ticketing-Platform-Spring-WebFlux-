@@ -1,10 +1,12 @@
-package com.app.application.service;
+package com.rzodeczko.application.service;
 
-import com.app.application.dto.CreateMailDto;
-import com.app.application.dto.CreateMailsDto;
-import com.app.application.exception.EmailServiceException;
-import com.app.application.validator.CreateMailDtoValidator;
-import com.app.application.validator.CreateMailsDtoValidator;
+import com.rzodeczko.application.dto.CreateMailDto;
+import com.rzodeczko.application.dto.CreateMailsDto;
+import com.rzodeczko.application.exception.EmailServiceException;
+import com.rzodeczko.application.port.out.MailPort;
+import com.rzodeczko.application.service.EmailService;
+import com.rzodeczko.application.validator.CreateMailDtoValidator;
+import com.rzodeczko.application.validator.CreateMailsDtoValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,29 +14,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mail.javamail.JavaMailSender;
 import reactor.test.StepVerifier;
-
-import jakarta.mail.Session;
-import jakarta.mail.internet.MimeMessage;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class EmailServiceTest {
 
     @Mock
-    private JavaMailSender mailSender;
+    private MailPort mailPort;
     @Mock
     private CreateMailDtoValidator createMailDtoValidator;
     @Mock
@@ -44,7 +38,6 @@ class EmailServiceTest {
     private EmailService emailService;
 
     private CreateMailDto validMail;
-    private MimeMessage mimeMessage;
 
     @BeforeEach
     void setUp() {
@@ -53,8 +46,6 @@ class EmailServiceTest {
                 .title("Hello")
                 .htmlContent("<p>hi</p>")
                 .build();
-
-        mimeMessage = new MimeMessage(Session.getInstance(new Properties()));
     }
 
     @Test
@@ -70,14 +61,13 @@ class EmailServiceTest {
                         .hasMessageContaining("Mail is not valid"))
                 .verify();
 
-        verify(mailSender, never()).send(any(MimeMessage.class));
+        verify(mailPort, never()).send(any(CreateMailDto.class));
     }
 
     @Test
     @DisplayName("sendSingleEmail — happy path returns MailDto and sends mime message")
     void sendSingleEmail_whenValid_shouldReturnMailDto() {
         when(createMailDtoValidator.validate(validMail)).thenReturn(new HashMap<>());
-        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
 
         StepVerifier.create(emailService.sendSingleEmail(validMail))
                 .assertNext(dto -> {
@@ -86,7 +76,7 @@ class EmailServiceTest {
                 })
                 .verifyComplete();
 
-        verify(mailSender, times(1)).send(any(MimeMessage.class));
+        verify(mailPort, times(1)).send(any(CreateMailDto.class));
     }
 
     @Test
@@ -104,8 +94,7 @@ class EmailServiceTest {
                 .verify();
 
         // No bulk send should have happened.
-        verify(mailSender, never()).send(any(MimeMessage.class));
-        verify(mailSender, never()).createMimeMessage();
+        verify(mailPort, never()).send(any(CreateMailDto.class));
     }
 
     @Test
@@ -115,15 +104,13 @@ class EmailServiceTest {
                 .to("user2@example.com").title("T2").htmlContent("<p>2</p>").build();
         CreateMailsDto bulk = CreateMailsDto.builder().mails(List.of(validMail, another)).build();
 
-        when(createMailsDtoValidator.validate(bulk)).thenReturn(new HashMap<String, Object>());
-        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        when(createMailsDtoValidator.validate(bulk)).thenReturn(new HashMap<>());
 
         StepVerifier.create(emailService.sendMultipleEmails(bulk))
                 .assertNext(dto -> assertThat(dto.getTo()).isEqualTo("user@example.com"))
                 .assertNext(dto -> assertThat(dto.getTo()).isEqualTo("user2@example.com"))
                 .verifyComplete();
 
-        // Bulk path uses send(MimeMessage...) varargs — verify createMimeMessage was used twice.
-        verify(mailSender, times(2)).createMimeMessage();
+        verify(mailPort, times(1)).sendBulk(anyList());
     }
 }

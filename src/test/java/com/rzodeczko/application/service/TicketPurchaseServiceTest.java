@@ -1,28 +1,21 @@
-package com.app.application.service;
+package com.rzodeczko.application.service;
 
-import com.app.application.dto.CreateTicketPurchaseDto;
-import com.app.application.exception.TicketOrderServiceException;
-import com.app.application.exception.TicketPurchaseServiceException;
-import com.app.application.validator.CreateTicketPurchaseDtoValidator;
-import com.app.domain.cinema.Cinema;
-import com.app.domain.cinema.CinemaRepository;
-import com.app.domain.cinema_hall.CinemaHall;
-import com.app.domain.cinema_hall.CinemaHallRepository;
-import com.app.domain.repository.CityRepository;
-import com.app.domain.movie.Movie;
-import com.app.domain.movie.MovieRepository;
-import com.app.domain.movie_emission.MovieEmission;
-import com.app.domain.movie_emission.MovieEmissionRepository;
-import com.app.domain.security.User;
-import com.app.domain.security.UserRepository;
-import com.app.domain.ticket.TicketRepository;
-import com.app.domain.ticket_order.TicketOrder;
-import com.app.domain.ticket_order.TicketOrderRepository;
-import com.app.domain.ticket_order.enums.TicketGroupType;
-import com.app.domain.ticket_order.enums.TicketOrderStatus;
-import com.app.domain.ticket_purchase.TicketPurchase;
-import com.app.domain.ticket_purchase.TicketPurchaseRepository;
-import com.app.domain.vo.Money;
+import com.rzodeczko.application.dto.CreateTicketPurchaseDto;
+import com.rzodeczko.application.exception.TicketOrderServiceException;
+import com.rzodeczko.application.exception.TicketPurchaseServiceException;
+import com.rzodeczko.application.port.out.*;
+import com.rzodeczko.application.service.TicketPurchaseService;
+import com.rzodeczko.application.validator.CreateTicketPurchaseDtoValidator;
+import com.rzodeczko.domain.cinema.Cinema;
+import com.rzodeczko.domain.cinema_hall.CinemaHall;
+import com.rzodeczko.domain.movie.Movie;
+import com.rzodeczko.domain.movie_emission.MovieEmission;
+import com.rzodeczko.domain.security.User;
+import com.rzodeczko.domain.ticket_order.TicketOrder;
+import com.rzodeczko.domain.ticket_order.enums.TicketGroupType;
+import com.rzodeczko.domain.ticket_order.enums.TicketOrderStatus;
+import com.rzodeczko.domain.ticket_purchase.TicketPurchase;
+import com.rzodeczko.domain.vo.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +24,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -45,23 +37,29 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TicketPurchaseServiceTest {
 
-    @Mock private TicketPurchaseRepository ticketPurchaseRepository;
-    @Mock private CreateTicketPurchaseDtoValidator createTicketPurchaseDtoValidator;
-    @Mock private MovieEmissionRepository movieEmissionRepository;
-    @Mock private MovieRepository movieRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private CinemaHallRepository cinemaHallRepository;
-    @Mock private TicketRepository ticketRepository;
-    @Mock private CityRepository cityRepository;
-    @Mock private TicketOrderRepository ticketOrderRepository;
-    @Mock private CinemaRepository cinemaRepository;
-    @Mock private TransactionalOperator transactionalOperator;
+    @Mock
+    private TicketPurchasePort ticketPurchasePort;
+    @Mock
+    private CreateTicketPurchaseDtoValidator createTicketPurchaseDtoValidator;
+    @Mock
+    private MovieEmissionPort movieEmissionPort;
+    @Mock
+    private MoviePort moviePort;
+    @Mock
+    private CinemaHallPort cinemaHallPort;
+    @Mock
+    private CityPort cityPort;
+    @Mock
+    private TicketOrderPort ticketOrderPort;
+    @Mock
+    private CinemaPort cinemaPort;
+    @Mock
+    private TransactionPort transactionPort;
 
     @InjectMocks
     private TicketPurchaseService ticketPurchaseService;
@@ -89,7 +87,7 @@ class TicketPurchaseServiceTest {
                 .id("tp-1").movieEmission(emission).user(user)
                 .tickets(List.of()).purchaseDate(LocalDate.now()).build();
 
-        Mockito.lenient().when(transactionalOperator.transactional(any(Mono.class)))
+        Mockito.lenient().when(transactionPort.inTransaction(any(Mono.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
     }
 
@@ -115,7 +113,7 @@ class TicketPurchaseServiceTest {
                 .ticketGroupType(TicketGroupType.NORMAL).build();
 
         when(createTicketPurchaseDtoValidator.validate(dto)).thenReturn(new HashMap<>());
-        when(movieEmissionRepository.findById("missing")).thenReturn(Mono.empty());
+        when(movieEmissionPort.findById("missing")).thenReturn(Mono.empty());
 
         StepVerifier.create(ticketPurchaseService.purchaseTicket(Mono.empty(), dto))
                 .expectErrorSatisfies(ex -> assertThat(ex)
@@ -137,12 +135,12 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("purchaseTicketFromOrder — emits error when order not found")
     void purchaseTicketFromOrder_whenOrderNotFound_shouldEmitError() {
-        when(ticketOrderRepository.findById("missing")).thenReturn(Mono.empty());
+        when(ticketOrderPort.findById("missing")).thenReturn(Mono.empty());
 
         StepVerifier.create(ticketPurchaseService.purchaseTicketFromOrder("alice", "missing"))
                 .expectErrorSatisfies(ex -> assertThat(ex)
                         .isInstanceOf(TicketPurchaseServiceException.class)
-                        .hasMessageContaining("missing"))
+                        .hasMessageContaining("No ticket order with id"))
                 .verify();
     }
 
@@ -154,7 +152,7 @@ class TicketPurchaseServiceTest {
                 .movieEmission(emission).tickets(List.of())
                 .ticketOrderStatus(TicketOrderStatus.ORDERED)
                 .ticketGroupType(TicketGroupType.NORMAL).build();
-        when(ticketOrderRepository.findById("order-1")).thenReturn(Mono.just(order));
+        when(ticketOrderPort.findById("order-1")).thenReturn(Mono.just(order));
 
         StepVerifier.create(ticketPurchaseService.purchaseTicketFromOrder("alice", "order-1"))
                 .expectErrorSatisfies(ex -> assertThat(ex)
@@ -175,7 +173,7 @@ class TicketPurchaseServiceTest {
                 .id("order-1").user(user).movieEmission(past).tickets(List.of())
                 .ticketOrderStatus(TicketOrderStatus.ORDERED)
                 .ticketGroupType(TicketGroupType.NORMAL).build();
-        when(ticketOrderRepository.findById("order-1")).thenReturn(Mono.just(order));
+        when(ticketOrderPort.findById("order-1")).thenReturn(Mono.just(order));
 
         StepVerifier.create(ticketPurchaseService.purchaseTicketFromOrder("alice", "order-1"))
                 .expectErrorSatisfies(ex -> assertThat(ex)
@@ -187,7 +185,7 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchasesByUser — emits purchases for user")
     void getAllTicketPurchasesByUser_shouldEmitPurchases() {
-        when(ticketPurchaseRepository.findAllByUserUsername("alice"))
+        when(ticketPurchasePort.findAllByUserUsername("alice"))
                 .thenReturn(Flux.just(samplePurchase));
 
         StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByUser("alice"))
@@ -198,7 +196,7 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchasesByUserAndCity — emits error when city name is null")
     void getAllTicketPurchasesByUserAndCity_whenNullCity_shouldEmitError() {
-        when(ticketPurchaseRepository.findAllByUserUsername("alice"))
+        when(ticketPurchasePort.findAllByUserUsername("alice"))
                 .thenReturn(Flux.just(samplePurchase));
 
         StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByUserAndCity("alice", null))
@@ -209,9 +207,9 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchasesByUserAndCity — emits error when city not found")
     void getAllTicketPurchasesByUserAndCity_whenCityMissing_shouldEmitError() {
-        when(ticketPurchaseRepository.findAllByUserUsername("alice"))
+        when(ticketPurchasePort.findAllByUserUsername("alice"))
                 .thenReturn(Flux.just(samplePurchase));
-        when(cityRepository.findByName("Unknown")).thenReturn(Mono.empty());
+        when(cityPort.findByName("Unknown")).thenReturn(Mono.empty());
 
         StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByUserAndCity("alice", "Unknown"))
                 .expectError(TicketPurchaseServiceException.class)
@@ -229,7 +227,7 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchaseByCinema — emits error when cinema not found")
     void getAllTicketPurchaseByCinema_whenNotFound_shouldEmitError() {
-        when(cinemaRepository.findById("c-missing")).thenReturn(Mono.empty());
+        when(cinemaPort.findById("c-missing")).thenReturn(Mono.empty());
 
         StepVerifier.create(ticketPurchaseService.getAllTicketPurchaseByCinema("c-missing"))
                 .expectError(TicketPurchaseServiceException.class)
@@ -243,8 +241,8 @@ class TicketPurchaseServiceTest {
                 .cinemaHalls(List.of(CinemaHall.builder().id("hall-1")
                         .positions(List.of()).movieEmissions(List.of()).build()))
                 .build();
-        when(cinemaRepository.findById("c-1")).thenReturn(Mono.just(cinema));
-        when(ticketPurchaseRepository.findAllByCinemaHallsIds(anyList()))
+        when(cinemaPort.findById("c-1")).thenReturn(Mono.just(cinema));
+        when(ticketPurchasePort.findAllByCinemaHallsIds(anyList()))
                 .thenReturn(Flux.just(samplePurchase));
 
         StepVerifier.create(ticketPurchaseService.getAllTicketPurchaseByCinema("c-1"))
@@ -285,7 +283,7 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchasesByDate — happy path with both dates uses between query")
     void getAllTicketPurchasesByDate_whenBothValid_shouldUseBetween() {
-        when(ticketPurchaseRepository.findAllByPurchaseDateBetween(
+        when(ticketPurchasePort.findAllByPurchaseDateBetween(
                 LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 10)))
                 .thenReturn(Flux.just(samplePurchase));
 
@@ -298,7 +296,7 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchasesByDate — only from uses 'after' query")
     void getAllTicketPurchasesByDate_whenOnlyFrom_shouldUseAfter() {
-        when(ticketPurchaseRepository.findAllByPurchaseDateAfter(LocalDate.of(2025, 12, 1)))
+        when(ticketPurchasePort.findAllByPurchaseDateAfter(LocalDate.of(2025, 12, 1)))
                 .thenReturn(Flux.just(samplePurchase));
 
         StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByDate(
@@ -310,7 +308,7 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchasesWithMovieId — emits error when movie not found")
     void getAllTicketPurchasesWithMovieId_whenMovieMissing_shouldEmitError() {
-        when(movieRepository.findById("missing")).thenReturn(Mono.empty());
+        when(moviePort.findById("missing")).thenReturn(Mono.empty());
 
         StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesWithMovieId("missing"))
                 .expectError(TicketPurchaseServiceException.class)
@@ -320,8 +318,8 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchasesWithMovieId — emits purchases when movie found")
     void getAllTicketPurchasesWithMovieId_whenMovieFound_shouldEmit() {
-        when(movieRepository.findById("movie-1")).thenReturn(Mono.just(movie));
-        when(ticketPurchaseRepository.findAllByMovieId("movie-1"))
+        when(moviePort.findById("movie-1")).thenReturn(Mono.just(movie));
+        when(ticketPurchasePort.findAllByMovieId("movie-1"))
                 .thenReturn(Flux.just(samplePurchase));
 
         StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesWithMovieId("movie-1"))
@@ -332,7 +330,7 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchasesByCinemaHallId — emits error when hall not found")
     void getAllTicketPurchasesByCinemaHallId_whenHallMissing_shouldEmitError() {
-        when(cinemaHallRepository.findById("missing")).thenReturn(Mono.empty());
+        when(cinemaHallPort.findById("missing")).thenReturn(Mono.empty());
 
         StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByCinemaHallId("missing"))
                 .expectError(TicketPurchaseServiceException.class)
@@ -342,7 +340,7 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchases — emits all purchases")
     void getAllTicketPurchases_shouldEmit() {
-        when(ticketPurchaseRepository.findAll()).thenReturn(Flux.just(samplePurchase));
+        when(ticketPurchasePort.findAll()).thenReturn(Flux.just(samplePurchase));
 
         StepVerifier.create(ticketPurchaseService.getAllTicketPurchases())
                 .assertNext(dto -> assertThat(dto.getId()).isEqualTo("tp-1"))

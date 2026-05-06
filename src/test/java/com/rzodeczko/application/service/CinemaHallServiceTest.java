@@ -1,11 +1,13 @@
-package com.app.application.service;
+package com.rzodeczko.application.service;
 
-import com.app.application.dto.AddCinemaHallToCinemaDto;
-import com.app.application.exception.CinemaHallServiceException;
-import com.app.domain.cinema.Cinema;
-import com.app.domain.cinema.CinemaRepository;
-import com.app.domain.cinema_hall.CinemaHall;
-import com.app.domain.cinema_hall.CinemaHallRepository;
+import com.rzodeczko.application.dto.AddCinemaHallToCinemaDto;
+import com.rzodeczko.application.exception.CinemaHallServiceException;
+import com.rzodeczko.application.port.out.CinemaHallPort;
+import com.rzodeczko.application.port.out.CinemaPort;
+import com.rzodeczko.application.port.out.TransactionPort;
+import com.rzodeczko.application.service.CinemaHallService;
+import com.rzodeczko.domain.cinema.Cinema;
+import com.rzodeczko.domain.cinema_hall.CinemaHall;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -29,11 +30,11 @@ import static org.mockito.Mockito.*;
 class CinemaHallServiceTest {
 
     @Mock
-    private CinemaHallRepository cinemaHallRepository;
+    private CinemaHallPort cinemaHallRepository;
     @Mock
-    private CinemaRepository cinemaRepository;
+    private CinemaPort cinemaRepository;
     @Mock
-    private TransactionalOperator transactionalOperator;
+    private TransactionPort transactionPort;
 
     @InjectMocks
     private CinemaHallService cinemaHallService;
@@ -73,7 +74,7 @@ class CinemaHallServiceTest {
             when(cinemaRepository.findById("cinema-1")).thenReturn(Mono.just(cinema));
             when(cinemaHallRepository.addOrUpdate(any())).thenReturn(Mono.just(cinemaHall));
             when(cinemaRepository.addOrUpdate(any())).thenReturn(Mono.just(cinema));
-            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
             StepVerifier.create(cinemaHallService.addCinemaHallToCinema(Mono.just(dto)))
                     .assertNext(result -> assertThat(result.getId()).isEqualTo("hall-1"))
@@ -93,7 +94,7 @@ class CinemaHallServiceTest {
                     .colNo(4)
                     .build();
 
-            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
             StepVerifier.create(cinemaHallService.addCinemaHallToCinema(Mono.just(dto)))
                     .expectError(CinemaHallServiceException.class)
@@ -112,7 +113,7 @@ class CinemaHallServiceTest {
                     .build();
 
             when(cinemaRepository.findById("no-cinema")).thenReturn(Mono.empty());
-            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
             StepVerifier.create(cinemaHallService.addCinemaHallToCinema(Mono.just(dto)))
                     .expectErrorSatisfies(ex -> {
@@ -135,7 +136,7 @@ class CinemaHallServiceTest {
             when(cinemaHallRepository.addOrUpdate(any(CinemaHall.class)))
                     .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
             when(cinemaRepository.addOrUpdate(any())).thenReturn(Mono.just(cinema));
-            when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
             var captor = org.mockito.ArgumentCaptor.forClass(CinemaHall.class);
 
