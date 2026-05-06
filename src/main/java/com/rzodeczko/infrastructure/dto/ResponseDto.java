@@ -1,6 +1,7 @@
-package com.rzodeczko.application.dto;
+package com.rzodeczko.infrastructure.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.rzodeczko.application.dto.ErrorMessageDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

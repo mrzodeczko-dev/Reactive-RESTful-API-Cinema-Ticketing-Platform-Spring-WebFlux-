@@ -18,13 +18,6 @@ public class CreateCinemaHallDto {
     private Integer rowNo;
     private Integer colNo;
 
-    public CinemaHall toEntity() {
-        return CinemaHall.builder()
-                .movieEmissions(new ArrayList<>())
-                .positions(ServiceUtils.buildPositions(rowNo, colNo))
-                .build();
-    }
-
     public CinemaHall toEntity(String cinemaId) {
         return CinemaHall.builder()
                 .cinemaId(cinemaId)

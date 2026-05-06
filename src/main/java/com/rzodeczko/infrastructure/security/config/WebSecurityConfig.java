@@ -1,7 +1,7 @@
 package com.rzodeczko.infrastructure.security.config;
 
 import com.rzodeczko.application.dto.ErrorMessageDto;
-import com.rzodeczko.application.dto.ResponseDto;
+import com.rzodeczko.infrastructure.dto.ResponseDto;
 import com.rzodeczko.infrastructure.security.AuthenticationManager;
 import com.rzodeczko.infrastructure.security.SecurityContextRepository;
 import lombok.RequiredArgsConstructor;
