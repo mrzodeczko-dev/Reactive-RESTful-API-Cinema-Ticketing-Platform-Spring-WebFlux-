@@ -753,7 +753,6 @@ Final JDK bump: `release` set to 25 in `maven-compiler-plugin`, base image switc
 
 Restructured the codebase around a hexagonal-style boundary:
 
-- Renamed the root package from `com.app` to `com.rzodeczko`.
 - Split out a dedicated `presentation` layer for HTTP routing (previously `infrastructure.routing`).
 - Pulled persistence concerns out of the domain: introduced separate `*Document` classes under `infrastructure.persistence.document` (carrying `@Document` and Lombok annotations), plus mappers in `infrastructure.persistence.mapper`. The `domain` package is now free of Spring, Mongo, and Lombok imports.
 - Defined a set of output ports under `application.port.out` (`CinemaPort`, `MailPort`, `TransactionPort`, `PasswordEncoderPort`, …), implemented by adapters in `infrastructure.*`. Application services depend on ports rather than Spring Data interfaces directly.
@@ -770,4 +769,6 @@ Container image upgraded to **`mongo:8.3.1`** (from the legacy 4.4.4 used during
 
 [↑ Back to top](#toc)
 
-Project kept on the **Spring Boot 4.0.6 / Java 25** baseline for reference and portfolio purposes.
+Designed and implemented by **Michał Rzodeczko**.  
+Other projects: [github.com/mrzodeczko-dev](https://github.com/mrzodeczko-dev)
+
