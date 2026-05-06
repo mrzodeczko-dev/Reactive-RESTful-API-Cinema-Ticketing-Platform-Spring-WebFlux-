@@ -319,15 +319,24 @@ The full surface is defined as functional `RouterFunction` beans in `com.rzodecz
 - **Docker** and **Docker Compose v2**
 - **Java 25** + **Maven 3.9+** _(only if running outside containers)_
 
-### 1. Provide the SMTP password
+### 1. Provide environment variables
 
-Email sending requires an SMTP credential. The Compose file expects `MAIL_PASSWORD` to be present in the environment (or in a `.env` file next to `docker-compose.yml`):
+The repository ships with a `.env.example` template listing every variable that `docker-compose.yml` and `application.yml` consume. Copy it to `.env` next to `docker-compose.yml` and fill in real values:
 
 ```bash
-echo "MAIL_PASSWORD=your-smtp-app-password" > .env
+cp .env.example .env
+# then edit .env and replace the placeholder values
 ```
 
-> The default SMTP host (`smtp.gmail.com`) and username are configured in `application.yml`. Override them there if you don't want to use the bundled Gmail relay.
+The `.env` file **must** sit next to `docker-compose.yml` (Compose loads it automatically from the project root) and **must not** be committed — it is already covered by `.gitignore`.
+
+Required variables (see `.env.example`):
+
+- `MAIL_USERNAME`, `MAIL_PASSWORD` — SMTP credentials used by `JavaMailSender` (Gmail app password by default).
+- `ADMIN_USERNAME`, `ADMIN_PASSWORD` — bootstrap admin account injected into `application.yml`.
+- `MONGO1_PORT`, `MONGO2_PORT`, `MONGO3_PORT` — host ports published for the three Mongo replica-set nodes (the in-container ports `30001`/`30002`/`30003` are fixed by the `--port` flags in `docker-compose.yml`).
+
+> The default SMTP host (`smtp.gmail.com`) is configured in `application.yml`. Override it there if you don't want to use the bundled Gmail relay.
 
 ### 2. Build the application
 
@@ -355,18 +364,23 @@ This brings up:
 | API | `http://localhost:8080` |
 | Swagger UI | `http://localhost:8080/docs` |
 | OpenAPI JSON | `http://localhost:8080/v3/api-docs` |
-| MongoDB primary | `localhost:30001` |
-| MongoDB secondary | `localhost:30002`, `localhost:30003` |
+| Actuator health | `http://localhost:8080/actuator/health` |
+| MongoDB nodes | `localhost:${MONGO1_PORT}`, `localhost:${MONGO2_PORT}`, `localhost:${MONGO3_PORT}` (as set in `.env`) |
 
 A quick smoke check:
 
 ```bash
-# Replica set is healthy
+# Replica set is healthy (in-container Mongo port is always 30001 on mongo1)
 docker exec -it mongo1 mongosh --port 30001 --eval "rs.status().ok"
 
-# API up
+# API up — Spring Boot Actuator health endpoint
+curl -i http://localhost:8080/actuator/health
+
+# OpenAPI document is being served
 curl -i http://localhost:8080/v3/api-docs | head
 ```
+
+The application exposes Spring Boot Actuator with only the `health` endpoint enabled (`management.endpoints.web.exposure.include: health` in `application.yml`); a healthy response returns HTTP `200` with `{"status":"UP"}`. The `app` service also defines a Docker Compose healthcheck that calls the same endpoint with `wget` every 15 seconds, waits up to 5 seconds, retries 5 times, and gives the application a 60-second start period.
 
 ---
 
@@ -388,11 +402,19 @@ Each functional route in `AppRouting` is annotated with `@RouterOperation` so th
 
 [↑ Back to top](#toc)
 
+A `.env.example` file at the repository root lists every variable the stack expects. Copy it to `.env` (next to `docker-compose.yml`) and fill in real values; the `.env` file is git-ignored and must never be committed.
+
 | Variable | Required | Description | Default |
 |----------|----------|-------------|---------|
+| `MAIL_USERNAME` | yes | SMTP username consumed by `application.yml` (`spring.mail.username`) | — |
 | `MAIL_PASSWORD` | yes | SMTP password used by `JavaMailSender` (Gmail app password by default) | — |
+| `ADMIN_USERNAME` | yes (in Compose) | Bootstrap admin account injected into `application.yml` (`adminusername`) | `admin` (when running outside Compose) |
+| `ADMIN_PASSWORD` | yes (in Compose) | Bootstrap admin password injected into `application.yml` (`adminpassword`) | `admin` (when running outside Compose) |
+| `MONGO1_PORT` | yes | Host port published for `mongo1` (mapped to in-container `30001`) | `30001` (fallback in `application.yml`) |
+| `MONGO2_PORT` | yes | Host port published for `mongo2` (mapped to in-container `30002`) | `30002` (fallback in `application.yml`) |
+| `MONGO3_PORT` | yes | Host port published for `mongo3` (mapped to in-container `30003`) | `30003` (fallback in `application.yml`) |
 
-Application-level configuration (Mongo URI, JWT lifetimes, admin bootstrap credentials, springdoc paths, Mongock migration package) lives in `src/main/resources/application.yml`. Override via standard Spring Boot mechanisms (env vars, `--spring.config.additional-location`, etc.).
+Application-level configuration (Mongo URI, JWT lifetimes, springdoc paths, Mongock migration package, Actuator exposure) lives in `src/main/resources/application.yml`. Override via standard Spring Boot mechanisms (env vars, `--spring.config.additional-location`, etc.).
 
 ---
 
@@ -771,4 +793,3 @@ Container image upgraded to **`mongo:8.3.1`** (from the legacy 4.4.4 used during
 
 Designed and implemented by **Michał Rzodeczko**.  
 Other projects: [github.com/mrzodeczko-dev](https://github.com/mrzodeczko-dev)
-
