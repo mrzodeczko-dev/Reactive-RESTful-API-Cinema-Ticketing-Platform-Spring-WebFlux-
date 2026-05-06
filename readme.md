@@ -392,3 +392,13 @@ The second phase was a full Spring Boot 3 migration. Spring Boot 3 requires Java
 - **JJWT 0.11.x → 0.12.6** — the entire JJWT builder and parser API was deprecated in 0.11 and removed in 0.12. All builder calls were updated to the new fluent API (`subject()`, `expiration()`, `issuedAt()` instead of `setSubject()` etc.), `parserBuilder()` was replaced with `parser()`, `parseClaimsJws()` with `parseSignedClaims()`, and `getBody()` with `getPayload()`. The `SecretKey` bean was updated from `Keys.secretKeyFor(SignatureAlgorithm.HS512)` to `Jwts.SIG.HS512.key().build()`.
 - **MongoDB custom converter** — `PositionMapToBSONObjectConverter` was returning `org.bson.BSONObject` which is no longer recognised as a store-supported type in Spring Data MongoDB 4.x. The converter was updated to return `org.bson.Document` instead.
 - **springdoc-openapi 1.x → 2.8.13** — the dependency was replaced with `springdoc-openapi-starter-webflux-ui` and `springdoc-openapi-starter-webflux-api`. The Swagger UI security permit-list in `WebSecurityConfig` was expanded to cover the new default paths (`/swagger-ui/**`, `/swagger-ui.html`, `/v3/api-docs`) used by springdoc 2.x, and `config-url` / `url` properties were added to `application.yml` to correctly wire the UI to the API spec.
+
+### Phase 3 — Spring Boot 3.5.x / Java 21 → Spring Boot 4.0.6 / Java 25
+
+- **Java 25** — bumped `java.version`, compiler target, and base Docker image to `eclipse-temurin:25`
+- **Lombok 1.18.34 → 1.18.38** — 1.18.34 crashes on Java 24+ (`TypeTag :: UNKNOWN`); 1.18.38 is the first release with JDK 24/25 support
+- **Jackson 2 → 3** — SB4 ships Jackson 3 (`tools.jackson` group); replaced all `com.fasterxml.jackson.*` imports and `JsonProcessingException` → `JacksonException` in `GlobalExceptionHandler`, `GlobalWebExceptionHandler`, `WebSecurityConfig`; updated `jackson-dataformat-yaml` artifact group accordingly
+- **`ErrorWebExceptionHandler` removed** — `org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler` no longer exists; replaced with `org.springframework.web.server.WebExceptionHandler`; `setRawStatusCode(int)` → `setStatusCode(HttpStatus)`
+- **MongoDB config prefix** — `spring.data.mongodb.*` deprecated; migrated to `spring.mongodb.uri` with database name inlined in the URI
+- **AOP starter** — `spring-aspects` replaced with `spring-boot-starter-aspectj` (new dedicated starter in SB4)
+- **`pom.xml` cleanup** — removed obsolete `com.github.cloudyrock.mongock` BOM, dropped `junit-vintage-engine` exclusion (no longer shipped by SB4)
