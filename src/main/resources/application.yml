@@ -2,24 +2,23 @@ server:
   port: 8080
 
 spring:
-    mongodb:
-      uri: mongodb://mongo1:30001,mongo2:30002,mongo3:30003/cinema_db?replicaSet=rs0
+  mongodb:
+    uri: mongodb://mongo1:${MONGO1_PORT:30001},mongo2:${MONGO2_PORT:30002},mongo3:${MONGO3_PORT:30003}/cinema_db?replicaSet=rs0
 
-    mail:
-      host: smtp.gmail.com
-      username: firelight.code@gmail.com
-      password: ${MAIL_PASSWORD}
-      port: 587
-      properties:
-        mail:
-          smtp:
-            auth: true
-            starttls:
-              enable: true
+  mail:
+    host: smtp.gmail.com
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    port: 587
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
-adminusername: admin123
-adminpassword: password@1
-
+mongock:
+  migration-scan-package: com.app.infrastructure.mongo.initscripts
 
 jwt:
   token:
@@ -39,6 +38,14 @@ springdoc:
     path: /docs
     config-url: /v3/api-docs/swagger-config
     url: /v3/api-docs
-mongock:
-  migration-scan-package: com.app.infrastructure.mongo.initscripts
 
+
+adminusername: ${ADMIN_USERNAME:admin}
+adminpassword: ${ADMIN_PASSWORD:admin}
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
