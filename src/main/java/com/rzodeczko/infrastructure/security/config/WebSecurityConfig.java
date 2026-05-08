@@ -1,7 +1,6 @@
 package com.rzodeczko.infrastructure.security.config;
 
 import com.rzodeczko.application.dto.ErrorMessageDto;
-import com.rzodeczko.infrastructure.dto.ResponseDto;
 import com.rzodeczko.infrastructure.security.AuthenticationManager;
 import com.rzodeczko.infrastructure.security.SecurityContextRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,11 +43,10 @@ public class WebSecurityConfig {
                         .getResponse()
                         .writeWith(Mono.just(dataBufferFactory.wrap(
                                 objectMapper.writeValueAsBytes(
-                                        ResponseDto.builder()
-                                                .error(ErrorMessageDto.builder()
-                                                        .message(e.getMessage())
-                                                        .build())
-                                                .build()))));
+                                        ErrorMessageDto.builder()
+                                                .message(e.getMessage())
+                                                .build())
+                        )));
             } catch (JacksonException exception) {
                 log.error(exception.getMessage(), exception);
             }
@@ -69,13 +67,12 @@ public class WebSecurityConfig {
                             .map(principal -> {
                                 try {
                                     return dataBufferFactory
-                                            .wrap(objectMapper.writeValueAsBytes(ResponseDto
-                                                    .builder()
-                                                    .error(ErrorMessageDto.builder()
+                                            .wrap(objectMapper.writeValueAsBytes(
+                                                    ErrorMessageDto.builder()
                                                             .message("%s for username: %s"
                                                                     .formatted(e.getMessage(), principal.getName()))
                                                             .build())
-                                                    .build()));
+                                            );
                                 } catch (JacksonException exception) {
                                     log.error(exception.getMessage(), exception);
                                 }

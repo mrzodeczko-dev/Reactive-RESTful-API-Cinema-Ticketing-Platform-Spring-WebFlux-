@@ -1,4 +1,4 @@
-package com.rzodeczko.presentation.routing.exception;
+package com.rzodeczko.presentation.exception;
 
 import com.rzodeczko.application.dto.ErrorMessageDto;
 import com.rzodeczko.application.dto.ResponseErrorDto;
