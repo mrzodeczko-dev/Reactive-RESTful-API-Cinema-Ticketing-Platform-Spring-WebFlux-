@@ -84,7 +84,7 @@ services:
             const current = rs.conf().members.map(m => m.host).sort().join(',');
             const want    = desired.members.map(m => m.host).sort().join(',');
             if (current !== want) {
-              print('Reconfiguring replica set members (current=' + current + ', want=' + want + ')...');
+              print('Reconfiguring replica set members...');
               const cfg = rs.conf();
               cfg.members = desired.members;
               rs.reconfig(cfg, { force: true });
@@ -104,6 +104,24 @@ services:
     networks:
       - net
 
+  liquibase-mongo:
+    build:
+      context: ./db
+      dockerfile: Dockerfile.liquibase
+    container_name: liquibase-mongo
+    restart: "no"
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+    command:
+      - --search-path=/liquibase/changelog
+      - --changelog-file=master.yaml
+      - --url=mongodb://${MONGO1_HOST}:${MONGO_PORT},${MONGO2_HOST}:${MONGO_PORT},${MONGO3_HOST}:${MONGO_PORT}/${MONGO_DB_NAME}?replicaSet=${RS_NAME}
+      - --log-level=info
+      - update
+    networks:
+      - net
+
   app:
     build:
       context: ./
@@ -118,6 +136,8 @@ services:
       start_period: 60s
     depends_on:
       mongo-init:
+        condition: service_completed_successfully
+      liquibase-mongo:
         condition: service_completed_successfully
     ports:
       - "${APP_PORT}:${APP_PORT}"

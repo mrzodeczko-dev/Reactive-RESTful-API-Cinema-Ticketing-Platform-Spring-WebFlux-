@@ -1,0 +1,11 @@
+# Resolve liquibase-mongodb + mongo driver + transitives via Maven.
+FROM maven:3.9-eclipse-temurin-17 AS deps
+COPY liquibase-deps.pom.xml /tmp/pom.xml
+RUN mvn -B -q -f /tmp/pom.xml dependency:copy-dependencies -DoutputDirectory=/tmp/lib
+
+# Liquibase image with extension JARs + changelog baked in.
+FROM liquibase/liquibase:4.31.0
+USER root
+COPY --from=deps /tmp/lib/*.jar /liquibase/lib/
+COPY changelog /liquibase/changelog
+USER liquibase

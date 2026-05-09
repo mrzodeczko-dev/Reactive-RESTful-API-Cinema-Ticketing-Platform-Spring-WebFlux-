@@ -9,7 +9,7 @@ spring:
     database: ${MONGO_DB_NAME}
   data:
     mongodb:
-      auto-index-creation: true
+      auto-index-creation: false # Disable auto-indexing, manage indexes via changelogs
 
   mail:
     host: smtp.gmail.com

@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-users-username-unique
+      author: rzodeczko-dev
+      comment: "Unique index on users.username — prevents duplicate logins"
+      changes:
+        - createIndex:
+            collectionName: users
+            keys: '{ username: 1 }'
+            options: '{ unique: true, name: "users_username_unique" }'
+
+  - changeSet:
+      id: 002-users-email-unique-partial
+      author: rzodeczko-dev
+      comment: "Unique index on users.email, partial — admin documents without email are skipped"
+      changes:
+        - createIndex:
+            collectionName: users
+            keys: '{ email: 1 }'
+            options: '{ unique: true, name: "users_email_unique", partialFilterExpression: { email: { $type: "string" } } }'
