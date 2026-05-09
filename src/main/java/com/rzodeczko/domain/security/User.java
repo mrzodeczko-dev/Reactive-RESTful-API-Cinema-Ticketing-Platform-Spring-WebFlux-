@@ -25,12 +25,29 @@ public final class User extends BaseUser {
         this.email = email;
     }
 
-    public LocalDate getBirthDate() { return birthDate; }
-    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
-    public List<Movie> getFavoriteMovies() { return favoriteMovies; }
-    public void setFavoriteMovies(List<Movie> favoriteMovies) { this.favoriteMovies = favoriteMovies; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public List<Movie> getFavoriteMovies() {
+        return favoriteMovies;
+    }
+
+    public void setFavoriteMovies(List<Movie> favoriteMovies) {
+        this.favoriteMovies = favoriteMovies;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
     public static RegularUserBuilder builder() {
         return new RegularUserBuilder();
@@ -51,11 +68,33 @@ public final class User extends BaseUser {
         private LocalDate birthDate;
         private List<Movie> favoriteMovies;
 
-        public RegularUserBuilder username(String username) { this.username = username; return this; }
-        public RegularUserBuilder password(String password) { this.password = password; return this; }
-        public RegularUserBuilder email(String email) { this.email = email; return this; }
-        public RegularUserBuilder birthDate(LocalDate birthDate) { this.birthDate = birthDate; return this; }
-        public RegularUserBuilder favoriteMovies(List<Movie> favoriteMovies) { this.favoriteMovies = favoriteMovies; return this; }
-        public User build() { return new User(username, password, birthDate, favoriteMovies, email); }
+        public RegularUserBuilder username(String username) {
+            this.username = username;
+            return this;
+        }
+
+        public RegularUserBuilder password(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public RegularUserBuilder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public RegularUserBuilder birthDate(LocalDate birthDate) {
+            this.birthDate = birthDate;
+            return this;
+        }
+
+        public RegularUserBuilder favoriteMovies(List<Movie> favoriteMovies) {
+            this.favoriteMovies = favoriteMovies;
+            return this;
+        }
+
+        public User build() {
+            return new User(username, password, birthDate, favoriteMovies, email);
+        }
     }
 }

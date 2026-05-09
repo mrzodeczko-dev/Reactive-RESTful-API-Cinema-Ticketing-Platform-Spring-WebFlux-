@@ -18,7 +18,7 @@ public class SecurityContextRepository implements ServerSecurityContextRepositor
 
     @Override
     public Mono<Void> save(ServerWebExchange serverWebExchange, SecurityContext securityContext) {
-        return Mono.error(() -> new UnsupportedOperationException("method not supported"));
+        return Mono.empty();
     }
 
     @Override

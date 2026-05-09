@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -37,23 +38,25 @@ public class LoginHandler {
     @Loggable
     @Operation(summary = "POST login", requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = AuthenticationDto.class))))
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Success", content = {
+            @ApiResponse(responseCode = "200", description = "Success", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = TokensDto.class))
             }),
-            @ApiResponse(responseCode = "500", description = "Error", content = {
+            @ApiResponse(responseCode = "401", description = "Authentication failed", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
+            }),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })
-
     })
     public Mono<ServerResponse> login(ServerRequest serverRequest) {
 
         return serverRequest.bodyToMono(AuthenticationDto.class)
                 .switchIfEmpty(Mono.error(() -> new AuthenticationException("Provide request body")))
-                .map(dto -> {
-                    if (isNull(dto.getPassword()) || isNull(dto.getUsername())) {
-                        throw new AuthenticationException("Provide password and username");
+                .flatMap(dto -> {
+                    if (!StringUtils.hasText(dto.getPassword()) || !StringUtils.hasText(dto.getUsername())) {
+                        return Mono.error(() -> new AuthenticationException("Provide password and username"));
                     }
-                    return dto;
+                    return Mono.just(dto);
                 })
                 .flatMap(authenticationDto -> appUserDetailsService
                         .findByUsername(authenticationDto.getUsername())
@@ -61,11 +64,11 @@ public class LoginHandler {
                                 .fromCallable(() -> passwordEncoder.matches(authenticationDto.getPassword(), user.getPassword()))
                                 .subscribeOn(Schedulers.boundedElastic())
                                 .filter(Boolean::booleanValue)
-                                .map(matched -> user)))
+                                .map(_ -> user)))
                 .switchIfEmpty(Mono.error(() -> new AuthenticationException("Provide valid credentials")))
                 .flatMap(appTokensService::generateTokens)
                 .flatMap(tokensDto -> ServerResponse
-                        .status(HttpStatus.CREATED)
+                        .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(BodyInserters.fromValue(tokensDto)));
     }

@@ -1,5 +1,7 @@
 package com.rzodeczko.infrastructure.aspect;
 
+import com.rzodeczko.application.dto.CreateUserDto;
+import com.rzodeczko.infrastructure.security.dto.AuthenticationDto;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -62,12 +64,18 @@ public class LoggerAspect {
 
     private void logStart(ProceedingJoinPoint joinPoint) {
         log.info("Invoking method: {}", joinPoint.getSignature().toShortString());
-        log.info("Arguments: {}", Arrays.toString(joinPoint.getArgs()));
+        log.info("Arguments: {}", Arrays.toString(safeArgs(joinPoint.getArgs())));
     }
 
     private void logExecution(ProceedingJoinPoint joinPoint, long start, String signalType) {
         log.info("Finished method: {}", joinPoint.getSignature().toShortString());
         log.info("Signal: {}", signalType);
         log.info("Execution time: {} ms", System.currentTimeMillis() - start);
+    }
+
+    private Object[] safeArgs(Object[] args) {
+        return Arrays.stream(args)
+                .map(a -> a instanceof CreateUserDto || a instanceof AuthenticationDto ? "[REDACTED]" : String.valueOf(a))
+                .toArray();
     }
 }

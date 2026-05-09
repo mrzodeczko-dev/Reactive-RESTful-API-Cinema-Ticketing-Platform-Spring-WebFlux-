@@ -12,6 +12,7 @@ public record CreateUserDto(
         String birthDate,
         String email
 ) {
+
     public User toEntity() {
         return User.builder()
                 .password(password)

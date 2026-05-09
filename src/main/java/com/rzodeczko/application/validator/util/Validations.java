@@ -13,7 +13,6 @@ public interface Validations {
         return errors
                 .entrySet()
                 .stream()
-                .sequential()
                 .map(e -> {
                     if (e.getValue() instanceof String value) {
                         return "%s -> %s".formatted(e.getKey(), value);

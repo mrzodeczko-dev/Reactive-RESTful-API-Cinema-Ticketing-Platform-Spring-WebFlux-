@@ -16,11 +16,14 @@ spring:
           auth: true
           starttls:
             enable: true
+  codec:
+    max-in-memory-size: 5MB
 
 mongock:
   migration-scan-package: com.app.infrastructure.mongo.initscripts
 
 jwt:
+  secret-key: ${JWT_SECRET_KEY}
   token:
     prefix: Bearer
   access-token:
@@ -38,6 +41,7 @@ springdoc:
     path: /docs
     config-url: /v3/api-docs/swagger-config
     url: /v3/api-docs
+  group-configs:
 
 
 adminusername: ${ADMIN_USERNAME:admin}
