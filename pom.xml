@@ -265,7 +265,7 @@
                 <version>${surefire.version}</version>
                 <configuration>
                     <includes>
-                        <include>**/*Test.java</include>
+                        <include>**/unit/*Test.java</include>
                     </includes>
                 </configuration>
             </plugin>
@@ -275,7 +275,7 @@
                 <version>${failsafe.version}</version>
                 <configuration>
                     <includes>
-                        <include>**/*IT.java</include>
+                        <include>**/it/*IT.java</include>
                     </includes>
                 </configuration>
                 <executions>
