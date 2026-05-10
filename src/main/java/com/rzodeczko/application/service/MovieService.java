@@ -11,7 +11,7 @@ import com.rzodeczko.application.port.out.UserPort;
 import com.rzodeczko.application.validator.CreateMovieDtoValidator;
 import com.rzodeczko.application.validator.util.Validations;
 import com.rzodeczko.domain.movie.Movie;
-import com.rzodeczko.domain.security.User;
+import com.rzodeczko.domain.user.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;

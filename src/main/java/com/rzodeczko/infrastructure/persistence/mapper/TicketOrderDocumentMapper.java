@@ -24,7 +24,7 @@ public final class TicketOrderDocumentMapper {
         if (doc == null) return null;
         return TicketOrder.builder()
                 .id(doc.getId())
-                .user(UserDocumentMapper.toUserDomain(doc.getUser()))
+                .user(UserDocumentMapper.toDomain(doc.getUser()))
                 .orderDate(doc.getOrderDate())
                 .ticketOrderStatus(doc.getTicketOrderStatus())
                 .movieEmission(MovieEmissionDocumentMapper.toDomain(doc.getMovieEmission()))

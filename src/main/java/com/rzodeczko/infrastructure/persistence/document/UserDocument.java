@@ -1,6 +1,6 @@
 package com.rzodeczko.infrastructure.persistence.document;
 
-import com.rzodeczko.domain.security.enums.Role;
+import com.rzodeczko.application.security.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

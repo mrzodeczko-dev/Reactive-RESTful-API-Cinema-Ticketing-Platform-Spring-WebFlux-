@@ -1,9 +1,8 @@
 package com.rzodeczko.infrastructure.persistence.mapper;
 
 import com.rzodeczko.domain.movie.Movie;
-import com.rzodeczko.domain.security.Admin;
-import com.rzodeczko.domain.security.BaseUser;
-import com.rzodeczko.domain.security.User;
+import com.rzodeczko.domain.user.User;
+import com.rzodeczko.application.security.enums.Role;
 import com.rzodeczko.infrastructure.persistence.document.MovieDocument;
 import com.rzodeczko.infrastructure.persistence.document.UserDocument;
 
@@ -28,23 +27,7 @@ public final class UserDocumentMapper {
         return doc;
     }
 
-    public static UserDocument toDocument(Admin a) {
-        if (a == null) return null;
-        UserDocument doc = new UserDocument();
-        doc.setId(a.getId());
-        doc.setUsername(a.getUsername());
-        doc.setPassword(a.getPassword());
-        doc.setRole(a.getRole());
-        return doc;
-    }
-
-    public static UserDocument toDocumentFromBase(BaseUser bu) {
-        if (bu instanceof User u) return toDocument(u);
-        if (bu instanceof Admin a) return toDocument(a);
-        return null;
-    }
-
-    public static User toUserDomain(UserDocument doc) {
+    public static User toDomain(UserDocument doc) {
         if (doc == null) {
             return null;
         }
@@ -53,26 +36,15 @@ public final class UserDocumentMapper {
                 .password(doc.getPassword())
                 .email(doc.getEmail())
                 .birthDate(doc.getBirthDate())
+                .role(doc.getRole() != null ? doc.getRole() : Role.ROLE_USER)
                 .build();
         u.setId(doc.getId());
-        if (doc.getRole() != null) {
-            u.setRole(doc.getRole());
-        }
         if (doc.getFavoriteMovies() != null) {
             for (Movie m : toDomainMovies(doc.getFavoriteMovies())) {
                 u.addMovieToFavorites(m);
             }
         }
         return u;
-    }
-
-    public static Admin toAdminDomain(UserDocument doc) {
-        if (doc == null) {
-            return null;
-        }
-        Admin a = new Admin(doc.getUsername(), doc.getPassword());
-        a.setId(doc.getId());
-        return a;
     }
 
     private static List<MovieDocument> toDocs(List<Movie> movies) {

@@ -3,23 +3,21 @@ package com.rzodeczko.application.service;
 import com.rzodeczko.application.dto.CreateUserDto;
 import com.rzodeczko.application.exception.RegistrationUserException;
 import com.rzodeczko.application.exception.UserServiceException;
-import com.rzodeczko.application.port.out.AdminPort;
 import com.rzodeczko.application.port.out.PasswordEncoderPort;
 import com.rzodeczko.application.port.out.TransactionPort;
 import com.rzodeczko.application.port.out.UserPort;
 import com.rzodeczko.application.validator.CreateUserDtoValidator;
-import com.rzodeczko.domain.security.Admin;
-import com.rzodeczko.domain.security.User;
+import com.rzodeczko.domain.user.User;
+import com.rzodeczko.application.security.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.verification.VerificationMode;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -40,8 +38,6 @@ class UsersServiceTest {
     private CreateUserDtoValidator createUserDtoValidator;
     @Mock
     private PasswordEncoderPort passwordEncoder;
-    @Mock
-    private AdminPort adminPort;
     @Mock
     private TransactionPort transactionPort;
 
@@ -193,10 +189,8 @@ class UsersServiceTest {
     class PromoteToAdminTests {
 
         @Test
-        @DisplayName("Happy path: user deleted, admin created, AdminDto returned")
+        @DisplayName("Happy path: user role updated in place to ROLE_ADMIN")
         void shouldPromoteUserToAdmin() {
-            Admin admin = new Admin("jan@example.com", "hashed-pass");
-
             when(userPort.findByUsername("jan@example.com")).thenReturn(Mono.just(userJan));
             when(userPort.addOrUpdate(any())).thenReturn(Mono.just(userJan));
             when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -205,7 +199,9 @@ class UsersServiceTest {
                     .assertNext(dto -> assertThat(dto.username()).isEqualTo("jan@example.com"))
                     .verifyComplete();
 
-            verify(userPort).addOrUpdate(any());
+            ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+            verify(userPort).addOrUpdate(captor.capture());
+            assertThat(captor.getValue().getRole()).isEqualTo(Role.ROLE_ADMIN);
             verify(userPort, times(0)).deleteById(any());
         }
 
@@ -221,14 +217,11 @@ class UsersServiceTest {
                         assertThat(ex.getMessage()).contains("ghost");
                     })
                     .verify();
-
-            verifyNoInteractions(adminPort);
         }
 
         @Test
         @DisplayName("Transaction: pipeline wrapped exactly once")
         void shouldWrapInTransaction() {
-            Admin admin = new Admin("jan@example.com", "hashed-pass");
             when(userPort.findByUsername("jan@example.com")).thenReturn(Mono.just(userJan));
             when(userPort.addOrUpdate(any())).thenReturn(Mono.just(userJan));
             when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));

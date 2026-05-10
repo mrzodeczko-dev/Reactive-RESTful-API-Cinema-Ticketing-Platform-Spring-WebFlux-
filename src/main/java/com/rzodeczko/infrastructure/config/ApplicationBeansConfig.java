@@ -4,13 +4,14 @@ import com.rzodeczko.application.port.out.*;
 import com.rzodeczko.application.service.*;
 import com.rzodeczko.application.validator.*;
 import com.rzodeczko.infrastructure.csv.CsvMovieParserAdapter;
+import com.rzodeczko.infrastructure.persistence.initscripts.AppAdminCredentials;
 import com.rzodeczko.infrastructure.security.tokens.JwtProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties({JwtProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, AppAdminCredentials.class})
 public class ApplicationBeansConfig {
 
     @Bean
@@ -64,28 +65,28 @@ public class ApplicationBeansConfig {
     }
 
     @Bean
-    public CinemaHallService cinemaHallService(CinemaHallPort CinemaHallPort,
-                                               CinemaPort CinemaPort,
+    public CinemaHallService cinemaHallService(CinemaHallPort cinemaHallPort,
+                                               CinemaPort cinemaPort,
                                                TransactionPort transactionPort) {
-        return new CinemaHallService(CinemaHallPort, CinemaPort, transactionPort);
+        return new CinemaHallService(cinemaHallPort, cinemaPort, transactionPort);
     }
 
     @Bean
-    public CinemaService cinemaService(CinemaPort CinemaPort,
-                                       CinemaHallPort CinemaHallPort,
-                                       CityPort CityPort,
+    public CinemaService cinemaService(CinemaPort cinemaPort,
+                                       CinemaHallPort cinemaHallPort,
+                                       CityPort cityPort,
                                        CreateCinemaDtoValidator createCinemaDtoValidator,
                                        TransactionPort transactionPort) {
-        return new CinemaService(CinemaPort, CinemaHallPort, CityPort,
+        return new CinemaService(cinemaPort, cinemaHallPort, cityPort,
                 createCinemaDtoValidator, transactionPort);
     }
 
     @Bean
-    public CityService cityService(CityPort CityPort,
-                                   CinemaPort CinemaPort,
-                                   CinemaHallPort CinemaHallPort,
+    public CityService cityService(CityPort cityPort,
+                                   CinemaPort cinemaPort,
+                                   CinemaHallPort cinemaHallPort,
                                    TransactionPort transactionPort) {
-        return new CityService(CityPort, CinemaPort, CinemaHallPort, transactionPort);
+        return new CityService(cityPort, cinemaPort, cinemaHallPort, transactionPort);
     }
 
     @Bean
@@ -97,11 +98,11 @@ public class ApplicationBeansConfig {
     }
 
     @Bean
-    public MovieEmissionService movieEmissionService(MovieEmissionPort MovieEmissionPort,
-                                                     CinemaHallPort CinemaHallPort,
-                                                     MoviePort MoviePort,
+    public MovieEmissionService movieEmissionService(MovieEmissionPort movieEmissionPort,
+                                                     CinemaHallPort cinemaHallPort,
+                                                     MoviePort moviePort,
                                                      TransactionPort transactionPort) {
-        return new MovieEmissionService(MovieEmissionPort, CinemaHallPort, MoviePort,
+        return new MovieEmissionService(movieEmissionPort, cinemaHallPort, moviePort,
                 transactionPort);
     }
 
@@ -120,38 +121,38 @@ public class ApplicationBeansConfig {
     }
 
     @Bean
-    public StatisticsService statisticsService(TicketPurchasePort TicketPurchasePort,
-                                               CityPort CityPort,
-                                               MoviePort MoviePort) {
-        return new StatisticsService(TicketPurchasePort, CityPort, MoviePort);
+    public StatisticsService statisticsService(TicketPurchasePort ticketPurchasePort,
+                                               CityPort cityPort,
+                                               MoviePort moviePort) {
+        return new StatisticsService(ticketPurchasePort, cityPort, moviePort);
     }
 
     @Bean
-    public TicketOrderService ticketOrderService(TicketOrderPort TicketOrderPort,
-                                                 MovieEmissionPort MovieEmissionPort,
-                                                 UserPort UserPort,
-                                                 TicketPort TicketPort,
+    public TicketOrderService ticketOrderService(TicketOrderPort ticketOrderPort,
+                                                 MovieEmissionPort movieEmissionPort,
+                                                 UserPort userPort,
+                                                 TicketPort ticketPort,
                                                  CreateTicketsOrderDtoValidator createTicketsOrderDtoValidator,
                                                  TransactionPort transactionPort) {
-        return new TicketOrderService(TicketOrderPort, MovieEmissionPort, UserPort,
-                TicketPort, createTicketsOrderDtoValidator, transactionPort);
+        return new TicketOrderService(ticketOrderPort, movieEmissionPort, userPort,
+                ticketPort, createTicketsOrderDtoValidator, transactionPort);
     }
 
     @Bean
-    public TicketPurchaseService ticketPurchaseService(TicketPurchasePort TicketPurchasePort,
+    public TicketPurchaseService ticketPurchaseService(TicketPurchasePort ticketPurchasePort,
                                                        CreateTicketPurchaseDtoValidator createTicketPurchaseDtoValidator,
-                                                       MovieEmissionPort MovieEmissionPort,
-                                                       MoviePort MoviePort,
-                                                       UserPort UserPort,
-                                                       CinemaHallPort CinemaHallPort,
-                                                       TicketPort TicketPort,
-                                                       CityPort CityPort,
-                                                       TicketOrderPort TicketOrderPort,
-                                                       CinemaPort CinemaPort,
+                                                       MovieEmissionPort movieEmissionPort,
+                                                       MoviePort moviePort,
+                                                       UserPort userPort,
+                                                       CinemaHallPort cinemaHallPort,
+                                                       TicketPort ticketPort,
+                                                       CityPort cityPort,
+                                                       TicketOrderPort ticketOrderPort,
+                                                       CinemaPort cinemaPort,
                                                        TransactionPort transactionPort) {
-        return new TicketPurchaseService(TicketPurchasePort, createTicketPurchaseDtoValidator,
-                MovieEmissionPort, MoviePort, UserPort, CinemaHallPort,
-                TicketPort, CityPort, TicketOrderPort, CinemaPort,
+        return new TicketPurchaseService(ticketPurchasePort, createTicketPurchaseDtoValidator,
+                movieEmissionPort, moviePort, userPort, cinemaHallPort,
+                ticketPort, cityPort, ticketOrderPort, cinemaPort,
                 transactionPort);
     }
 

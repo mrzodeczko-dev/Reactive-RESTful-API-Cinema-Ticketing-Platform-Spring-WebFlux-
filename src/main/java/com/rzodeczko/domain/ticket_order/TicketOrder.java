@@ -2,7 +2,7 @@ package com.rzodeczko.domain.ticket_order;
 
 import com.rzodeczko.domain.generic.GenericEntity;
 import com.rzodeczko.domain.movie_emission.MovieEmission;
-import com.rzodeczko.domain.security.User;
+import com.rzodeczko.domain.user.User;
 import com.rzodeczko.domain.ticket.Ticket;
 import com.rzodeczko.domain.ticket_order.enums.TicketGroupType;
 import com.rzodeczko.domain.ticket_order.enums.TicketOrderStatus;

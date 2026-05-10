@@ -1,7 +1,7 @@
 package com.rzodeczko.infrastructure.persistence.repository.impl;
 
 import com.rzodeczko.application.port.out.UserPort;
-import com.rzodeczko.domain.security.User;
+import com.rzodeczko.domain.user.User;
 import com.rzodeczko.infrastructure.persistence.mapper.UserDocumentMapper;
 import com.rzodeczko.infrastructure.persistence.repository.MongoUserRepository;
 import org.springframework.stereotype.Repository;
@@ -22,39 +22,44 @@ public class UserRepositoryImpl implements UserPort {
 
     @Override
     public Mono<User> findByUsername(String username) {
-        return mongo.findByUsername(username).map(UserDocumentMapper::toUserDomain);
+        return mongo.findByUsername(username).map(UserDocumentMapper::toDomain);
+    }
+
+    @Override
+    public Mono<User> findByEmail(String email) {
+        return mongo.findByEmail(email).map(UserDocumentMapper::toDomain);
     }
 
     @Override
     public Mono<User> addOrUpdate(User user) {
-        return mongo.save(UserDocumentMapper.toDocument(user)).map(UserDocumentMapper::toUserDomain);
+        return mongo.save(UserDocumentMapper.toDocument(user)).map(UserDocumentMapper::toDomain);
     }
 
     @Override
     public Flux<User> addOrUpdateMany(List<User> users) {
         return mongo.saveAll(users.stream().map(UserDocumentMapper::toDocument).collect(Collectors.toList()))
-                .map(UserDocumentMapper::toUserDomain);
+                .map(UserDocumentMapper::toDomain);
     }
 
     @Override
     public Flux<User> findAll() {
-        return mongo.findAll().map(UserDocumentMapper::toUserDomain);
+        return mongo.findAll().map(UserDocumentMapper::toDomain);
     }
 
     @Override
     public Mono<User> findById(String id) {
-        return mongo.findById(id).map(UserDocumentMapper::toUserDomain);
+        return mongo.findById(id).map(UserDocumentMapper::toDomain);
     }
 
     @Override
     public Flux<User> findAllById(List<String> ids) {
-        return mongo.findAllById(ids).map(UserDocumentMapper::toUserDomain);
+        return mongo.findAllById(ids).map(UserDocumentMapper::toDomain);
     }
 
     @Override
     public Mono<User> deleteById(String id) {
         return mongo.findById(id)
-                .flatMap(doc -> mongo.deleteById(id).then(Mono.just(UserDocumentMapper.toUserDomain(doc))));
+                .flatMap(doc -> mongo.deleteById(id).then(Mono.just(UserDocumentMapper.toDomain(doc))));
     }
 
     @Override
@@ -63,11 +68,6 @@ public class UserRepositoryImpl implements UserPort {
                 .collectList()
                 .flatMap(list -> mongo.deleteAll(list).then(Mono.just(list)))
                 .flatMapMany(Flux::fromIterable)
-                .map(UserDocumentMapper::toUserDomain);
-    }
-
-    @Override
-    public Mono<User> findByEmail(String email) {
-        return mongo.findByEmail(email).map(UserDocumentMapper::toUserDomain);
+                .map(UserDocumentMapper::toDomain);
     }
 }

@@ -1,6 +1,6 @@
 package com.rzodeczko.application.dto;
 
-import com.rzodeczko.domain.security.User;
+import com.rzodeczko.domain.user.User;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;

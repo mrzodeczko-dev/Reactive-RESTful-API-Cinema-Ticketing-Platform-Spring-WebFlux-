@@ -23,7 +23,7 @@ public final class TicketPurchaseDocumentMapper {
         if (doc == null) return null;
         return TicketPurchase.builder()
                 .id(doc.getId())
-                .user(UserDocumentMapper.toUserDomain(doc.getUser()))
+                .user(UserDocumentMapper.toDomain(doc.getUser()))
                 .purchaseDate(doc.getPurchaseDate())
                 .movieEmission(MovieEmissionDocumentMapper.toDomain(doc.getMovieEmission()))
                 .tickets(TicketDocumentMapper.toDomains(doc.getTickets()))

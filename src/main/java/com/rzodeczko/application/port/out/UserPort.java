@@ -1,6 +1,6 @@
 package com.rzodeczko.application.port.out;
 
-import com.rzodeczko.domain.security.User;
+import com.rzodeczko.domain.user.User;
 import reactor.core.publisher.Mono;
 
 public interface UserPort extends PersistencePort<User, String> {

@@ -5,9 +5,10 @@ import com.rzodeczko.application.exception.MovieServiceException;
 import com.rzodeczko.application.port.out.MoviePort;
 import com.rzodeczko.application.port.out.TransactionPort;
 import com.rzodeczko.application.port.out.UserPort;
+import com.rzodeczko.application.security.enums.Role;
 import com.rzodeczko.application.validator.CreateMovieDtoValidator;
 import com.rzodeczko.domain.movie.Movie;
-import com.rzodeczko.domain.security.User;
+import com.rzodeczko.domain.user.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -72,7 +73,7 @@ class MovieServiceTest {
      * so we use the public constructor to construct a User with a known favorites list.
      */
     private static User userWithFavorites(String username, List<Movie> favorites) {
-        return new User(username, "hashed-pass", LocalDate.of(1995, 5, 20), favorites, username);
+        return new User(username, "hashed-pass", Role.ROLE_USER, LocalDate.of(1995, 5, 20), favorites, username);
     }
 
     @Nested

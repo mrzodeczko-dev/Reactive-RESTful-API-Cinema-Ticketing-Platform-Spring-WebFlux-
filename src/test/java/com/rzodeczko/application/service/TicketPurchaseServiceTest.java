@@ -9,7 +9,7 @@ import com.rzodeczko.domain.cinema.Cinema;
 import com.rzodeczko.domain.cinema_hall.CinemaHall;
 import com.rzodeczko.domain.movie.Movie;
 import com.rzodeczko.domain.movie_emission.MovieEmission;
-import com.rzodeczko.domain.security.User;
+import com.rzodeczko.domain.user.User;
 import com.rzodeczko.domain.ticket_order.TicketOrder;
 import com.rzodeczko.domain.ticket_order.enums.TicketGroupType;
 import com.rzodeczko.domain.ticket_order.enums.TicketOrderStatus;
