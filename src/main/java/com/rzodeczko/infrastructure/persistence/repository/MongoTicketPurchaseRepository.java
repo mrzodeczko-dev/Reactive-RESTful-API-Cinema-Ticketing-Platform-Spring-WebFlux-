@@ -17,6 +17,8 @@ public interface MongoTicketPurchaseRepository extends ReactiveMongoRepository<T
     @Query("{ 'movieEmission.cinemaHallId': { $in: ?0 }, 'user.username': ?1 }")
     Flux<TicketPurchaseDocument> findAllByMovieEmissionCinemaHallIdInAndUserUsername(List<String> cinemaHallsIds, String username);
 
+    // Custom @Query overrides Spring Data default 'between' ($gt/$lt strict) → uses $gte/$lte.
+    @Query("{'purchaseDate': {$gte: ?0, $lte: ?1}}")
     Flux<TicketPurchaseDocument> findAllByPurchaseDateBetween(LocalDate from, LocalDate to);
 
     Flux<TicketPurchaseDocument> findAllByPurchaseDateAfter(LocalDate from);
