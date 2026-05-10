@@ -1,12 +1,15 @@
 package com.rzodeczko.infrastructure.security.config;
 
 import com.rzodeczko.application.dto.ErrorMessageDto;
+import com.rzodeczko.application.dto.ResponseErrorDto;
 import com.rzodeczko.infrastructure.security.AuthenticationManager;
 import com.rzodeczko.infrastructure.security.SecurityContextRepository;
+import com.rzodeczko.infrastructure.web.RequestIdWebFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -17,6 +20,7 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
 import org.springframework.security.web.server.authorization.ServerAccessDeniedHandler;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -33,52 +37,69 @@ public class WebSecurityConfig {
     private final SecurityContextRepository securityContextRepository;
     private final DataBufferFactory dataBufferFactory;
 
+    /**
+     * 401 Unauthorized handler. Logs the real reason server-side with request id;
+     * returns a generic message to the client to avoid leaking auth internals.
+     */
     @Bean
     public ServerAuthenticationEntryPoint serverAuthenticationEntryPoint() {
-        return (serverWebExchange, e) -> {
-            serverWebExchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            serverWebExchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-            try {
-                return serverWebExchange
-                        .getResponse()
-                        .writeWith(Mono.just(dataBufferFactory.wrap(
-                                objectMapper.writeValueAsBytes(
-                                        ErrorMessageDto.builder()
-                                                .message(e.getMessage())
-                                                .build())
-                        )));
-            } catch (JacksonException exception) {
-                log.error(exception.getMessage(), exception);
-            }
-            return serverWebExchange
-                    .getResponse()
-                    .writeWith(Mono.just(dataBufferFactory.wrap(new byte[]{})));
+        return (exchange, e) -> {
+            String reqId = RequestIdWebFilter.get(exchange);
+            log.warn("Authentication failed [reqId={}] on {} {}: {}",
+                    reqId,
+                    exchange.getRequest().getMethod(),
+                    exchange.getRequest().getURI().getPath(),
+                    e.getMessage());
+
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return exchange.getResponse().writeWith(Mono.just(buildBody("Authentication required", reqId)));
         };
     }
 
+    /**
+     * 403 Forbidden handler. Logs the principal name + path + reason server-side
+     * for audit; returns generic "Access denied" to the client (no username leak).
+     */
     @Bean
     public ServerAccessDeniedHandler serverAccessDeniedHandler() {
-        return (serverWebExchange, e) -> {
-            serverWebExchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-            serverWebExchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
-            return serverWebExchange
-                    .getResponse()
-                    .writeWith(serverWebExchange.getPrincipal()
-                            .map(principal -> {
-                                try {
-                                    return dataBufferFactory
-                                            .wrap(objectMapper.writeValueAsBytes(
-                                                    ErrorMessageDto.builder()
-                                                            .message("%s for username: %s"
-                                                                    .formatted(e.getMessage(), principal.getName()))
-                                                            .build())
-                                            );
-                                } catch (JacksonException exception) {
-                                    log.error(exception.getMessage(), exception);
-                                }
-                                return dataBufferFactory.wrap(new byte[]{});
-                            }));
+        return (exchange, e) -> {
+            String reqId = RequestIdWebFilter.get(exchange);
+
+            // Async log enrichment with principal — fire and forget, must not block the response.
+            exchange.getPrincipal()
+                    .doOnNext(principal -> log.warn(
+                            "Access denied [reqId={}] user='{}' on {} {}: {}",
+                            reqId,
+                            principal.getName(),
+                            exchange.getRequest().getMethod(),
+                            exchange.getRequest().getURI().getPath(),
+                            e.getMessage()))
+                    .switchIfEmpty(Mono.fromRunnable(() -> log.warn(
+                            "Access denied [reqId={}] anonymous on {} {}: {}",
+                            reqId,
+                            exchange.getRequest().getMethod(),
+                            exchange.getRequest().getURI().getPath(),
+                            e.getMessage())))
+                    .subscribe();
+
+            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+            exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return exchange.getResponse().writeWith(Mono.just(buildBody("Access denied", reqId)));
         };
+    }
+
+    private DataBuffer buildBody(String clientMessage, String requestId) {
+        try {
+            return dataBufferFactory.wrap(objectMapper.writeValueAsBytes(
+                    ResponseErrorDto.builder()
+                            .error(ErrorMessageDto.builder().message(clientMessage).build())
+                            .requestId(requestId)
+                            .build()));
+        } catch (JacksonException ex) {
+            log.error("Failed to serialize security error body [reqId={}]", requestId, ex);
+            return dataBufferFactory.wrap(new byte[]{});
+        }
     }
 
     @Bean
@@ -102,8 +123,11 @@ public class WebSecurityConfig {
                         .pathMatchers("/login").permitAll()
 
                         .pathMatchers("/users/**").hasRole("ADMIN")
-                        .pathMatchers("/emails/**").hasRole("USER")
-                        .pathMatchers("/statistics/**").permitAll()
+
+                        .pathMatchers(HttpMethod.POST, "/emails/send/multiple").hasRole("ADMIN")
+                        .pathMatchers("/emails/send/single").hasAnyRole("USER", "ADMIN")
+
+                        .pathMatchers("/statistics/**").hasAnyRole("USER", "ADMIN")
 
                         .pathMatchers(HttpMethod.GET, "/cinemas").hasRole("USER")
                         .pathMatchers("/cinemas/**").hasRole("ADMIN")
@@ -127,6 +151,8 @@ public class WebSecurityConfig {
                         .pathMatchers("/v3/api-docs/**").permitAll()
                         .pathMatchers("/v3/api-docs").permitAll()
                         .pathMatchers("/webjars/swagger-ui/**").permitAll()
+
+                        .pathMatchers("/actuator/health").permitAll()
 
                         .anyExchange().denyAll()
                 )

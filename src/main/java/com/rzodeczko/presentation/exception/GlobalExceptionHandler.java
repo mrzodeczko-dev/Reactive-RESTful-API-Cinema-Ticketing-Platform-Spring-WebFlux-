@@ -5,6 +5,7 @@ import com.rzodeczko.application.dto.ResponseErrorDto;
 import com.rzodeczko.application.exception.AuthenticationException;
 import com.rzodeczko.application.exception.HandledException;
 import com.rzodeczko.application.exception.RegistrationUserException;
+import com.rzodeczko.infrastructure.web.RequestIdWebFilter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,24 +31,23 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
     private final ObjectMapper objectMapper;
     private final DataBufferFactory dataBufferFactory;
 
-
     @Override
-    public Mono<Void> handle(ServerWebExchange serverWebExchange, @NonNull Throwable throwable) {
+    public Mono<Void> handle(ServerWebExchange exchange, @NonNull Throwable throwable) {
         HttpStatus status = resolveStatus(throwable);
+        String requestId = RequestIdWebFilter.get(exchange);
 
-        log.error("Request failed [{} {} -> {}]: {}",
-                serverWebExchange.getRequest().getMethod(),
-                serverWebExchange.getRequest().getURI().getPath(),
+        log.error("Request failed [reqId={} {} {} -> {}]: {}",
+                requestId,
+                exchange.getRequest().getMethod(),
+                exchange.getRequest().getURI().getPath(),
                 status.value(),
                 throwable.getMessage(),
                 throwable);
 
-        serverWebExchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        serverWebExchange.getResponse().setStatusCode(status);
+        exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        exchange.getResponse().setStatusCode(status);
 
-        return serverWebExchange
-                .getResponse()
-                .writeWith(Mono.just(buildBody(throwable, status)));
+        return exchange.getResponse().writeWith(Mono.just(buildBody(throwable, status, requestId)));
     }
 
     private HttpStatus resolveStatus(Throwable throwable) {
@@ -60,14 +60,14 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
         }
         if (throwable instanceof RegistrationUserException) {
             String msg = throwable.getMessage();
-            if (msg != null && msg.toLowerCase().contains("already exists")) {
+            if (msg != null && msg.contains("already exists")) {
                 return HttpStatus.CONFLICT;
             }
             return HttpStatus.BAD_REQUEST;
         }
         if (throwable instanceof HandledException) {
             String msg = throwable.getMessage();
-            if (msg != null && msg.toLowerCase().contains("not found")) {
+            if (msg != null && (msg.contains("No ") || msg.contains("not found"))) {
                 return HttpStatus.NOT_FOUND;
             }
             return HttpStatus.BAD_REQUEST;
@@ -75,19 +75,21 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
-    private DataBuffer buildBody(Throwable throwable, HttpStatus status) {
-        // For server errors, do not leak the underlying message — it may contain stack/connection info.
+    private DataBuffer buildBody(Throwable throwable, HttpStatus status, String requestId) {
+        // For 5xx don't leak the underlying message — it may carry stack/connection info.
+        // For 4xx pass the message through, it's usually a meaningful validation error.
         String clientMessage = status.is5xxServerError()
                 ? "Internal server error. Please try again later."
                 : throwable.getMessage();
 
         try {
-            return dataBufferFactory
-                    .wrap(objectMapper.writeValueAsBytes(ResponseErrorDto.builder()
+            return dataBufferFactory.wrap(objectMapper.writeValueAsBytes(
+                    ResponseErrorDto.builder()
                             .error(ErrorMessageDto.builder().message(clientMessage).build())
+                            .requestId(requestId)
                             .build()));
-        } catch (JacksonException exception) {
-            log.error("Failed to serialize error response", exception);
+        } catch (JacksonException ex) {
+            log.error("Failed to serialize error response [reqId={}]", requestId, ex);
             return dataBufferFactory.wrap(new byte[]{});
         }
     }
