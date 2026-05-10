@@ -1,4 +1,4 @@
-package com.rzodeczko.infrastructure.persistence;
+package testcontainers;
 
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
