@@ -37,7 +37,7 @@ jobs:
       matrix:
         suite:
           - name: unit
-            cmd: mvn test
+            cmd: mvn surefire:test
             profile: ""
             exec: jacoco-unit.exec
           - name: it-handlers
@@ -60,13 +60,24 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+
+      # Pobieramy skompilowane klasy z joba build — bez tego Maven
+      # musiałby kompilować od nowa i mógłby nie znaleźć zasobów.
+      - name: Download compiled classes
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-classes
+          path: target/
+
       - name: Run ${{ matrix.suite.name }} tests
         run: >
           ${{ matrix.suite.cmd }}
           ${{ matrix.suite.profile }}
           --batch-mode
           --no-transfer-progress
+          -Dmaven.main.skip=true
           -Djacoco.dataFile=target/${{ matrix.suite.exec }}
+
       - uses: actions/upload-artifact@v4
         with:
           name: jacoco-${{ matrix.suite.name }}

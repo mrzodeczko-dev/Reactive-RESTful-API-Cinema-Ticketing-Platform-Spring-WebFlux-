@@ -285,6 +285,10 @@
                 <version>${failsafe.version}</version>
                 <configuration>
                     <skipITs>${skipITs}</skipITs>
+                    <includes>
+                        <include>**/*SliceTest.java</include>
+                        <include>**/testcontainers/*IT.java</include>
+                    </includes>
                 </configuration>
             </plugin>
 
