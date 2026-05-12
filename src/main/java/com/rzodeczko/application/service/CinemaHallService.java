@@ -2,8 +2,10 @@ package com.rzodeczko.application.service;
 
 import com.rzodeczko.application.dto.AddCinemaHallToCinemaDto;
 import com.rzodeczko.application.dto.CinemaHallDto;
+import com.rzodeczko.application.dto.CreateCinemaHallDto;
 import com.rzodeczko.application.exception.CinemaHallServiceException;
 import com.rzodeczko.application.mapper.CinemaHallMapper;
+import com.rzodeczko.application.port.out.CinemaHallCsvParserPort;
 import com.rzodeczko.application.port.out.CinemaHallPort;
 import com.rzodeczko.application.port.out.CinemaPort;
 import com.rzodeczko.application.port.out.TransactionPort;
@@ -14,7 +16,9 @@ import com.rzodeczko.domain.vo.Position;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -22,11 +26,15 @@ public class CinemaHallService {
 
     private final CinemaHallPort cinemaHallPort;
     private final CinemaPort cinemaPort;
+    private final CinemaHallCsvParserPort cinemaHallCsvParserPort;
     private final TransactionPort transactionPort;
 
-    public CinemaHallService(CinemaHallPort cinemaHallPort, CinemaPort cinemaPort, TransactionPort transactionPort) {
+    public CinemaHallService(CinemaHallPort cinemaHallPort, CinemaPort cinemaPort,
+                             CinemaHallCsvParserPort cinemaHallCsvParserPort,
+                             TransactionPort transactionPort) {
         this.cinemaHallPort = cinemaHallPort;
         this.cinemaPort = cinemaPort;
+        this.cinemaHallCsvParserPort = cinemaHallCsvParserPort;
         this.transactionPort = transactionPort;
     }
 
@@ -40,22 +48,25 @@ public class CinemaHallService {
                     }
                     return Mono.just(dto);
                 })
-                .flatMap(dto -> cinemaPort.findById(dto.cinemaId())
-                        .switchIfEmpty(Mono.error(new CinemaHallServiceException(
-                                "No cinema with id: %s".formatted(dto.cinemaId()))))
-                        .flatMap(cinema -> cinemaHallPort.addOrUpdate(CinemaHall.builder()
-                                        .cinemaId(cinema.getId())
-                                        .movieEmissions(new ArrayList<>())
-                                        .positions(createPositions(dto.colNo(), dto.rowNo()))
-                                        .build())
-                                .flatMap(savedCinemaHall -> {
-                                    cinema.getCinemaHalls().add(savedCinemaHall);
-                                    return cinemaPort.addOrUpdate(cinema)
-                                            .thenReturn(savedCinemaHall);
-                                })
-                        )
-                );
+                .flatMap(this::saveCinemaHallToCinema);
         return transactionPort.inTransaction(result).map(CinemaHallMapper::toDto);
+    }
+
+    private Mono<CinemaHall> saveCinemaHallToCinema(AddCinemaHallToCinemaDto dto) {
+        return cinemaPort.findById(dto.cinemaId())
+                .switchIfEmpty(Mono.error(new CinemaHallServiceException(
+                        "No cinema with id: %s".formatted(dto.cinemaId()))))
+                .flatMap(cinema -> cinemaHallPort.addOrUpdate(CinemaHall.builder()
+                                .cinemaId(cinema.getId())
+                                .movieEmissions(new ArrayList<>())
+                                .positions(createPositions(dto.colNo(), dto.rowNo()))
+                                .build())
+                        .flatMap(savedCinemaHall -> {
+                            cinema.getCinemaHalls().add(savedCinemaHall);
+                            return cinemaPort.addOrUpdate(cinema)
+                                    .thenReturn(savedCinemaHall);
+                        })
+                );
     }
 
     private List<Position> createPositions(Integer colNo, Integer rowNo) {
@@ -82,5 +93,22 @@ public class CinemaHallService {
                         "No cinema with id: %s".formatted(cinemaId))))
                 .flatMapMany(cinema -> cinemaHallPort.getAllForCinemaById(cinemaId)
                         .map(CinemaHallMapper::toDto));
+    }
+
+    public Flux<CinemaHallDto> uploadCSVFile(String cinemaId, InputStream inputStream) {
+        var errorsList = Collections.synchronizedList(new ArrayList<String>());
+
+        return cinemaHallCsvParserPort.parse(inputStream, errorsList)
+                .map(dto -> new AddCinemaHallToCinemaDto(dto.rowNo(), dto.colNo(), cinemaId))
+                .collectList()
+                .flatMapMany(cinemaHalls -> saveCinemaHalls(cinemaHalls, errorsList));
+    }
+
+    private Flux<CinemaHallDto> saveCinemaHalls(List<AddCinemaHallToCinemaDto> cinemaHalls, List<String> errorsList) {
+        if (!errorsList.isEmpty()) {
+            return Flux.error(new CinemaHallServiceException("Errors are: %s".formatted(errorsList)));
+        }
+        return transactionPort.inTransactionMany(Flux.fromIterable(cinemaHalls).concatMap(this::saveCinemaHallToCinema))
+                .map(CinemaHallMapper::toDto);
     }
 }

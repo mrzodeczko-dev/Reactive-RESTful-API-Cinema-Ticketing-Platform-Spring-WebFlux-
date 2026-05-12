@@ -16,7 +16,7 @@ public class CinemaDocument {
 
     @Id
     private String id;
-    private String cityId;
+    private String cityName;
     private String street;
     private List<CinemaHallDocument> cinemaHalls;
 }
