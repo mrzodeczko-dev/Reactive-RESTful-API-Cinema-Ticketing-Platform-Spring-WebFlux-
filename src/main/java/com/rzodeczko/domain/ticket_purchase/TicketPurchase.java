@@ -2,33 +2,24 @@ package com.rzodeczko.domain.ticket_purchase;
 
 import com.rzodeczko.domain.generic.GenericEntity;
 import com.rzodeczko.domain.movie_emission.MovieEmission;
-import com.rzodeczko.domain.user.User;
 import com.rzodeczko.domain.ticket.Ticket;
 import com.rzodeczko.domain.ticket_order.enums.TicketGroupType;
+import com.rzodeczko.domain.user.User;
 
 import java.time.LocalDate;
 import java.util.List;
 
-public class TicketPurchase implements GenericEntity {
-
-    private String id;
-    private User user;
-    private LocalDate purchaseDate;
-    private MovieEmission movieEmission;
-    private List<Ticket> tickets;
-    private TicketGroupType ticketGroupType;
+public record TicketPurchase(
+        String id,
+        User user,
+        LocalDate purchaseDate,
+        MovieEmission movieEmission,
+        List<Ticket> tickets,
+        TicketGroupType ticketGroupType
+) implements GenericEntity {
 
     public TicketPurchase() {
-    }
-
-    public TicketPurchase(String id, User user, LocalDate purchaseDate, MovieEmission movieEmission,
-                          List<Ticket> tickets, TicketGroupType ticketGroupType) {
-        this.id = id;
-        this.user = user;
-        this.purchaseDate = purchaseDate;
-        this.movieEmission = movieEmission;
-        this.tickets = tickets;
-        this.ticketGroupType = ticketGroupType;
+        this(null, null, null, null, null, null);
     }
 
     public static Builder builder() {
@@ -36,17 +27,17 @@ public class TicketPurchase implements GenericEntity {
     }
 
     public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public TicketPurchase setId(String id) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
     public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public TicketPurchase setUser(User user) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
     public LocalDate getPurchaseDate() { return purchaseDate; }
-    public void setPurchaseDate(LocalDate purchaseDate) { this.purchaseDate = purchaseDate; }
+    public TicketPurchase setPurchaseDate(LocalDate purchaseDate) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
     public MovieEmission getMovieEmission() { return movieEmission; }
-    public void setMovieEmission(MovieEmission movieEmission) { this.movieEmission = movieEmission; }
+    public TicketPurchase setMovieEmission(MovieEmission movieEmission) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
     public List<Ticket> getTickets() { return tickets; }
-    public void setTickets(List<Ticket> tickets) { this.tickets = tickets; }
+    public TicketPurchase setTickets(List<Ticket> tickets) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
     public TicketGroupType getTicketGroupType() { return ticketGroupType; }
-    public void setTicketGroupType(TicketGroupType ticketGroupType) { this.ticketGroupType = ticketGroupType; }
+    public TicketPurchase setTicketGroupType(TicketGroupType ticketGroupType) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
 
     public static class Builder {
         private String id;

@@ -50,8 +50,7 @@ public class AdminBootstrapper implements ApplicationRunner {
                     }
                     log.info("User '{}' exists with role {} — promoting to ADMIN",
                             username, existing.getRole());
-                    existing.setRole(Role.ROLE_ADMIN);
-                    return userPort.addOrUpdate(existing);
+                    return userPort.addOrUpdate(existing.setRole(Role.ROLE_ADMIN));
                 })
                 .switchIfEmpty(Mono.defer(() -> userPort
                         .addOrUpdate(User.builder()

@@ -4,27 +4,17 @@ import com.rzodeczko.domain.generic.GenericEntity;
 import com.rzodeczko.domain.movie_emission.MovieEmission;
 import com.rzodeczko.domain.vo.Position;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import static java.util.Objects.nonNull;
-
-public class CinemaHall implements GenericEntity {
-
-    private String id;
-    private List<Position> positions;
-    private String cinemaId;
-    private List<MovieEmission> movieEmissions;
+public record CinemaHall(
+        String id,
+        List<Position> positions,
+        String cinemaId,
+        List<MovieEmission> movieEmissions
+) implements GenericEntity {
 
     public CinemaHall() {
-    }
-
-    public CinemaHall(String id, List<Position> positions, String cinemaId, List<MovieEmission> movieEmissions) {
-        this.id = id;
-        this.positions = positions;
-        this.cinemaId = cinemaId;
-        this.movieEmissions = movieEmissions;
+        this(null, null, null, null);
     }
 
     public static Builder builder() {
@@ -35,48 +25,41 @@ public class CinemaHall implements GenericEntity {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public CinemaHall setId(String id) {
+        return new CinemaHall(id, positions, cinemaId, movieEmissions);
     }
 
     public List<Position> getPositions() {
         return positions;
     }
 
-    public void setPositions(List<Position> positions) {
-        this.positions = positions;
+    public CinemaHall setPositions(List<Position> positions) {
+        return new CinemaHall(id, positions, cinemaId, movieEmissions);
     }
 
     public String getCinemaId() {
         return cinemaId;
     }
 
-    public void setCinemaId(String cinemaId) {
-        this.cinemaId = cinemaId;
+    public CinemaHall setCinemaId(String cinemaId) {
+        return new CinemaHall(id, positions, cinemaId, movieEmissions);
     }
 
     public List<MovieEmission> getMovieEmissions() {
         return movieEmissions;
     }
 
-    public void setMovieEmissions(List<MovieEmission> movieEmissions) {
-        this.movieEmissions = movieEmissions;
-    }
-
-    public CinemaHall addMovieEmission(MovieEmission movieEmission) {
-        if (nonNull(movieEmissions)) {
-            movieEmissions.add(movieEmission);
-        } else {
-            movieEmissions = new ArrayList<>(Collections.singletonList(movieEmission));
-        }
-        return this;
+    public CinemaHall setMovieEmissions(List<MovieEmission> movieEmissions) {
+        return new CinemaHall(id, positions, cinemaId, movieEmissions);
     }
 
     public CinemaHall removeMovieEmissionById(String movieEmissionId) {
-        if (nonNull(movieEmissions)) {
-            movieEmissions.removeIf(movieEmission -> movieEmission.getId().equals(movieEmissionId));
+        if (movieEmissions == null) {
+            return this;
         }
-        return this;
+        return setMovieEmissions(movieEmissions.stream()
+                .filter(movieEmission -> !movieEmission.getId().equals(movieEmissionId))
+                .toList());
     }
 
     public static class Builder {

@@ -78,8 +78,7 @@ public class UsersService {
                         return Mono.error(new UserServiceException(
                                 "User with username: %s is already an admin".formatted(username)));
                     }
-                    user.setRole(Role.ROLE_ADMIN);
-                    return userPort.addOrUpdate(user);
+                    return userPort.addOrUpdate(user.setRole(Role.ROLE_ADMIN));
                 });
 
         return transactionPort.inTransaction(result).map(UserMapper::toDto);

@@ -76,7 +76,7 @@ class UserRepositoryImplIT extends AbstractMongoIT {
         assertThat(savedUser.getRole()).isEqualTo(Role.ROLE_USER);
 
         // Promote and re-save.
-        savedUser.setRole(Role.ROLE_ADMIN);
+        savedUser = savedUser.setRole(Role.ROLE_ADMIN);
         userPort.addOrUpdate(savedUser).block();
 
         StepVerifier.create(userPort.findByUsername("jan"))
@@ -88,7 +88,7 @@ class UserRepositoryImplIT extends AbstractMongoIT {
     @DisplayName("addOrUpdate on existing id updates rather than duplicating")
     void shouldUpdateNotDuplicate() {
         User saved = userPort.addOrUpdate(jan).block();
-        saved.setEmail("jan2@example.com");
+        saved = saved.setEmail("jan2@example.com");
         userPort.addOrUpdate(saved).block();
         StepVerifier.create(userPort.findAll().count()).expectNext(1L).verifyComplete();
         StepVerifier.create(userPort.findByEmail("jan2@example.com"))

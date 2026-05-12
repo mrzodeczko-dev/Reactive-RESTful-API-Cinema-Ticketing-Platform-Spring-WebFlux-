@@ -2,37 +2,27 @@ package com.rzodeczko.domain.ticket_order;
 
 import com.rzodeczko.domain.generic.GenericEntity;
 import com.rzodeczko.domain.movie_emission.MovieEmission;
-import com.rzodeczko.domain.user.User;
 import com.rzodeczko.domain.ticket.Ticket;
 import com.rzodeczko.domain.ticket_order.enums.TicketGroupType;
 import com.rzodeczko.domain.ticket_order.enums.TicketOrderStatus;
 import com.rzodeczko.domain.ticket_purchase.TicketPurchase;
+import com.rzodeczko.domain.user.User;
 
 import java.time.LocalDate;
 import java.util.List;
 
-public class TicketOrder implements GenericEntity {
-
-    private String id;
-    private User user;
-    private LocalDate orderDate;
-    private TicketOrderStatus ticketOrderStatus;
-    private MovieEmission movieEmission;
-    private List<Ticket> tickets;
-    private TicketGroupType ticketGroupType;
+public record TicketOrder(
+        String id,
+        User user,
+        LocalDate orderDate,
+        TicketOrderStatus ticketOrderStatus,
+        MovieEmission movieEmission,
+        List<Ticket> tickets,
+        TicketGroupType ticketGroupType
+) implements GenericEntity {
 
     public TicketOrder() {
-    }
-
-    public TicketOrder(String id, User user, LocalDate orderDate, TicketOrderStatus ticketOrderStatus,
-                       MovieEmission movieEmission, List<Ticket> tickets, TicketGroupType ticketGroupType) {
-        this.id = id;
-        this.user = user;
-        this.orderDate = orderDate;
-        this.ticketOrderStatus = ticketOrderStatus;
-        this.movieEmission = movieEmission;
-        this.tickets = tickets;
-        this.ticketGroupType = ticketGroupType;
+        this(null, null, null, null, null, null, null);
     }
 
     public static Builder builder() {
@@ -46,19 +36,19 @@ public class TicketOrder implements GenericEntity {
     }
 
     public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public TicketOrder setId(String id) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
     public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public TicketOrder setUser(User user) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
     public LocalDate getOrderDate() { return orderDate; }
-    public void setOrderDate(LocalDate orderDate) { this.orderDate = orderDate; }
+    public TicketOrder setOrderDate(LocalDate orderDate) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
     public TicketOrderStatus getTicketOrderStatus() { return ticketOrderStatus; }
-    public void setTicketOrderStatus(TicketOrderStatus ticketOrderStatus) { this.ticketOrderStatus = ticketOrderStatus; }
+    public TicketOrder setTicketOrderStatus(TicketOrderStatus ticketOrderStatus) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
     public MovieEmission getMovieEmission() { return movieEmission; }
-    public void setMovieEmission(MovieEmission movieEmission) { this.movieEmission = movieEmission; }
+    public TicketOrder setMovieEmission(MovieEmission movieEmission) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
     public List<Ticket> getTickets() { return tickets; }
-    public void setTickets(List<Ticket> tickets) { this.tickets = tickets; }
+    public TicketOrder setTickets(List<Ticket> tickets) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
     public TicketGroupType getTicketGroupType() { return ticketGroupType; }
-    public void setTicketGroupType(TicketGroupType ticketGroupType) { this.ticketGroupType = ticketGroupType; }
+    public TicketOrder setTicketGroupType(TicketGroupType ticketGroupType) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
 
     public TicketPurchase toTicketPurchase() {
         return TicketPurchase.builder()
@@ -71,13 +61,11 @@ public class TicketOrder implements GenericEntity {
     }
 
     public TicketOrder changeOrderStatusToDone() {
-        ticketOrderStatus = TicketOrderStatus.DONE;
-        return this;
+        return setTicketOrderStatus(TicketOrderStatus.DONE);
     }
 
     public TicketOrder changeOrderStatusToCancelled() {
-        ticketOrderStatus = TicketOrderStatus.CANCELLED;
-        return this;
+        return setTicketOrderStatus(TicketOrderStatus.CANCELLED);
     }
 
     public static class Builder {

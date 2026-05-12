@@ -86,7 +86,7 @@ public class CinemasHandler {
             })
     })
     public Mono<ServerResponse> getAllCinemasByCity(ServerRequest serverRequest) {
-        return cinemaService.getAllByCity(serverRequest.pathVariable("city"))
+        return cinemaService.getAllByCity(serverRequest.pathVariable("id"))
                 .as(flux -> ServerResponse
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)

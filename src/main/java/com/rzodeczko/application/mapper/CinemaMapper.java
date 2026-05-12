@@ -17,7 +17,7 @@ public final class CinemaMapper {
         }
         return CinemaDto.builder()
                 .id(cinema.getId())
-                .city(cinema.getCity())
+                .city(cinema.getCityId())
                 .street(cinema.getStreet())
                 .hallsCapacity(cinema.getCinemaHalls() == null ? null :
                         cinema.getCinemaHalls()

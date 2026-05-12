@@ -9,19 +9,14 @@ import java.util.List;
 
 import static java.util.Objects.isNull;
 
-public class City implements GenericEntity {
-
-    private String id;
-    private String name;
-    private List<Cinema> cinemas;
+public record City(
+        String id,
+        String name,
+        List<Cinema> cinemas
+) implements GenericEntity {
 
     public City() {
-    }
-
-    public City(String id, String name, List<Cinema> cinemas) {
-        this.id = id;
-        this.name = name;
-        this.cinemas = cinemas;
+        this(null, null, null);
     }
 
     public static Builder builder() {
@@ -29,18 +24,17 @@ public class City implements GenericEntity {
     }
 
     public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public City setId(String id) { return new City(id, name, cinemas); }
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public City setName(String name) { return new City(id, name, cinemas); }
     public List<Cinema> getCinemas() { return cinemas; }
-    public void setCinemas(List<Cinema> cinemas) { this.cinemas = cinemas; }
+    public City setCinemas(List<Cinema> cinemas) { return new City(id, name, cinemas); }
 
     public City addCinema(Cinema cinema) {
         if (isNull(cinemas)) {
-            cinemas = new ArrayList<>(Collections.singletonList(cinema));
-        } else {
-            cinemas.add(cinema);
+            return setCinemas(new ArrayList<>(Collections.singletonList(cinema)));
         }
+        cinemas.add(cinema);
         return this;
     }
 

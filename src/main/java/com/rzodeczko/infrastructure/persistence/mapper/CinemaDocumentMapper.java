@@ -15,7 +15,7 @@ public final class CinemaDocumentMapper {
         if (c == null) return null;
         return new CinemaDocument(
                 c.getId(),
-                c.getCity(),
+                c.getCityId(),
                 c.getStreet(),
                 CinemaHallDocumentMapper.toDocuments(c.getCinemaHalls()));
     }
@@ -24,7 +24,7 @@ public final class CinemaDocumentMapper {
         if (doc == null) return null;
         return Cinema.builder()
                 .id(doc.getId())
-                .city(doc.getCity())
+                .city(doc.getCityId())
                 .street(doc.getStreet())
                 .cinemaHalls(CinemaHallDocumentMapper.toDomains(doc.getCinemaHalls()))
                 .build();

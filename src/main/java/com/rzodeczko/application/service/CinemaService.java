@@ -63,7 +63,7 @@ public class CinemaService {
                                 .switchIfEmpty(Mono.error(() -> new CinemaServiceException(
                                         "No city with name: %s".formatted(createCinemaDto.city()))))
                                 .flatMap(city -> cinemaPort
-                                        .addOrUpdate(cinema.setCity(city.getName()).setCinemasIdForCinemaHalls(cinema.getId()))
+                                        .addOrUpdate(cinema.setCityId(city.getName()).setCinemasIdForCinemaHalls(cinema.getId()))
                                         .flatMap(savedCinema -> cityPort.addOrUpdate(city.addCinema(savedCinema))
                                                 .thenReturn(savedCinema))));
         return transactionPort.inTransaction(result).map(CinemaMapper::toDto);

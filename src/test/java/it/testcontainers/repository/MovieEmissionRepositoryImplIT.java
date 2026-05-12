@@ -42,11 +42,11 @@ class MovieEmissionRepositoryImplIT extends AbstractMongoIT {
 
         Movie movie1 = Movie.builder().name("Inception").genre("Drama").duration(148)
                 .premiereDate(LocalDate.of(2010, 7, 16)).build();
-        movie1.setId("movie-1");
+        movie1 = movie1.setId("movie-1");
 
         Movie movie2 = Movie.builder().name("Joker").genre("Thriller").duration(122)
                 .premiereDate(LocalDate.of(2019, 10, 4)).build();
-        movie2.setId("movie-2");
+        movie2 = movie2.setId("movie-2");
 
         emissionA = MovieEmission.builder()
                 .movie(movie1).cinemaHallId("hall-A")

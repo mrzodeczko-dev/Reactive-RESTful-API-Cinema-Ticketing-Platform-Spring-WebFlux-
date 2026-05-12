@@ -2,19 +2,13 @@ package com.rzodeczko.domain.position_index;
 
 import com.rzodeczko.domain.vo.Position;
 
-import java.util.Objects;
-
-public class PositionIndex {
-
-    private Position position;
-    private boolean isFree;
+public record PositionIndex(
+        Position position,
+        boolean isFree
+) {
 
     public PositionIndex() {
-    }
-
-    public PositionIndex(Position position, boolean isFree) {
-        this.position = position;
-        this.isFree = isFree;
+        this(null, false);
     }
 
     public static Builder builder() {
@@ -25,29 +19,16 @@ public class PositionIndex {
         return position;
     }
 
-    public void setPosition(Position position) {
-        this.position = position;
+    public PositionIndex setPosition(Position position) {
+        return new PositionIndex(position, isFree);
     }
 
     public boolean isFree() {
         return isFree;
     }
 
-    public void setFree(boolean free) {
-        isFree = free;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof PositionIndex)) return false;
-        PositionIndex p = (PositionIndex) o;
-        return isFree == p.isFree && Objects.equals(position, p.position);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(position, isFree);
+    public PositionIndex setFree(boolean free) {
+        return new PositionIndex(position, free);
     }
 
     public static class Builder {

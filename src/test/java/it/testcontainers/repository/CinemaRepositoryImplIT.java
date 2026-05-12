@@ -40,20 +40,20 @@ class CinemaRepositoryImplIT extends AbstractMongoIT {
         // Cinema halls with explicit ids — must be unique to test the $elemMatch query.
         CinemaHall hallA1 = CinemaHall.builder().positions(Collections.emptyList())
                 .movieEmissions(Collections.emptyList()).build();
-        hallA1.setId("hall-a1");
+        hallA1 = hallA1.setId("hall-a1");
         CinemaHall hallA2 = CinemaHall.builder().positions(Collections.emptyList())
                 .movieEmissions(Collections.emptyList()).build();
-        hallA2.setId("hall-a2");
+        hallA2 = hallA2.setId("hall-a2");
         CinemaHall hallB1 = CinemaHall.builder().positions(Collections.emptyList())
                 .movieEmissions(Collections.emptyList()).build();
-        hallB1.setId("hall-b1");
+        hallB1 = hallB1.setId("hall-b1");
 
         cinemaA = Cinema.builder().street("Main St 1").cinemaHalls(List.of(hallA1, hallA2)).build();
-        cinemaA.setCity("Warsaw");
+        cinemaA = cinemaA.setCityId("Warsaw");
         cinemaB = Cinema.builder().street("Other St 5").cinemaHalls(List.of(hallB1)).build();
-        cinemaB.setCity("Warsaw");
+        cinemaB = cinemaB.setCityId("Warsaw");
         cinemaC = Cinema.builder().street("Floriańska 10").cinemaHalls(Collections.emptyList()).build();
-        cinemaC.setCity("Krakow");
+        cinemaC = cinemaC.setCityId("Krakow");
 
         cinemaPort.addOrUpdateMany(List.of(cinemaA, cinemaB, cinemaC)).blockLast();
     }

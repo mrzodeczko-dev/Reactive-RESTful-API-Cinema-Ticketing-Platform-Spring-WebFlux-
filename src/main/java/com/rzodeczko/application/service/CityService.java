@@ -63,9 +63,11 @@ public class CityService {
                         cityPort.findByName(addCinemaToCityDto.city())
                                 .switchIfEmpty(Mono.error(() -> new CityServiceException(
                                         "No city with name: %s".formatted(addCinemaToCityDto.city()))))
-                                .flatMap(cityEntity ->
-                                        cinemaPort.addOrUpdate(cinema.setCity(cityEntity.getName()))
-                                                .then(cityPort.addOrUpdate(cityEntity.addCinema(cinema)))));
+                                .flatMap(cityEntity -> {
+                                    var cinemaWithCity = cinema.setCityId(cityEntity.getName());
+                                    return cinemaPort.addOrUpdate(cinemaWithCity)
+                                            .then(cityPort.addOrUpdate(cityEntity.addCinema(cinemaWithCity)));
+                                }));
         return transactionPort.inTransaction(result).map(CityMapper::toDto);
     }
 
