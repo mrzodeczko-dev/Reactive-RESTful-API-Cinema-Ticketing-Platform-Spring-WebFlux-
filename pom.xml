@@ -280,11 +280,6 @@
                 </configuration>
             </plugin>
 
-            <!--
-                Domyślna konfiguracja failsafe — BEZ <includes>.
-                Każdy profil IT definiuje własne <execution> z właściwymi <includes>.
-                skipITs=true domyślnie, więc bez aktywnego profilu IT nic się nie odpali.
-            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -292,6 +287,17 @@
                 <configuration>
                     <skipITs>${skipITs}</skipITs>
                 </configuration>
+                <executions>
+                    <!--
+                        Disable the built-in default failsafe execution. Without this, failsafe always executes **/*IT.java
+                        regardless of the profile, which causes test containers to execute in both IT profiles.
+                        Each profile defines its own <execution> with precise <includes>.
+                    -->
+                    <execution>
+                        <id>default</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -356,7 +362,7 @@
                                 <id>handlers</id>
                                 <phase>integration-test</phase>
                                 <configuration>
-                                    <!-- Tylko SliceTesty z pakietu handlers -->
+                                    <!-- Only SliceTesta handlers -->
                                     <includes>
                                         <include>**/handlers/*SliceTest.java</include>
                                     </includes>
@@ -389,7 +395,7 @@
                                 <id>testcontainers</id>
                                 <phase>integration-test</phase>
                                 <configuration>
-                                    <!-- Tylko *IT.java z pakietu testcontainers -->
+                                    <!-- only *IT.java testcontainers -->
                                     <includes>
                                         <include>**/testcontainers/*IT.java</include>
                                     </includes>
