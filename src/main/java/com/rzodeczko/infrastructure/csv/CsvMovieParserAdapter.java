@@ -8,6 +8,7 @@ import com.rzodeczko.application.validator.CreateMovieDtoValidator;
 import com.rzodeczko.application.validator.util.Validations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -15,11 +16,12 @@ import reactor.core.scheduler.Schedulers;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
+@Component
 public class CsvMovieParserAdapter implements MovieCsvParserPort {
 
     private static final Logger log = LogManager.getLogger(CsvMovieParserAdapter.class);
@@ -31,7 +33,7 @@ public class CsvMovieParserAdapter implements MovieCsvParserPort {
     }
 
     public Flux<CreateMovieDto> parse(InputStream inputStream, List<String> errorsList) {
-        return Mono.fromCallable(() -> collectMoviesFromCsv(new BufferedReader(new InputStreamReader(inputStream)), errorsList))
+        return Mono.fromCallable(() -> collectMoviesFromCsv(new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)), errorsList))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapIterable(Function.identity());
     }
@@ -47,16 +49,16 @@ public class CsvMovieParserAdapter implements MovieCsvParserPort {
                     .build()
                     .parse()
                     .stream()
-                    .peek(row -> {
+                    .map(row -> {
                         var dto = row.toApplicationDto();
                         var errors = createMovieDtoValidator.validate(dto);
                         var counterVal = counter.getAndIncrement();
                         if (Validations.hasErrors(errors)) {
                             errorsList.add("Movie in row no. %s is not valid. %s".formatted(counterVal, Validations.createErrorMessage(errors)));
                         }
+                        return dto;
                     })
-                    .map(CsvMovieRow::toApplicationDto)
-                    .collect(Collectors.toList());
+                    .toList();
 
         } catch (Exception e) {
             throw e instanceof MovieServiceException me ? me : new MovieServiceException("The file extension .csv is required");
