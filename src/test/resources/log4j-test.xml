@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <!-- Silences MongoDB driver monitor - connection closed on container shutdown -->
+        <Logger name="org.mongodb.driver.cluster" level="ERROR" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="org.mongodb.driver.connection" level="ERROR" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <!-- Silences Testcontainers CloseableResource warning -->
+        <Logger name="org.junit.jupiter.engine.descriptor" level="ERROR" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>
