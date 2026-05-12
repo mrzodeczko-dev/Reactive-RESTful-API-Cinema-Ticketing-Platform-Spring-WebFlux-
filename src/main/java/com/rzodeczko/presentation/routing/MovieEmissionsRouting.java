@@ -17,6 +17,7 @@ public class MovieEmissionsRouting extends BaseJsonRouter {
     @Bean
     @RouterOperations({
             @RouterOperation(method = RequestMethod.POST, path = "/movieEmissions", beanClass = MovieEmissionsHandler.class, beanMethod = "addMovieEmission"),
+            @RouterOperation(method = RequestMethod.POST, path = "/movieEmissions/csv", beanClass = MovieEmissionsHandler.class, beanMethod = "addMovieEmissionsWithCsvFile"),
             @RouterOperation(method = RequestMethod.GET, path = "/movieEmissions", beanClass = MovieEmissionsHandler.class, beanMethod = "getAllMovieEmissions"),
             @RouterOperation(method = RequestMethod.GET, path = "/movieEmissions/movieId/{movieId}", beanClass = MovieEmissionsHandler.class, beanMethod = "getAllMovieEmissionsByMovieId"),
             @RouterOperation(method = RequestMethod.GET, path = "/movieEmissions/cinemaHallId/{cinemaHallId}", beanClass = MovieEmissionsHandler.class, beanMethod = "getAllMovieEmissionsByCinemaHallId"),
@@ -27,6 +28,7 @@ public class MovieEmissionsRouting extends BaseJsonRouter {
                 .path("/movieEmissions", builder -> builder
                         .nest(jsonAccept(), nested -> nested
                                 .POST("", movieEmissionsHandler::addMovieEmission)
+                                .POST("/csv", movieEmissionsHandler::addMovieEmissionsWithCsvFile)
                                 .GET("", _ -> movieEmissionsHandler.getAllMovieEmissions())
                                 .GET("/movieId/{movieId}", movieEmissionsHandler::getAllMovieEmissionsByMovieId)
                                 .GET("/cinemaHallId/{cinemaHallId}", movieEmissionsHandler::getAllMovieEmissionsByCinemaHallId)

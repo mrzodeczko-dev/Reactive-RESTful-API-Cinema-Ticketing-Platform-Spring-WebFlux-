@@ -3,8 +3,11 @@ package com.rzodeczko.presentation.routing.handlers;
 import com.rzodeczko.application.dto.CreateMovieEmissionDto;
 import com.rzodeczko.application.dto.MovieEmissionDto;
 import com.rzodeczko.application.dto.ResponseErrorDto;
+import com.rzodeczko.application.exception.MovieEmissionServiceException;
 import com.rzodeczko.application.service.MovieEmissionService;
 import com.rzodeczko.infrastructure.aspect.annotations.Loggable;
+import com.rzodeczko.presentation.csv.CsvMultipartFileReader;
+import com.rzodeczko.presentation.dto.CsvFileUploadRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -30,6 +33,7 @@ public class MovieEmissionsHandler {
 
 
     private final MovieEmissionService movieEmissionService;
+    private final CsvMultipartFileReader csvMultipartFileReader;
 
     @Loggable
     @Operation(
@@ -54,6 +58,27 @@ public class MovieEmissionsHandler {
                         .body(BodyInserters.fromValue(savedVal))
                 );
 
+    }
+
+    @Loggable
+    @Operation(
+            summary = "POST add movie emissions with csv",
+            requestBody = @RequestBody(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(implementation = CsvFileUploadRequest.class))),
+            security = @SecurityRequirement(name = "JwtAuthToken"))
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Success", content = {
+                    @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = MovieEmissionDto.class)))
+            }),
+            @ApiResponse(responseCode = "500", description = "Error", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
+            })})
+    public Mono<ServerResponse> addMovieEmissionsWithCsvFile(ServerRequest serverRequest) {
+        return csvMultipartFileReader.readCsvFile(serverRequest, movieEmissionService::uploadCSVFile, MovieEmissionServiceException::new)
+                .collectList()
+                .flatMap(movieEmissions -> ServerResponse
+                        .status(HttpStatus.CREATED)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(BodyInserters.fromValue(movieEmissions)));
     }
 
     @Loggable
