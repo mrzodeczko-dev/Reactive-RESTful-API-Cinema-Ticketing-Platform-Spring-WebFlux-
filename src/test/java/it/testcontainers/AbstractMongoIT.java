@@ -26,14 +26,13 @@ import org.testcontainers.utility.DockerImageName;
 @ActiveProfiles("testcontainers")
 public abstract class AbstractMongoIT {
 
-    @Container
-    protected static final MongoDBContainer MONGO;
+    static final MongoDBContainer MONGO;
 
     static {
-        // Wymuszenie API version przed inicjalizacją kontenera
         System.setProperty("api.version", "1.43");
         MONGO = new MongoDBContainer(DockerImageName.parse("mongo:8.3.1"))
                 .withReuse(true);
+        MONGO.start();
     }
 
     @DynamicPropertySource
