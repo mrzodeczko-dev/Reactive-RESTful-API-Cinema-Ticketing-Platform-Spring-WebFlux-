@@ -7,13 +7,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.5</version>
+        <version>4.0.6</version>
         <relativePath/>
     </parent>
 
     <groupId>com.app</groupId>
     <artifactId>cinema_webflux_ddd</artifactId>
-    <version>0.0.1-sb-4-jdk-25</version>
+    <version>1.0.0</version>
     <name>cinema_webflux_ddd</name>
     <description>cinema_webflux_ddd</description>
 
