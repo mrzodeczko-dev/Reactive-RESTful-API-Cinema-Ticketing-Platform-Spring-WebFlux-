@@ -69,7 +69,7 @@ class MovieRepositoryImplIT extends AbstractMongoIT {
         @DisplayName("addOrUpdate on existing id updates instead of duplicating")
         void shouldUpdateNotDuplicate() {
             Movie saved = moviePort.addOrUpdate(inception).block();
-            saved.setName("Inception (Director's Cut)");
+            saved = saved.setName("Inception (Director's Cut)");
             moviePort.addOrUpdate(saved).block();
             StepVerifier.create(moviePort.findAll().count())
                     .expectNext(1L).verifyComplete();

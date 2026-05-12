@@ -7,26 +7,17 @@ import com.rzodeczko.domain.vo.Discount;
 import com.rzodeczko.domain.vo.Money;
 import com.rzodeczko.domain.vo.Position;
 
-public class Ticket implements GenericEntity {
-
-    private String id;
-    private TicketStatus ticketStatus;
-    private IndividualTicketType type;
-    private Position position;
-    private Discount discount;
-    private Money price;
+public record Ticket(
+        String id,
+        TicketStatus ticketStatus,
+        IndividualTicketType type,
+        Position position,
+        Discount discount,
+        Money price
+) implements GenericEntity {
 
     public Ticket() {
-    }
-
-    public Ticket(String id, TicketStatus ticketStatus, IndividualTicketType type,
-                  Position position, Discount discount, Money price) {
-        this.id = id;
-        this.ticketStatus = ticketStatus;
-        this.type = type;
-        this.position = position;
-        this.discount = discount;
-        this.price = price;
+        this(null, null, null, null, null, null);
     }
 
     public static Builder builder() {
@@ -34,17 +25,17 @@ public class Ticket implements GenericEntity {
     }
 
     public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public Ticket setId(String id) { return new Ticket(id, ticketStatus, type, position, discount, price); }
     public TicketStatus getTicketStatus() { return ticketStatus; }
-    public void setTicketStatus(TicketStatus ticketStatus) { this.ticketStatus = ticketStatus; }
+    public Ticket setTicketStatus(TicketStatus ticketStatus) { return new Ticket(id, ticketStatus, type, position, discount, price); }
     public IndividualTicketType getType() { return type; }
-    public void setType(IndividualTicketType type) { this.type = type; }
+    public Ticket setType(IndividualTicketType type) { return new Ticket(id, ticketStatus, type, position, discount, price); }
     public Position getPosition() { return position; }
-    public void setPosition(Position position) { this.position = position; }
+    public Ticket setPosition(Position position) { return new Ticket(id, ticketStatus, type, position, discount, price); }
     public Discount getDiscount() { return discount; }
-    public void setDiscount(Discount discount) { this.discount = discount; }
+    public Ticket setDiscount(Discount discount) { return new Ticket(id, ticketStatus, type, position, discount, price); }
     public Money getPrice() { return price; }
-    public void setPrice(Money price) { this.price = price; }
+    public Ticket setPrice(Money price) { return new Ticket(id, ticketStatus, type, position, discount, price); }
 
     public static class Builder {
         private String id;

@@ -6,20 +6,14 @@ import java.math.BigDecimal;
 
 import static java.util.Objects.isNull;
 
-public class Money {
+public record Money(BigDecimal value) {
 
-    private BigDecimal value;
-
-    private Money() {
-        this.value = BigDecimal.ZERO;
+    public Money() {
+        this(BigDecimal.ZERO);
     }
 
     private Money(String value) {
-        this.value = init(value);
-    }
-
-    private Money(BigDecimal value) {
-        this.value = value;
+        this(init(value));
     }
 
     public static Money of(String value) {
@@ -30,8 +24,8 @@ public class Money {
         return value;
     }
 
-    public void setValue(BigDecimal value) {
-        this.value = value;
+    public Money setValue(BigDecimal value) {
+        return new Money(value);
     }
 
     public Money add(String value) {

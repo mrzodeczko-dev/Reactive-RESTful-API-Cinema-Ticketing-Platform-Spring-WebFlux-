@@ -25,6 +25,7 @@
 - [Technical Highlights](#technical-highlights)
 - [Tech Stack](#tech-stack)
 - [Testing](#testing)
+- [CI Pipeline](#ci-pipeline)
 - [Observability](#observability)
 - [Repository Structure](#repository-structure)
 - [Why Reactive?](#why-reactive)
@@ -595,13 +596,17 @@ Every code path that touches an inherently blocking or CPU-bound API is wrapped 
 
 [↑ Back to top](#toc)
 
+Three distinct test suites cover different layers of the application. Each suite is run as a separate CI job (see [CI Pipeline](#ci-pipeline) below).
+
+### Unit tests — application services
+
 Unit tests cover all application services and run in **under 5 seconds** without any external dependencies (MongoDB, SMTP, …) — collaborators are mocked with **Mockito** and reactive flows are asserted using `StepVerifier` from `reactor-test`.
 
 ```bash
 mvn test
 ```
 
-**Coverage:** ten service test classes located in `src/test/java/com/rzodeczko/application/service/`:
+Ten service test classes in `src/test/java/com/rzodeczko/application/service/`:
 
 ```
 CinemaHallServiceTest    EmailServiceTest          StatisticsServiceTest
@@ -611,6 +616,75 @@ CityServiceTest          MovieServiceTest          TicketPurchaseServiceTest
 ```
 
 All reactive pipelines (`Mono`/`Flux`) are verified with `StepVerifier` — completion signals, ordering, and error propagation are all asserted explicitly.
+
+### Integration tests — handler slice tests (`it-handlers`)
+
+Handler slice tests use `@WebFluxTest` to spin up only the routing + handler + security configuration, with services mocked via `@MockitoBean`. They verify HTTP routing, status codes, and response body shape without needing MongoDB or SMTP.
+
+```bash
+mvn verify -P it-handlers -DskipUTs=true
+```
+
+Nine handler slice test classes in `src/test/java/it/handlers/`:
+
+```
+CitiesHandlerSliceTest        CinemasHandlerSliceTest       CinemaHallsHandlerSliceTest
+MoviesHandlerSliceTest        MovieEmissionsHandlerSliceTest EmailHandlerSliceTest
+StatisticsHandlerSliceTest    TicketOrderHandlerSliceTest    TicketPurchaseHandlerSliceTest
+LoginHandlerSliceTest         UsersHandlerSliceTest
+```
+
+### Integration tests — repository tests with Testcontainers (`it-testcontainers`)
+
+Repository integration tests spin up a real MongoDB replica set via **Testcontainers** and verify reactive repository adapters end-to-end. These tests run against actual MongoDB and confirm that queries, custom converters, and aggregation pipelines behave as expected.
+
+```bash
+mvn verify -P it-testcontainers -DskipUTs=true
+```
+
+Eight repository IT classes in `src/test/java/it/testcontainers/repository/`:
+
+```
+CinemaHallRepositoryImplIT    CinemaRepositoryImplIT       CityRepositoryImplIT
+MovieEmissionRepositoryImplIT MovieRepositoryImplIT        TicketOrderRepositoryImplIT
+TicketPurchaseRepositoryImplIT UserRepositoryImplIT
+```
+
+### CI Pipeline
+
+The CI pipeline (`.github/workflows/ci.yml`) runs all three suites in parallel after a successful compilation step, then merges JaCoCo execution data for a unified coverage report uploaded to Codecov.
+
+```mermaid
+flowchart TD
+    push([Push to master]) --> build
+
+    subgraph build["Job: build (compile only)"]
+        B1[Checkout] --> B2[Setup Java 25]
+        B2 --> B3[Restore Maven cache]
+        B3 --> B4["mvn clean package -DskipTests"]
+    end
+
+    build --> test
+
+    subgraph test["Job: test (matrix — 3 parallel suites)"]
+        direction TB
+        T1["suite: unit\nmvn surefire:test\n→ jacoco-unit.exec"]
+        T2["suite: it-handlers\nmvn verify -P it-handlers\n→ jacoco-it-handlers.exec"]
+        T3["suite: it-testcontainers\nmvn verify -P it-testcontainers\n→ jacoco-it-testcontainers.exec"]
+    end
+
+    test --> coverage
+
+    subgraph coverage["Job: coverage (after all tests pass)"]
+        C1[Download all .exec artifacts] --> C2["jacoco:merge → jacoco.exec"]
+        C2 --> C3["jacoco:report → site/jacoco/"]
+        C3 --> C4["jacoco:check (coverage gate)"]
+        C4 --> C5[Upload HTML report artifact]
+        C5 --> C6[Upload to Codecov]
+    end
+```
+
+Each test suite uploads its `.exec` file as a GitHub Actions artifact. The `coverage` job downloads all three, merges them with `jacoco:merge`, generates an HTML report, enforces coverage thresholds with `jacoco:check`, and uploads the combined report to Codecov.
 
 ---
 

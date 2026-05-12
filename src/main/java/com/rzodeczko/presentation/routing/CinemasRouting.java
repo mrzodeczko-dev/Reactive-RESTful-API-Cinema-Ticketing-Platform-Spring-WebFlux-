@@ -27,7 +27,7 @@ public class CinemasRouting extends BaseJsonRouter {
                         .nest(jsonAccept(), nested -> nested
                                 .POST("", cinemasHandler::addCinema)
                                 .GET("", _ -> cinemasHandler.getAll())
-                                .GET("/city/{city}", cinemasHandler::getAllCinemasByCity)
+                                .GET("/city/{id}", cinemasHandler::getAllCinemasByCity)
                                 .PUT("/id/{id}/addCinemaHall", cinemasHandler::addCinemaHall)
                         )
                 )

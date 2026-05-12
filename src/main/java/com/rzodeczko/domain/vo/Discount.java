@@ -4,19 +4,14 @@ import com.rzodeczko.domain.exception.DiscountException;
 
 import java.math.BigDecimal;
 
-public class Discount {
-    private BigDecimal value;
+public record Discount(BigDecimal value) {
 
-    private Discount() {
-        this.value = BigDecimal.ZERO;
+    public Discount() {
+        this(BigDecimal.ZERO);
     }
 
     private Discount(String value) {
-        this.value = init(value);
-    }
-
-    private Discount(BigDecimal value) {
-        this.value = value;
+        this(init(value));
     }
 
     public static Discount of(BigDecimal value) {
@@ -28,7 +23,7 @@ public class Discount {
     }
 
     public BigDecimal getValue() { return value; }
-    public void setValue(BigDecimal value) { this.value = value; }
+    public Discount setValue(BigDecimal value) { return new Discount(value); }
 
     public Discount inverse() {
         return new Discount(BigDecimal.ONE.subtract(value));

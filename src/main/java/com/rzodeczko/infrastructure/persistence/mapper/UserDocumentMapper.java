@@ -32,16 +32,16 @@ public final class UserDocumentMapper {
             return null;
         }
         User u = User.builder()
+                .id(doc.getId())
                 .username(doc.getUsername())
                 .password(doc.getPassword())
                 .email(doc.getEmail())
                 .birthDate(doc.getBirthDate())
                 .role(doc.getRole() != null ? doc.getRole() : Role.ROLE_USER)
                 .build();
-        u.setId(doc.getId());
         if (doc.getFavoriteMovies() != null) {
             for (Movie m : toDomainMovies(doc.getFavoriteMovies())) {
-                u.addMovieToFavorites(m);
+                u = u.addMovieToFavorites(m);
             }
         }
         return u;

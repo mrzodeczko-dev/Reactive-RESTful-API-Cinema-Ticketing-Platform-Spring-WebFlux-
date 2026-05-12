@@ -1,8 +1,8 @@
 package com.rzodeczko.domain.user;
 
+import com.rzodeczko.application.security.enums.Role;
 import com.rzodeczko.domain.generic.GenericEntity;
 import com.rzodeczko.domain.movie.Movie;
-import com.rzodeczko.application.security.enums.Role;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -12,25 +12,25 @@ import java.util.Objects;
 import static java.util.Objects.isNull;
 
 /**
- * Single user entity. {@code role} controls authorization — promote to {@code ROLE_ADMIN}
- * via {@link #setRole(Role)} (used by {@code AdminBootstrapper} and {@code UsersService}).
+ * Single user entity. {@code role} controls authorization.
  */
-public final class User implements GenericEntity {
-
-    private String id;
-    private String username;
-    private String password;
-    private Role role;
-    private LocalDate birthDate;
-    private List<Movie> favoriteMovies;
-    private String email;
+public record User(
+        String id,
+        String username,
+        String password,
+        Role role,
+        LocalDate birthDate,
+        List<Movie> favoriteMovies,
+        String email
+) implements GenericEntity {
 
     public User() {
-        this.role = Role.ROLE_USER;
+        this(null, null, null, Role.ROLE_USER, null, null, null);
     }
 
-    public User(String username, String password, Role role,
+    public User(String id, String username, String password, Role role,
                 LocalDate birthDate, List<Movie> favoriteMovies, String email) {
+        this.id = id;
         this.username = username;
         this.password = password;
         this.role = role != null ? role : Role.ROLE_USER;
@@ -39,68 +39,72 @@ public final class User implements GenericEntity {
         this.email = email;
     }
 
+    public User(String username, String password, Role role,
+                LocalDate birthDate, List<Movie> favoriteMovies, String email) {
+        this(null, username, password, role, birthDate, favoriteMovies, email);
+    }
+
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public User setId(String id) {
+        return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
     public String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public User setUsername(String username) {
+        return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
     public String getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public User setPassword(String password) {
+        return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
     public Role getRole() {
         return role;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
+    public User setRole(Role role) {
+        return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
     public LocalDate getBirthDate() {
         return birthDate;
     }
 
-    public void setBirthDate(LocalDate birthDate) {
-        this.birthDate = birthDate;
+    public User setBirthDate(LocalDate birthDate) {
+        return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
     public List<Movie> getFavoriteMovies() {
         return favoriteMovies;
     }
 
-    public void setFavoriteMovies(List<Movie> favoriteMovies) {
-        this.favoriteMovies = favoriteMovies;
+    public User setFavoriteMovies(List<Movie> favoriteMovies) {
+        return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
     public String getEmail() {
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public User setEmail(String email) {
+        return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
-    /**
-     * Mutates the favorites list. Returns {@code this} for fluent chaining.
-     */
     public User addMovieToFavorites(Movie movie) {
         if (isNull(favoriteMovies)) {
-            favoriteMovies = new ArrayList<>();
+            var movies = new ArrayList<Movie>();
+            movies.add(movie);
+            return setFavoriteMovies(movies);
         }
         favoriteMovies.add(movie);
         return this;
@@ -126,12 +130,18 @@ public final class User implements GenericEntity {
     }
 
     public static class Builder {
+        private String id;
         private String username;
         private String password;
         private Role role = Role.ROLE_USER;
         private LocalDate birthDate;
         private List<Movie> favoriteMovies;
         private String email;
+
+        public Builder id(String id) {
+            this.id = id;
+            return this;
+        }
 
         public Builder username(String username) {
             this.username = username;
@@ -164,7 +174,7 @@ public final class User implements GenericEntity {
         }
 
         public User build() {
-            return new User(username, password, role, birthDate, favoriteMovies, email);
+            return new User(id, username, password, role, birthDate, favoriteMovies, email);
         }
     }
 }

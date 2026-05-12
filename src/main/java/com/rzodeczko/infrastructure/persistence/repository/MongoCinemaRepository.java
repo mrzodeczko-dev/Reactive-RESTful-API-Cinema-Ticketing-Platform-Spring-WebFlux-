@@ -11,6 +11,6 @@ public interface MongoCinemaRepository extends ReactiveMongoRepository<CinemaDoc
     @Query(value = "{'cinemaHalls':{$elemMatch: {'_id': ?0}}}")
     Mono<CinemaDocument> findByCinemaHallId(String id);
 
-    @Query("{'city': ?0}")
+    @Query("{'cityId': ?0}")
     Flux<CinemaDocument> getAllByCity(String city);
 }

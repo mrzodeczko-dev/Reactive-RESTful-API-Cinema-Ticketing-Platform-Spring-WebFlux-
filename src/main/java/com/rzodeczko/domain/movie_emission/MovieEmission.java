@@ -12,26 +12,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class MovieEmission implements GenericEntity {
-
-    private String id;
-    private Movie movie;
-    private LocalDateTime startDateTime;
-    private Money baseTicketPrice;
-    private String cinemaHallId;
-    private Map<Position, Boolean> isPositionFree;
+public record MovieEmission(
+        String id,
+        Movie movie,
+        LocalDateTime startDateTime,
+        Money baseTicketPrice,
+        String cinemaHallId,
+        Map<Position, Boolean> isPositionFree
+) implements GenericEntity {
 
     public MovieEmission() {
-    }
-
-    public MovieEmission(String id, Movie movie, LocalDateTime startDateTime, Money baseTicketPrice,
-                         String cinemaHallId, Map<Position, Boolean> isPositionFree) {
-        this.id = id;
-        this.movie = movie;
-        this.startDateTime = startDateTime;
-        this.baseTicketPrice = baseTicketPrice;
-        this.cinemaHallId = cinemaHallId;
-        this.isPositionFree = isPositionFree;
+        this(null, null, null, null, null, null);
     }
 
     public static Builder builder() {
@@ -42,48 +33,48 @@ public class MovieEmission implements GenericEntity {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public MovieEmission setId(String id) {
+        return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree);
     }
 
     public Movie getMovie() {
         return movie;
     }
 
-    public void setMovie(Movie movie) {
-        this.movie = movie;
+    public MovieEmission setMovie(Movie movie) {
+        return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree);
     }
 
     public LocalDateTime getStartDateTime() {
         return startDateTime;
     }
 
-    public void setStartDateTime(LocalDateTime startDateTime) {
-        this.startDateTime = startDateTime;
+    public MovieEmission setStartDateTime(LocalDateTime startDateTime) {
+        return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree);
     }
 
     public Money getBaseTicketPrice() {
         return baseTicketPrice;
     }
 
-    public void setBaseTicketPrice(Money baseTicketPrice) {
-        this.baseTicketPrice = baseTicketPrice;
+    public MovieEmission setBaseTicketPrice(Money baseTicketPrice) {
+        return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree);
     }
 
     public String getCinemaHallId() {
         return cinemaHallId;
     }
 
-    public void setCinemaHallId(String cinemaHallId) {
-        this.cinemaHallId = cinemaHallId;
+    public MovieEmission setCinemaHallId(String cinemaHallId) {
+        return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree);
     }
 
     public Map<Position, Boolean> getIsPositionFree() {
         return isPositionFree;
     }
 
-    public void setIsPositionFree(Map<Position, Boolean> isPositionFree) {
-        this.isPositionFree = isPositionFree;
+    public MovieEmission setIsPositionFree(Map<Position, Boolean> isPositionFree) {
+        return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree);
     }
 
     public List<Position> getFreePositions() {
