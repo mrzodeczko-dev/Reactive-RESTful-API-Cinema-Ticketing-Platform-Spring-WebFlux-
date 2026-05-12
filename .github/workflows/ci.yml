@@ -37,11 +37,11 @@ jobs:
             profile: ""
             exec: jacoco-unit.exec
           - name: it-handlers
-            cmd: mvn test-compile failsafe:integration-test failsafe:verify
+            cmd: mvn verify -DskipUTs=true
             profile: -P it-handlers
             exec: jacoco-it-handlers.exec
           - name: it-testcontainers
-            cmd: mvn test-compile failsafe:integration-test failsafe:verify
+            cmd: mvn verify -DskipUTs=true
             profile: -P it-testcontainers
             exec: jacoco-it-testcontainers.exec
     steps:
