@@ -7,6 +7,7 @@ import com.rzodeczko.application.exception.CityServiceException;
 import com.rzodeczko.application.mapper.CityMapper;
 import com.rzodeczko.application.port.out.CinemaHallPort;
 import com.rzodeczko.application.port.out.CinemaPort;
+import com.rzodeczko.application.port.out.CityCsvParserPort;
 import com.rzodeczko.application.port.out.CityPort;
 import com.rzodeczko.application.port.out.TransactionPort;
 import com.rzodeczko.application.service.util.ServiceUtils;
@@ -16,7 +17,12 @@ import com.rzodeczko.domain.city.City;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CityService {
@@ -24,13 +30,16 @@ public class CityService {
     private final CityPort cityPort;
     private final CinemaPort cinemaPort;
     private final CinemaHallPort cinemaHallPort;
+    private final CityCsvParserPort cityCsvParserPort;
     private final TransactionPort transactionPort;
 
     public CityService(CityPort cityPort, CinemaPort cinemaPort,
-                       CinemaHallPort cinemaHallPort, TransactionPort transactionPort) {
+                       CinemaHallPort cinemaHallPort, CityCsvParserPort cityCsvParserPort,
+                       TransactionPort transactionPort) {
         this.cityPort = cityPort;
         this.cinemaPort = cinemaPort;
         this.cinemaHallPort = cinemaHallPort;
+        this.cityCsvParserPort = cityCsvParserPort;
         this.transactionPort = transactionPort;
     }
 
@@ -73,5 +82,36 @@ public class CityService {
 
     public Flux<CityDto> getAll() {
         return cityPort.findAll().map(CityMapper::toDto);
+    }
+
+    public Flux<CityDto> uploadCSVFile(InputStream inputStream) {
+        var errorsList = Collections.synchronizedList(new ArrayList<String>());
+        var counter = new AtomicInteger(1);
+
+        return cityCsvParserPort.parse(inputStream, errorsList)
+                .map(CreateCityDto::toEntity)
+                .flatMap(city -> doCityExistsInDb(city, errorsList, counter))
+                .collectList()
+                .flatMap(cities -> saveCities(cities, errorsList))
+                .flatMapMany(Function.identity());
+    }
+
+    private Mono<City> doCityExistsInDb(City city, List<String> errorsList, AtomicInteger counter) {
+        return cityPort.findByName(city.getName())
+                .hasElement()
+                .map(isPresent -> {
+                    var counterVal = counter.getAndIncrement();
+                    if (isPresent) {
+                        errorsList.add("City in row no. %s is not unique by name".formatted(counterVal));
+                    }
+                    return city;
+                });
+    }
+
+    private Mono<Flux<CityDto>> saveCities(List<City> cities, List<String> errorsList) {
+        if (!errorsList.isEmpty()) {
+            return Mono.error(new CityServiceException("Errors are: %s".formatted(errorsList)));
+        }
+        return Mono.just(transactionPort.inTransactionMany(cityPort.addOrUpdateMany(cities)).map(CityMapper::toDto));
     }
 }

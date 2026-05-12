@@ -5,6 +5,7 @@ import com.rzodeczko.application.dto.CreateCinemaDto;
 import com.rzodeczko.application.dto.CreateCinemaHallDto;
 import com.rzodeczko.application.exception.CinemaServiceException;
 import com.rzodeczko.application.mapper.CinemaMapper;
+import com.rzodeczko.application.port.out.CinemaCsvParserPort;
 import com.rzodeczko.application.port.out.CinemaHallPort;
 import com.rzodeczko.application.port.out.CinemaPort;
 import com.rzodeczko.application.port.out.CityPort;
@@ -18,7 +19,10 @@ import com.rzodeczko.domain.cinema_hall.CinemaHall;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class CinemaService {
@@ -26,14 +30,17 @@ public class CinemaService {
     private final CinemaPort cinemaPort;
     private final CinemaHallPort cinemaHallPort;
     private final CityPort cityPort;
+    private final CinemaCsvParserPort cinemaCsvParserPort;
     private final CreateCinemaDtoValidator createCinemaDtoValidator;
     private final TransactionPort transactionPort;
 
     public CinemaService(CinemaPort cinemaPort, CinemaHallPort cinemaHallPort, CityPort cityPort,
+                         CinemaCsvParserPort cinemaCsvParserPort,
                          CreateCinemaDtoValidator createCinemaDtoValidator, TransactionPort transactionPort) {
         this.cinemaPort = cinemaPort;
         this.cinemaHallPort = cinemaHallPort;
         this.cityPort = cityPort;
+        this.cinemaCsvParserPort = cinemaCsvParserPort;
         this.createCinemaDtoValidator = createCinemaDtoValidator;
         this.transactionPort = transactionPort;
     }
@@ -45,7 +52,12 @@ public class CinemaService {
             return Mono.error(() -> new CinemaServiceException(Validations.createErrorMessage(errors)));
         }
 
-        Mono<Cinema> result = cinemaHallPort
+        Mono<Cinema> result = saveCinema(createCinemaDto);
+        return transactionPort.inTransaction(result).map(CinemaMapper::toDto);
+    }
+
+    private Mono<Cinema> saveCinema(CreateCinemaDto createCinemaDto) {
+        return cinemaHallPort
                 .addOrUpdateMany(createCinemaDto
                         .cinemaHallsCapacity().stream()
                         .map(dtoVal -> CinemaHall.builder()
@@ -66,7 +78,6 @@ public class CinemaService {
                                         .addOrUpdate(cinema.setCityId(city.getName()).setCinemasIdForCinemaHalls(cinema.getId()))
                                         .flatMap(savedCinema -> cityPort.addOrUpdate(city.addCinema(savedCinema))
                                                 .thenReturn(savedCinema))));
-        return transactionPort.inTransaction(result).map(CinemaMapper::toDto);
     }
 
     public Flux<CinemaDto> getAll() {
@@ -94,6 +105,22 @@ public class CinemaService {
                         .addOrUpdate(createCinemaHallDto.toEntity(cinema.getId()))
                         .flatMap(savedCinemaHall -> cinemaPort.addOrUpdate(addCinemaHallToCinema(cinema, savedCinemaHall))));
         return transactionPort.inTransaction(result).map(CinemaMapper::toDto);
+    }
+
+    public Flux<CinemaDto> uploadCSVFile(InputStream inputStream) {
+        var errorsList = Collections.synchronizedList(new ArrayList<String>());
+
+        return cinemaCsvParserPort.parse(inputStream, errorsList)
+                .collectList()
+                .flatMapMany(cinemas -> saveCinemas(cinemas, errorsList));
+    }
+
+    private Flux<CinemaDto> saveCinemas(List<CreateCinemaDto> cinemas, List<String> errorsList) {
+        if (!errorsList.isEmpty()) {
+            return Flux.error(new CinemaServiceException("Errors are: %s".formatted(errorsList)));
+        }
+        return transactionPort.inTransactionMany(Flux.fromIterable(cinemas).concatMap(this::saveCinema))
+                .map(CinemaMapper::toDto);
     }
 
     private Cinema addCinemaHallToCinema(Cinema cinema, CinemaHall cinemaHall) {

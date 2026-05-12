@@ -3,6 +3,9 @@ package com.rzodeczko.infrastructure.config;
 import com.rzodeczko.application.port.out.*;
 import com.rzodeczko.application.service.*;
 import com.rzodeczko.application.validator.*;
+import com.rzodeczko.infrastructure.csv.CsvCinemaHallParserAdapter;
+import com.rzodeczko.infrastructure.csv.CsvCinemaParserAdapter;
+import com.rzodeczko.infrastructure.csv.CsvCityParserAdapter;
 import com.rzodeczko.infrastructure.csv.CsvMovieParserAdapter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -63,17 +66,20 @@ public class ApplicationBeansConfig {
     @Bean
     public CinemaHallService cinemaHallService(CinemaHallPort cinemaHallPort,
                                                CinemaPort cinemaPort,
+                                               CinemaHallCsvParserPort cinemaHallCsvParserPort,
                                                TransactionPort transactionPort) {
-        return new CinemaHallService(cinemaHallPort, cinemaPort, transactionPort);
+        return new CinemaHallService(cinemaHallPort, cinemaPort, cinemaHallCsvParserPort, transactionPort);
     }
 
     @Bean
     public CinemaService cinemaService(CinemaPort cinemaPort,
                                        CinemaHallPort cinemaHallPort,
                                        CityPort cityPort,
+                                       CinemaCsvParserPort cinemaCsvParserPort,
                                        CreateCinemaDtoValidator createCinemaDtoValidator,
                                        TransactionPort transactionPort) {
         return new CinemaService(cinemaPort, cinemaHallPort, cityPort,
+                cinemaCsvParserPort,
                 createCinemaDtoValidator, transactionPort);
     }
 
@@ -81,8 +87,9 @@ public class ApplicationBeansConfig {
     public CityService cityService(CityPort cityPort,
                                    CinemaPort cinemaPort,
                                    CinemaHallPort cinemaHallPort,
+                                   CityCsvParserPort cityCsvParserPort,
                                    TransactionPort transactionPort) {
-        return new CityService(cityPort, cinemaPort, cinemaHallPort, transactionPort);
+        return new CityService(cityPort, cinemaPort, cinemaHallPort, cityCsvParserPort, transactionPort);
     }
 
     @Bean
@@ -114,6 +121,21 @@ public class ApplicationBeansConfig {
     @Bean
     public MovieCsvParserPort movieCsvParserPort(CreateMovieDtoValidator createMovieDtoValidator) {
         return new CsvMovieParserAdapter(createMovieDtoValidator);
+    }
+
+    @Bean
+    public CityCsvParserPort cityCsvParserPort() {
+        return new CsvCityParserAdapter();
+    }
+
+    @Bean
+    public CinemaCsvParserPort cinemaCsvParserPort(CreateCinemaDtoValidator createCinemaDtoValidator) {
+        return new CsvCinemaParserAdapter(createCinemaDtoValidator);
+    }
+
+    @Bean
+    public CinemaHallCsvParserPort cinemaHallCsvParserPort(CreateCinemaHallDtoValidator createCinemaHallDtoValidator) {
+        return new CsvCinemaHallParserAdapter(createCinemaHallDtoValidator);
     }
 
     @Bean

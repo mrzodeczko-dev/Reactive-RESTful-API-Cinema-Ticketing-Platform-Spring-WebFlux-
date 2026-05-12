@@ -18,7 +18,8 @@ public class CinemaHallsRouting extends BaseJsonRouter {
     @RouterOperations({
             @RouterOperation(path = "/cinemaHalls", method = RequestMethod.GET, beanClass = CinemaHallsHandler.class, beanMethod = "getAll"),
             @RouterOperation(path = "/cinemaHalls/cinemaId/{cinemaId}", method = RequestMethod.GET, beanClass = CinemaHallsHandler.class, beanMethod = "getAllForCinema"),
-            @RouterOperation(path = "/cinemaHalls/addToCinema/cinemaId/{cinemaId}", method = RequestMethod.POST, beanClass = CinemaHallsHandler.class, beanMethod = "addCinemaHallToCinema")
+            @RouterOperation(path = "/cinemaHalls/addToCinema/cinemaId/{cinemaId}", method = RequestMethod.POST, beanClass = CinemaHallsHandler.class, beanMethod = "addCinemaHallToCinema"),
+            @RouterOperation(path = "/cinemaHalls/cinemaId/{cinemaId}/csv", method = RequestMethod.POST, beanClass = CinemaHallsHandler.class, beanMethod = "addCinemaHallsWithCsvFile")
     })
     public RouterFunction<ServerResponse> cinemaHallsRouterFunction(CinemaHallsHandler cinemaHallsHandler) {
         return route()
@@ -27,6 +28,7 @@ public class CinemaHallsRouting extends BaseJsonRouter {
                                 .GET("", _ -> cinemaHallsHandler.getAll())
                                 .GET("/cinemaId/{cinemaId}", cinemaHallsHandler::getAllForCinema)
                                 .POST("/addToCinema/cinemaId/{cinemaId}", cinemaHallsHandler::addCinemaHallToCinema)
+                                .POST("/cinemaId/{cinemaId}/csv", cinemaHallsHandler::addCinemaHallsWithCsvFile)
                         )
                 )
                 .build();

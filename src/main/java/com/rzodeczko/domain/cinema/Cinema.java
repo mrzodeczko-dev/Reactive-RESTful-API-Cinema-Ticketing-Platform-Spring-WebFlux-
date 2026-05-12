@@ -8,7 +8,7 @@ import java.util.List;
 
 public record Cinema(
         String id,
-        String cityId,
+        String cityName,
         String street,
         List<CinemaHall> cinemaHalls
 ) implements GenericEntity {
@@ -30,11 +30,11 @@ public record Cinema(
     }
 
     public Cinema setId(String id) {
-        return new Cinema(id, cityId, street, cinemaHalls);
+        return new Cinema(id, cityName, street, cinemaHalls);
     }
 
     public String getCityId() {
-        return cityId;
+        return cityName;
     }
 
     public Cinema setCityId(String cityId) {
@@ -46,7 +46,7 @@ public record Cinema(
     }
 
     public Cinema setStreet(String street) {
-        return new Cinema(id, cityId, street, cinemaHalls);
+        return new Cinema(id, cityName, street, cinemaHalls);
     }
 
     public List<CinemaHall> getCinemaHalls() {
@@ -54,7 +54,7 @@ public record Cinema(
     }
 
     public Cinema setCinemaHalls(List<CinemaHall> cinemaHalls) {
-        return new Cinema(id, cityId, street, cinemaHalls);
+        return new Cinema(id, cityName, street, cinemaHalls);
     }
 
     public Cinema setCinemasIdForCinemaHalls(String cinemaId) {

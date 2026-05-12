@@ -3,6 +3,7 @@ package com.rzodeczko.presentation.routing.handlers;
 import com.rzodeczko.application.dto.AddCinemaHallToCinemaDto;
 import com.rzodeczko.application.dto.CinemaHallDto;
 import com.rzodeczko.application.dto.ResponseErrorDto;
+import com.rzodeczko.application.exception.CinemaHallServiceException;
 import com.rzodeczko.application.service.CinemaHallService;
 import com.rzodeczko.infrastructure.aspect.annotations.Loggable;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,13 +17,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
@@ -53,6 +58,35 @@ public class CinemaHallsHandler {
                         .body(BodyInserters.fromValue(cinemaHallDto))
                 );
 
+    }
+
+    @Loggable
+    @Operation(
+            summary = "POST add cinemaHalls to cinema with csv",
+            requestBody = @RequestBody(content = @Content(mediaType = "application/octet-stream", array = @ArraySchema(schema = @Schema(type = "string", format = "binary")))),
+            parameters = @Parameter(in = ParameterIn.PATH, name = "cinemaId"),
+            security = @SecurityRequirement(name = "JwtAuthToken"))
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Success", content = {
+                    @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = CinemaHallDto.class)))
+            }),
+            @ApiResponse(responseCode = "500", description = "Error", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
+            })})
+    public Mono<ServerResponse> addCinemaHallsWithCsvFile(ServerRequest serverRequest) {
+        return serverRequest.bodyToMono(Resource.class)
+                .flatMapMany(resource -> {
+                    try {
+                        return cinemaHallService.uploadCSVFile(serverRequest.pathVariable("cinemaId"), resource.getInputStream());
+                    } catch (IOException e) {
+                        return Flux.error(new CinemaHallServiceException("Failed to read CSV file"));
+                    }
+                })
+                .collectList()
+                .flatMap(cinemaHalls -> ServerResponse
+                        .status(HttpStatus.CREATED)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(BodyInserters.fromValue(cinemaHalls)));
     }
 
     @Loggable

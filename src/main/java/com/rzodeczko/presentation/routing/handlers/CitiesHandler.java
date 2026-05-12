@@ -4,6 +4,7 @@ import com.rzodeczko.application.dto.AddCinemaToCityDto;
 import com.rzodeczko.application.dto.CityDto;
 import com.rzodeczko.application.dto.CreateCityDto;
 import com.rzodeczko.application.dto.ResponseErrorDto;
+import com.rzodeczko.application.exception.CityServiceException;
 import com.rzodeczko.application.service.CityService;
 import com.rzodeczko.infrastructure.aspect.annotations.Loggable;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,13 +18,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
@@ -53,6 +58,34 @@ public class CitiesHandler {
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(BodyInserters.fromValue(savedCity))
                 );
+    }
+
+    @Loggable
+    @Operation(
+            summary = "POST add cities with csv",
+            requestBody = @RequestBody(content = @Content(mediaType = "application/octet-stream", array = @ArraySchema(schema = @Schema(type = "string", format = "binary")))),
+            security = @SecurityRequirement(name = "JwtAuthToken"))
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Success", content = {
+                    @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = CityDto.class)))
+            }),
+            @ApiResponse(responseCode = "500", description = "Error", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
+            })})
+    public Mono<ServerResponse> addCitiesWithCsvFile(ServerRequest request) {
+        return request.bodyToMono(Resource.class)
+                .flatMapMany(resource -> {
+                    try {
+                        return cityService.uploadCSVFile(resource.getInputStream());
+                    } catch (IOException e) {
+                        return Flux.error(new CityServiceException("Failed to read CSV file"));
+                    }
+                })
+                .collectList()
+                .flatMap(cities -> ServerResponse
+                        .status(HttpStatus.CREATED)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(BodyInserters.fromValue(cities)));
     }
 
     @Loggable
