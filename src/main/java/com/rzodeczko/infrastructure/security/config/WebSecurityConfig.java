@@ -127,13 +127,18 @@ public class WebSecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/emails/send/multiple").hasRole("ADMIN")
                         .pathMatchers("/emails/send/single").hasAnyRole("USER", "ADMIN")
 
-                        .pathMatchers("/statistics/**").hasAnyRole("USER", "ADMIN")
+                        .pathMatchers("/statistics/**").hasRole("ADMIN")
+
+                        .pathMatchers(HttpMethod.POST, "/cities/csv").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/cinemas/csv").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/cinemaHalls/cinemaId/{cinemaId}/csv").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/movies/csv").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/movieEmissions/csv").hasRole("ADMIN")
 
                         .pathMatchers(HttpMethod.GET, "/cinemas").hasRole("USER")
                         .pathMatchers("/cinemas/**").hasRole("ADMIN")
                         .pathMatchers("/cities/**").hasRole("USER")
 
-                        .pathMatchers(HttpMethod.POST, "/movies/csv").hasRole("ADMIN")
                         .pathMatchers("/movies/**").hasAnyRole("USER", "ADMIN")
                         .pathMatchers("/tickets/**").hasRole("USER")
                         .pathMatchers("/ticketOrders/**").hasRole("USER")

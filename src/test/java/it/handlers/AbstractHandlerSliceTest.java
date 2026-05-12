@@ -10,6 +10,7 @@ import com.rzodeczko.infrastructure.security.SecurityContextRepository;
 import com.rzodeczko.infrastructure.security.config.SecretKeyConfig;
 import com.rzodeczko.infrastructure.security.tokens.AppTokensService;
 import com.rzodeczko.infrastructure.security.tokens.JwtProperties;
+import com.rzodeczko.presentation.csv.CsvMultipartFileReader;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -35,6 +36,7 @@ public abstract class AbstractHandlerSliceTest {
     @TestConfiguration
     @Import({
             ServerHttpSecurity.class,
+            CsvMultipartFileReader.class
     })
     public static class Configs {
 

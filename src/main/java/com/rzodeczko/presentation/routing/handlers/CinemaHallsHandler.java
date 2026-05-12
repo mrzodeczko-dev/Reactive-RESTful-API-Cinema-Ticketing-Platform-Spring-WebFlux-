@@ -6,6 +6,8 @@ import com.rzodeczko.application.dto.ResponseErrorDto;
 import com.rzodeczko.application.exception.CinemaHallServiceException;
 import com.rzodeczko.application.service.CinemaHallService;
 import com.rzodeczko.infrastructure.aspect.annotations.Loggable;
+import com.rzodeczko.presentation.csv.CsvMultipartFileReader;
+import com.rzodeczko.presentation.dto.CsvFileUploadRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -17,23 +19,20 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
 public class CinemaHallsHandler {
 
     private final CinemaHallService cinemaHallService;
+    private final CsvMultipartFileReader csvMultipartFileReader;
 
     @Loggable
     @Operation(
@@ -63,7 +62,7 @@ public class CinemaHallsHandler {
     @Loggable
     @Operation(
             summary = "POST add cinemaHalls to cinema with csv",
-            requestBody = @RequestBody(content = @Content(mediaType = "application/octet-stream", array = @ArraySchema(schema = @Schema(type = "string", format = "binary")))),
+            requestBody = @RequestBody(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(implementation = CsvFileUploadRequest.class))),
             parameters = @Parameter(in = ParameterIn.PATH, name = "cinemaId"),
             security = @SecurityRequirement(name = "JwtAuthToken"))
     @ApiResponses({
@@ -74,14 +73,10 @@ public class CinemaHallsHandler {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
             })})
     public Mono<ServerResponse> addCinemaHallsWithCsvFile(ServerRequest serverRequest) {
-        return serverRequest.bodyToMono(Resource.class)
-                .flatMapMany(resource -> {
-                    try {
-                        return cinemaHallService.uploadCSVFile(serverRequest.pathVariable("cinemaId"), resource.getInputStream());
-                    } catch (IOException e) {
-                        return Flux.error(new CinemaHallServiceException("Failed to read CSV file"));
-                    }
-                })
+        return csvMultipartFileReader.readCsvFile(
+                        serverRequest,
+                        inputStream -> cinemaHallService.uploadCSVFile(serverRequest.pathVariable("cinemaId"), inputStream),
+                        CinemaHallServiceException::new)
                 .collectList()
                 .flatMap(cinemaHalls -> ServerResponse
                         .status(HttpStatus.CREATED)

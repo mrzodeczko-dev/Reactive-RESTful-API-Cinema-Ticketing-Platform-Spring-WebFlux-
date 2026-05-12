@@ -5,6 +5,7 @@ import com.rzodeczko.application.dto.MovieEmissionDto;
 import com.rzodeczko.application.exception.MovieEmissionServiceException;
 import com.rzodeczko.application.mapper.MovieEmissionMapper;
 import com.rzodeczko.application.port.out.CinemaHallPort;
+import com.rzodeczko.application.port.out.MovieEmissionCsvParserPort;
 import com.rzodeczko.application.port.out.MovieEmissionPort;
 import com.rzodeczko.application.port.out.MoviePort;
 import com.rzodeczko.application.port.out.TransactionPort;
@@ -20,10 +21,13 @@ import org.joda.time.Interval;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,13 +42,16 @@ public class MovieEmissionService {
     private final MovieEmissionPort movieEmissionPort;
     private final CinemaHallPort cinemaHallPort;
     private final MoviePort moviePort;
+    private final MovieEmissionCsvParserPort movieEmissionCsvParserPort;
     private final TransactionPort transactionPort;
 
     public MovieEmissionService(MovieEmissionPort movieEmissionPort, CinemaHallPort cinemaHallPort,
-                                MoviePort moviePort, TransactionPort transactionPort) {
+                                MoviePort moviePort, MovieEmissionCsvParserPort movieEmissionCsvParserPort,
+                                TransactionPort transactionPort) {
         this.movieEmissionPort = movieEmissionPort;
         this.cinemaHallPort = cinemaHallPort;
         this.moviePort = moviePort;
+        this.movieEmissionCsvParserPort = movieEmissionCsvParserPort;
         this.transactionPort = transactionPort;
     }
 
@@ -55,7 +62,13 @@ public class MovieEmissionService {
             return Mono.error(new MovieEmissionServiceException(Validations.createErrorMessage(errors)));
         }
 
-        Mono<MovieEmission> result = moviePort.findById(createMovieEmission.movieId())
+        Mono<MovieEmission> result = saveMovieEmission(createMovieEmission);
+
+        return transactionPort.inTransaction(result).map(MovieEmissionMapper::toDto);
+    }
+
+    private Mono<MovieEmission> saveMovieEmission(CreateMovieEmissionDto createMovieEmission) {
+        return moviePort.findById(createMovieEmission.movieId())
                 .switchIfEmpty(Mono.error(() -> new MovieEmissionServiceException(
                         "No movie with id: [%s]".formatted(createMovieEmission.movieId()))))
                 .flatMap(movie -> {
@@ -95,8 +108,6 @@ public class MovieEmissionService {
                 })
                 .flatMap(pair -> cinemaHallPort.addOrUpdate(pair.getLeft().addMovieEmission(pair.getRight()))
                         .then(Mono.just(pair.getRight())));
-
-        return transactionPort.inTransaction(result).map(MovieEmissionMapper::toDto);
     }
 
     private boolean isFreeSpaceForMovieEmissionInCinemaHall(
@@ -163,6 +174,22 @@ public class MovieEmissionService {
                                 .addOrUpdate(cinemaHall.removeMovieEmissionById(movieEmission.getId()))
                                 .then(Mono.just(movieEmission))));
         return transactionPort.inTransaction(result).map(MovieEmissionMapper::toDto);
+    }
+
+    public Flux<MovieEmissionDto> uploadCSVFile(InputStream inputStream) {
+        var errorsList = Collections.synchronizedList(new ArrayList<String>());
+
+        return movieEmissionCsvParserPort.parse(inputStream, errorsList)
+                .collectList()
+                .flatMapMany(movieEmissions -> saveMovieEmissions(movieEmissions, errorsList));
+    }
+
+    private Flux<MovieEmissionDto> saveMovieEmissions(List<CreateMovieEmissionDto> movieEmissions, List<String> errorsList) {
+        if (!errorsList.isEmpty()) {
+            return Flux.error(new MovieEmissionServiceException("Errors are: %s".formatted(errorsList)));
+        }
+        return transactionPort.inTransactionMany(Flux.fromIterable(movieEmissions).concatMap(this::saveMovieEmission))
+                .map(MovieEmissionMapper::toDto);
     }
 
     private LocalDateTime toLocalDateTime(String stringValue) {
