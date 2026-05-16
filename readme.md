@@ -458,7 +458,32 @@ Connection string (from `application.yml`):
 mongodb://${MONGO1_HOST}:${MONGO_PORT},${MONGO2_HOST}:${MONGO_PORT},${MONGO3_HOST}:${MONGO_PORT}/${MONGO_DB_NAME}?replicaSet=${RS_NAME}
 ```
 
-Mongo image: **`mongo:8.3.1`**.
+MongoDB image: **`mongo:8.3.1`**.
+
+### Migrations: Liquibase + Docker Container
+
+Database migrations are applied via a **Liquibase container** (`liquibase-mongo` service in `docker-compose.yml`). This container:
+- Runs the official Liquibase CLI with the MongoDB extension (`liquibase-mongodb`).
+- Applies YAML-based changesets from `db/changelog/` directory.
+- Executes before the `app` service starts (dependency chain in Compose).
+- Changesets are versioned and tracked in MongoDB's `DATABASECHANGELOG` collection.
+
+To add a migration:
+1. Create a new YAML file in `db/changelog/` (e.g., `db/changelog/001-initial-schema.yaml`).
+2. Define changesets with `@id` and `@author` attributes.
+3. Re-build and restart the stack: `docker compose up -d --build`.
+
+Example changeset structure:
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: "001-create-users"
+      author: "system"
+      changes:
+        - insert:
+            collectionName: "users"
+            # … insert/update operations
+```
 
 ---
 
@@ -469,13 +494,13 @@ Mongo image: **`mongo:8.3.1`**.
 
 Every CPU-bound or blocking call is wrapped in `Mono.fromCallable(...)` and offloaded to `Schedulers.boundedElastic()`:
 
-| Operation | Location |
-|---|---|
-| BCrypt hashing / matching | `UsersService`, `AuthenticationManager` |
-| JWT issuance & verification (HS512) | `AppTokensService` |
-| Email sending (blocking SMTP) | `JavaMailSenderAdapter` — with retries on transient failures |
-| CSV parsing (OpenCSV, synchronous) | `Csv*ParserAdapter` — errors collected before any DB write |
-| MongoDB persistence | _No offload needed_ — reactive driver is non-blocking natively |
+| Operation | Location | Notes |
+|---|---|---|
+| BCrypt hashing / matching | `UsersService`, `AuthenticationManager` | Offloaded to avoid blocking Netty thread |
+| JWT issuance & verification (HS512) | `AppTokensService` | Signing/parsing via `Mono.fromCallable(...).subscribeOn(...)` |
+| Email sending (blocking SMTP) | `JavaMailSenderAdapter` | With exponential backoff retry; consider adding circuit-breaker |
+| CSV parsing (OpenCSV, synchronous) | `Csv*ParserAdapter` — errors collected before any DB write | All parsing on boundedElastic |
+| MongoDB persistence | _No offload needed_ — reactive driver is non-blocking natively | Operations stay on Netty |
 
 ---
 
@@ -488,13 +513,15 @@ Every CPU-bound or blocking call is wrapped in `Mono.fromCallable(...)` and offl
 - **Functional routing** — per-resource `*Routing` classes extend `BaseJsonRouter`; springdoc wired via `@RouterOperations` on each router `@Bean`.
 - **MongoDB distributed transactions** — three-node replica set; seat reservation and purchase are atomic across collections via `TransactionPort` (`TransactionalOperator`-backed).
 - **Schedulers discipline** — every CPU-bound or blocking call explicitly offloaded to `Schedulers.boundedElastic()`.
-- **Liquibase / Mongock 5 migrations** — versioned `@ChangeUnit` changesets applied by a dedicated Compose service before the app starts.
+- **Liquibase migrations** — versioned YAML changesets applied by a dedicated Compose service before the app starts; tracked in MongoDB.
+- **Async admin bootstrap with health gate** — `AdminBootstrapper` runs asynchronously (non-blocking startup) with retry/backoff; `AdminBootstrapHealthIndicator` keeps `/actuator/health` in DOWN state until bootstrap succeeds. This prevents traffic to an app without an admin account.
 - **JWT with refresh tokens** — HS512-signed access tokens (5 min) + refresh tokens (8 h).
 - **Hexagonal layering** — domain free of Spring / Mongo / Lombok; ports in `application.port.out`, adapters in `infrastructure`; services expose `Mono`/`Flux` for end-to-end pipeline composition.
 - **Immutable domain objects** — Java records with "wither" methods; value objects validate invariants in the canonical constructor.
 - **Request ID tracing** — `RequestIdWebFilter` attaches a UUID `X-Request-Id` to every request; echoed in response headers and included in every error body.
 - **AOP logging** — `@Loggable` on handler methods triggers `@Around` advice that logs args (sensitive DTOs redacted), reactive signal type, and execution time.
 - **Atomic CSV import** — bulk import either fully succeeds or rejects with a collected list of row-level errors; no partial saves.
+- **Reactive error handling** — security error handlers use reactive chains with proper error handling (no fire-and-forget `.subscribe()`); all async operations have fallback/error recovery.
 
 ---
 
@@ -506,7 +533,7 @@ Every CPU-bound or blocking call is wrapped in `Mono.fromCallable(...)` and offl
 | Concern | Technology | Version |
 |---|---|---|
 | Language | Java (Eclipse Temurin) | 25 |
-| Framework | Spring Boot | 4.0.5 |
+| Framework | Spring Boot | 4.0.6 |
 | Reactive web | Spring WebFlux + Netty | via Boot |
 | Reactive runtime | Project Reactor | via Boot |
 | Database | MongoDB (replica set) | 8.3.1 |
@@ -539,17 +566,17 @@ Plain POJO services, no Spring context; collaborators mocked with **Mockito**, r
 mvn test
 ```
 
-Ten service test classes in `src/test/java/com/rzodeczko/application/service/` (`CinemaServiceTest`, `MovieServiceTest`, `TicketOrderServiceTest`, …).
+Located in `src/test/java/com/rzodeczko/application/service/` (e.g., `CinemaServiceTest`, `MovieServiceTest`, `TicketOrderServiceTest`, …).
 
 ### Handler slice tests (`it-handlers`)
 
-`@WebFluxTest` spins up routing + handler + security only; services mocked via `@MockitoBean`. Verifies HTTP routing, status codes, and response body shape — no MongoDB or SMTP needed.
+`@WebFluxTest` spins up routing + handler only; services mocked via `@MockitoBean`. **Security is replaced with a no-op filter chain** (see `AbstractHandlerSliceTest.Configs#noOpFilterChain`), so slice tests focus on HTTP routing, handler logic, and response shape — not authorization.
 
 ```bash
 mvn verify -P it-handlers -DskipUTs=true
 ```
 
-Ten handler slice test classes in `src/test/java/it/handlers/`.
+Located in `src/test/java/it/handlers/` (e.g., `LoginHandlerSliceTest`, `CitiesHandlerSliceTest`, …).
 
 ### Repository integration tests (`it-testcontainers`)
 
@@ -559,7 +586,7 @@ Spins up a real MongoDB replica set via **Testcontainers** and verifies reposito
 mvn verify -P it-testcontainers -DskipUTs=true
 ```
 
-Nine repository IT classes in `src/test/java/it/testcontainers/repository/`.
+Located in `src/test/java/it/testcontainers/repository/` (e.g., `UserRepositoryImplIT`, `MovieRepositoryImplIT`, …).
 
 ---
 
@@ -568,20 +595,20 @@ Nine repository IT classes in `src/test/java/it/testcontainers/repository/`.
 
 [↑ Back to top](#toc)
 
-`.github/workflows/ci.yml` compiles the project, runs all three suites **in parallel**, then merges JaCoCo execution data for a unified Codecov report:
+`.github/workflows/ci.yml` (if present) compiles the project, runs all three suites **in parallel**, then merges JaCoCo execution data for a unified Codecov report:
 
 ```mermaid
 flowchart LR
     A[Build] --> B1[Unit tests]
-    A --> B2[Integration tests - handlers]
-    A --> B3[Integration tests - testcontainers]
+    A --> B2[Handler slice tests]
+    A --> B3[Repository integration tests]
 
-    B1 --> C[JaCoCo coverage]
+    B1 --> C[JaCoCo merge & report]
     B2 --> C
     B3 --> C
 ```
 
-Each suite uploads its `.exec` file as a GitHub Actions artifact (1-day retention). The `coverage` job merges them, enforces thresholds with `jacoco:check`, and uploads the combined report to Codecov. `fail-fast: true` cancels remaining jobs on any failure.
+Each suite uploads its `.exec` file as a GitHub Actions artifact. The `coverage` job merges them, enforces thresholds with `jacoco:check`, and uploads to Codecov. `fail-fast: true` cancels remaining jobs on any failure.
 
 ---
 
@@ -609,11 +636,21 @@ All 4xx/5xx errors return:
 }
 ```
 
-5xx messages are always the generic `"Internal server error. Please try again later."` — the real exception is logged server-side only.
+5xx messages are always generic `"Internal server error. Please try again later."` — the real exception is logged server-side only.
 
-### Actuator & logging
+### Security error handling
 
-Only the `health` endpoint is exposed (`management.endpoints.web.exposure.include: health`). The Docker Compose healthcheck polls it every 15 seconds (5 s timeout, 5 retries, 60 s start period). Log4j2 is used as the logging backend (Logback excluded from all starters); a `log4j2-test.xml` is provided for tests.
+`WebSecurityConfig` defines custom `ServerAuthenticationEntryPoint` and `ServerAccessDeniedHandler`:
+- **401 Unauthorized** — logs the reason server-side with request ID; returns generic message to client.
+- **403 Forbidden** — logs principal name + path + reason (async, with fallback for retrieval failures); returns generic "Access denied" to client.
+
+Both handlers use reactive chains with proper error recovery — no fire-and-forget `.subscribe()` calls.
+
+### Health indicators
+
+- **`adminBootstrap` health indicator** — reports DOWN until admin bootstrap completes successfully. This prevents Docker Compose healthcheck from marking the container as healthy until the bootstrap is ready.
+- **Standard Spring Boot health** — Actuator exposes only `health` endpoint (`management.endpoints.web.exposure.include: health`).
+- **Healthcheck** — Docker Compose polls `/actuator/health` every 15 seconds (5 s timeout, 5 retries, 60 s start period). App is not marked healthy until `adminBootstrap` indicator is UP.
 
 ---
 
