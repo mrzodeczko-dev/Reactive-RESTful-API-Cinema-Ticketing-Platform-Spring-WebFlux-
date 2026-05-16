@@ -20,7 +20,6 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
 import org.springframework.security.web.server.authorization.ServerAccessDeniedHandler;
-import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -57,17 +56,13 @@ public class WebSecurityConfig {
         };
     }
 
-    /**
-     * 403 Forbidden handler. Logs the principal name + path + reason server-side
-     * for audit; returns generic "Access denied" to the client (no username leak).
-     */
+
     @Bean
     public ServerAccessDeniedHandler serverAccessDeniedHandler() {
         return (exchange, e) -> {
             String reqId = RequestIdWebFilter.get(exchange);
 
-            // Async log enrichment with principal — fire and forget, must not block the response.
-            exchange.getPrincipal()
+            Mono<Void> auditLogMono = exchange.getPrincipal()
                     .doOnNext(principal -> log.warn(
                             "Access denied [reqId={}] user='{}' on {} {}: {}",
                             reqId,
@@ -81,11 +76,17 @@ public class WebSecurityConfig {
                             exchange.getRequest().getMethod(),
                             exchange.getRequest().getURI().getPath(),
                             e.getMessage())))
-                    .subscribe();
+                    .onErrorResume(err -> {
+                        log.warn("Failed to retrieve principal for access denied audit [reqId={}]: {}", reqId, err.getMessage());
+                        return Mono.empty();
+                    })
+                    .then();
 
             exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
             exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-            return exchange.getResponse().writeWith(Mono.just(buildBody("Access denied", reqId)));
+            DataBuffer body = buildBody("Access denied", reqId);
+
+            return auditLogMono.then(exchange.getResponse().writeWith(Mono.just(body)));
         };
     }
 
