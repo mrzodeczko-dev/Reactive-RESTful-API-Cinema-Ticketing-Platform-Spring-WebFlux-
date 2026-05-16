@@ -6,6 +6,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -14,16 +15,29 @@ public class DateTimeGapFinder {
     public static List<Interval> findGaps(List<Interval> existingIntervals, Interval searchInterval) {
         List<Interval> gaps = new ArrayList<>();
 
-        DateTime searchStart = searchInterval.getStart();
-        DateTime searchEnd = searchInterval.getEnd();
-
-        if (hasNoOverlap(existingIntervals, searchStart, searchEnd)) {
+        if (existingIntervals.isEmpty()) {
             gaps.add(searchInterval);
             return gaps;
         }
 
+        DateTime searchStart = searchInterval.getStart();
+        DateTime searchEnd = searchInterval.getEnd();
 
-        List<Interval> subExistingList = removeNoneOverlappingIntervals(existingIntervals, searchInterval);
+        List<Interval> sortedExistingIntervals = existingIntervals.stream()
+                .sorted(Comparator.comparing(Interval::getStart))
+                .toList();
+
+        if (hasNoOverlap(sortedExistingIntervals, searchStart, searchEnd)) {
+            gaps.add(searchInterval);
+            return gaps;
+        }
+
+        List<Interval> subExistingList = removeNoneOverlappingIntervals(sortedExistingIntervals, searchInterval);
+        if (subExistingList.isEmpty()) {
+            gaps.add(searchInterval);
+            return gaps;
+        }
+
         DateTime subEarliestStart = subExistingList.getFirst().getStart();
         DateTime subLatestStop = subExistingList.getLast().getEnd();
 
