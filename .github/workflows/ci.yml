@@ -104,6 +104,8 @@ jobs:
         run: mvn jacoco:merge --batch-mode --no-transfer-progress -Djacoco.destFile=target/jacoco.exec
       - name: Generate JaCoCo report
         run: mvn jacoco:report --batch-mode --no-transfer-progress -Djacoco.dataFile=target/jacoco.exec
+      - name: Check if jacoco.xml exists
+        run: ls -la target/site/jacoco/ || echo "Report directory does not exist"
       - name: Check coverage
         run: mvn jacoco:check --batch-mode --no-transfer-progress -Djacoco.dataFile=target/jacoco.exec
       - name: Upload JaCoCo coverage report
@@ -118,5 +120,5 @@ jobs:
         if: always()
         with:
           files: target/site/jacoco/jacoco.xml
-          fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+

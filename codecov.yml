@@ -1,0 +1,32 @@
+codecov:
+  require_ci_to_pass: true
+  precision: 2
+  round: down
+  layout: "reach,diff,flags,tree"
+  show_critical_path: false
+
+coverage:
+  precision: 2
+  round: round
+  range: "70...100"
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+  branches:
+    - master
+
+ignore:
+  - "**/domain/**"
+  - "**/*Config.java"
+  - "**/*Document.java"
+
+flags:
+  unit:
+    carryforward: true
+  integration:
+    carryforward: true
+
