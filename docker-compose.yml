@@ -1,4 +1,14 @@
 services:
+  redis:
+    image: redis:7.4-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - net
+
   mongo1:
     image: mongo:8.3.1
     container_name: ${MONGO1_HOST}
@@ -139,6 +149,8 @@ services:
         condition: service_completed_successfully
       liquibase-mongo:
         condition: service_completed_successfully
+      redis:
+        condition: service_started
     ports:
       - "${APP_PORT}:${APP_PORT}"
     environment:
@@ -154,6 +166,8 @@ services:
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     networks:
       - net
 

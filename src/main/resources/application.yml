@@ -24,6 +24,10 @@ spring:
             enable: true
   codec:
     max-in-memory-size: 5MB
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 jwt:
   secret-key: ${JWT_SECRET_KEY}
@@ -55,3 +59,11 @@ management:
     web:
       exposure:
         include: health
+
+# Rate limiter for public auth endpoints (/login, /register).
+# Each unique client IP is allowed `capacity` requests per `refill-period-seconds`.
+# Exceeding the limit returns HTTP 429 with a Retry-After header.
+rate-limit:
+  capacity: 10
+  refill-tokens: 10
+  refill-period-seconds: 60
