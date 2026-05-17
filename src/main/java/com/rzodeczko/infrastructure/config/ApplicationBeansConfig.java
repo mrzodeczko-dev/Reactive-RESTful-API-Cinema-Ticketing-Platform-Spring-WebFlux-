@@ -68,8 +68,10 @@ public class ApplicationBeansConfig {
     public CinemaHallService cinemaHallService(CinemaHallPort cinemaHallPort,
                                                CinemaPort cinemaPort,
                                                CinemaHallCsvParserPort cinemaHallCsvParserPort,
-                                               TransactionPort transactionPort) {
-        return new CinemaHallService(cinemaHallPort, cinemaPort, cinemaHallCsvParserPort, transactionPort);
+                                               TransactionPort transactionPort,
+                                               AddCinemaHallToCinemaDtoValidator addCinemaHallToCinemaDtoValidator) {
+        return new CinemaHallService(cinemaHallPort, cinemaPort, cinemaHallCsvParserPort, transactionPort,
+                addCinemaHallToCinemaDtoValidator);
     }
 
     @Bean
@@ -78,10 +80,11 @@ public class ApplicationBeansConfig {
                                        CityPort cityPort,
                                        CinemaCsvParserPort cinemaCsvParserPort,
                                        CreateCinemaDtoValidator createCinemaDtoValidator,
+                                       CreateCinemaHallDtoValidator createCinemaHallDtoValidator,
                                        TransactionPort transactionPort) {
         return new CinemaService(cinemaPort, cinemaHallPort, cityPort,
                 cinemaCsvParserPort,
-                createCinemaDtoValidator, transactionPort);
+                createCinemaDtoValidator, createCinemaHallDtoValidator, transactionPort);
     }
 
     @Bean
@@ -106,10 +109,11 @@ public class ApplicationBeansConfig {
                                                      CinemaHallPort cinemaHallPort,
                                                      MoviePort moviePort,
                                                      MovieEmissionCsvParserPort movieEmissionCsvParserPort,
-                                                     TransactionPort transactionPort) {
+                                                     TransactionPort transactionPort,
+                                                     CreateMovieEmissionDtoValidator createMovieEmissionDtoValidator) {
         return new MovieEmissionService(movieEmissionPort, cinemaHallPort, moviePort,
                 movieEmissionCsvParserPort,
-                transactionPort);
+                transactionPort, createMovieEmissionDtoValidator);
     }
 
     @Bean

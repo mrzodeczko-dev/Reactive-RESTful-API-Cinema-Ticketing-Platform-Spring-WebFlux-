@@ -27,21 +27,24 @@ public class CinemaHallService {
     private final CinemaPort cinemaPort;
     private final CinemaHallCsvParserPort cinemaHallCsvParserPort;
     private final TransactionPort transactionPort;
+    private final AddCinemaHallToCinemaDtoValidator addCinemaHallToCinemaDtoValidator;
 
     public CinemaHallService(CinemaHallPort cinemaHallPort, CinemaPort cinemaPort,
                              CinemaHallCsvParserPort cinemaHallCsvParserPort,
-                             TransactionPort transactionPort) {
+                             TransactionPort transactionPort,
+                             AddCinemaHallToCinemaDtoValidator addCinemaHallToCinemaDtoValidator) {
         this.cinemaHallPort = cinemaHallPort;
         this.cinemaPort = cinemaPort;
         this.cinemaHallCsvParserPort = cinemaHallCsvParserPort;
         this.transactionPort = transactionPort;
+        this.addCinemaHallToCinemaDtoValidator = addCinemaHallToCinemaDtoValidator;
     }
 
     public Mono<CinemaHallDto> addCinemaHallToCinema(Mono<AddCinemaHallToCinemaDto> addCinemaHallToCinemaDtoMono) {
 
         Mono<CinemaHall> result = addCinemaHallToCinemaDtoMono
                 .flatMap(dto -> {
-                    var errors = new AddCinemaHallToCinemaDtoValidator().validate(dto);
+                    var errors = addCinemaHallToCinemaDtoValidator.validate(dto);
                     if (Validations.hasErrors(errors)) {
                         return Mono.error(new CinemaHallServiceException(Validations.createErrorMessage(errors)));
                     }

@@ -36,15 +36,18 @@ public record Discount(BigDecimal value) {
     }
 
     private static BigDecimal init(String value) {
-        if (value == null || !value.matches("\\d\\.\\d+")) {
+        if (value == null) {
             throw new DiscountException("discount value is not correct");
         }
-
-        var decimalValue = new BigDecimal(value);
+        final BigDecimal decimalValue;
+        try {
+            decimalValue = new BigDecimal(value);
+        } catch (NumberFormatException e) {
+            throw new DiscountException("discount value is not correct");
+        }
         if (decimalValue.compareTo(BigDecimal.ZERO) < 0 || decimalValue.compareTo(BigDecimal.ONE) > 0) {
             throw new DiscountException("discount value is out of range");
         }
-
         return decimalValue;
     }
 

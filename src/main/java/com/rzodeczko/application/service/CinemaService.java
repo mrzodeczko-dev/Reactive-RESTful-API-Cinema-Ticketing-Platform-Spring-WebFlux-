@@ -30,16 +30,20 @@ public class CinemaService {
     private final CityPort cityPort;
     private final CinemaCsvParserPort cinemaCsvParserPort;
     private final CreateCinemaDtoValidator createCinemaDtoValidator;
+    private final CreateCinemaHallDtoValidator createCinemaHallDtoValidator;
     private final TransactionPort transactionPort;
 
     public CinemaService(CinemaPort cinemaPort, CinemaHallPort cinemaHallPort, CityPort cityPort,
                          CinemaCsvParserPort cinemaCsvParserPort,
-                         CreateCinemaDtoValidator createCinemaDtoValidator, TransactionPort transactionPort) {
+                         CreateCinemaDtoValidator createCinemaDtoValidator,
+                         CreateCinemaHallDtoValidator createCinemaHallDtoValidator,
+                         TransactionPort transactionPort) {
         this.cinemaPort = cinemaPort;
         this.cinemaHallPort = cinemaHallPort;
         this.cityPort = cityPort;
         this.cinemaCsvParserPort = cinemaCsvParserPort;
         this.createCinemaDtoValidator = createCinemaDtoValidator;
+        this.createCinemaHallDtoValidator = createCinemaHallDtoValidator;
         this.transactionPort = transactionPort;
     }
 
@@ -95,7 +99,7 @@ public class CinemaService {
 
     public Mono<CinemaDto> addCinemaHallToCinema(String cinemaId, CreateCinemaHallDto createCinemaHallDto) {
 
-        var errors = new CreateCinemaHallDtoValidator().validate(createCinemaHallDto);
+        var errors = createCinemaHallDtoValidator.validate(createCinemaHallDto);
         if (Validations.hasErrors(errors)) {
             return Mono.error(new CinemaServiceException(
                     "CreateCinemaHallDto is not valid. Errors are: [%s]".formatted(

@@ -42,20 +42,23 @@ public class MovieEmissionService {
     private final MoviePort moviePort;
     private final MovieEmissionCsvParserPort movieEmissionCsvParserPort;
     private final TransactionPort transactionPort;
+    private final CreateMovieEmissionDtoValidator createMovieEmissionDtoValidator;
 
     public MovieEmissionService(MovieEmissionPort movieEmissionPort, CinemaHallPort cinemaHallPort,
                                 MoviePort moviePort, MovieEmissionCsvParserPort movieEmissionCsvParserPort,
-                                TransactionPort transactionPort) {
+                                TransactionPort transactionPort,
+                                CreateMovieEmissionDtoValidator createMovieEmissionDtoValidator) {
         this.movieEmissionPort = movieEmissionPort;
         this.cinemaHallPort = cinemaHallPort;
         this.moviePort = moviePort;
         this.movieEmissionCsvParserPort = movieEmissionCsvParserPort;
         this.transactionPort = transactionPort;
+        this.createMovieEmissionDtoValidator = createMovieEmissionDtoValidator;
     }
 
     public Mono<MovieEmissionDto> createMovieEmission(CreateMovieEmissionDto createMovieEmission) {
 
-        var errors = new CreateMovieEmissionDtoValidator().validate(createMovieEmission);
+        var errors = createMovieEmissionDtoValidator.validate(createMovieEmission);
         if (Validations.hasErrors(errors)) {
             return Mono.error(new MovieEmissionServiceException(Validations.createErrorMessage(errors)));
         }

@@ -45,9 +45,10 @@ public class StatisticsService {
                                 currentDate,
                                 cinemaHallIdsForCity(city))
                         .map(ticketPurchase -> ticketPurchase.getTickets().size())
-                        .map(ticketsNumber -> CityFrequencyDto.builder()
+                        .reduce(0, Integer::sum)
+                        .map(totalTickets -> CityFrequencyDto.builder()
                                 .city(city.getName())
-                                .frequency(ticketsNumber)
+                                .frequency(totalTickets)
                                 .build()));
     }
 
