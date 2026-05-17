@@ -296,4 +296,25 @@ public class MoviesHandler {
                         .body(flux, MovieDto.class)
                 );
     }
+
+    @Loggable
+    @Operation(
+            summary = "DELETE all movies",
+            security = @SecurityRequirement(name = "JwtAuthToken"))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Success", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = MovieDto.class))
+            }),
+            @ApiResponse(responseCode = "500", description = "Error", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseErrorDto.class))
+            })
+    })
+    public Mono<ServerResponse> deleteAllMovies() {
+        return movieService.deleteAll()
+                .as(flux -> ServerResponse
+                        .status(HttpStatus.OK)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(flux, MovieDto.class)
+                );
+    }
 }

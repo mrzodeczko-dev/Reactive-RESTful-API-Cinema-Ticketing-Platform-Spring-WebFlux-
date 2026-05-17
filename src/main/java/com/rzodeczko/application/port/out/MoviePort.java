@@ -16,4 +16,5 @@ public interface MoviePort extends PersistencePort<Movie, String> {
     Flux<Movie> findAllByPremiereDateBetween(LocalDate from, LocalDate to);
     Flux<Movie> findAllByPremiereDateGreaterThanEqual(LocalDate from);
     Flux<Movie> findAllByPremiereDateLessThanEqual(LocalDate to);
+    Flux<Movie> deleteAll();
 }

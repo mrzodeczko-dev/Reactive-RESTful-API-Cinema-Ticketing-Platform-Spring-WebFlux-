@@ -1,5 +1,6 @@
 package com.rzodeczko.application.service;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.rzodeczko.application.dto.CreateMovieDto;
 import com.rzodeczko.application.dto.MovieDto;
 import com.rzodeczko.application.exception.MovieServiceException;
@@ -86,7 +87,7 @@ public class MovieService {
             return Flux.error(() -> new MovieServiceException(
                     """
                             Movie duration is not set correctly!
-
+                            
                             Conditions to met:
                             1) At least one boundary movie duration should be set,
                             2) Variable minDuration must not be greater than maxDuration (if defined),
@@ -202,6 +203,11 @@ public class MovieService {
 
     public Mono<MovieDto> deleteMovieById(final String id) {
         return moviePort.deleteById(id)
+                .map(MovieMapper::toDto);
+    }
+
+    public Flux<MovieDto> deleteAll() {
+        return moviePort.deleteAll()
                 .map(MovieMapper::toDto);
     }
 }

@@ -106,4 +106,13 @@ public class MovieRepositoryImpl implements MoviePort {
     public Flux<Movie> findAllByPremiereDateLessThanEqual(LocalDate to) {
         return mongo.findAllByPremiereDateLessThanEqual(to).map(MovieDocumentMapper::toDomain);
     }
+
+    @Override
+    public Flux<Movie> deleteAll() {
+        return mongo.findAll()
+                .collectList()
+                .flatMapMany(list -> mongo.deleteAll(list)
+                        .thenMany(Flux.fromIterable(list)))
+                .map(MovieDocumentMapper::toDomain);
+    }
 }

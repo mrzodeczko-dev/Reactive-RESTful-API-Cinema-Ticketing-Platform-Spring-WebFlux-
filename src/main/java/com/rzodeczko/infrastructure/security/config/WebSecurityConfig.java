@@ -120,9 +120,7 @@ public class WebSecurityConfig {
 
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
-                        .pathMatchers("/register").permitAll()
-                        .pathMatchers("/login").permitAll()
-                        .pathMatchers("/refresh").permitAll()
+                        .pathMatchers("/register", "/login", "/refresh").permitAll()
 
                         .pathMatchers("/users/**").hasRole("ADMIN")
 
@@ -133,32 +131,28 @@ public class WebSecurityConfig {
 
                         .pathMatchers(HttpMethod.POST, "/cities/csv").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.POST, "/cinemas/csv").hasRole("ADMIN")
-                        .pathMatchers(HttpMethod.POST, "/cinemaHalls/cinemaId/{cinemaId}/csv").hasRole("ADMIN")
+                        .pathMatchers( "/cinemaHalls/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.POST, "/movies/csv").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.POST, "/movieEmissions/csv").hasRole("ADMIN")
 
-                        .pathMatchers(HttpMethod.GET, "/cinemas").hasRole("USER")
+                        .pathMatchers(HttpMethod.GET, "/cinemas").hasAnyRole("USER", "ADMIN")
                         .pathMatchers("/cinemas/**").hasRole("ADMIN")
-                        .pathMatchers("/cities/**").hasRole("USER")
+                        .pathMatchers("/cities/**").hasAnyRole("USER", "ADMIN")
 
+                        .pathMatchers(HttpMethod.DELETE, "/movies/**").hasRole("ADMIN")
                         .pathMatchers("/movies/**").hasAnyRole("USER", "ADMIN")
-                        .pathMatchers("/tickets/**").hasRole("USER")
-                        .pathMatchers("/ticketOrders/**").hasRole("USER")
-                        .pathMatchers("/ticketsOrders/**").hasRole("USER")
+
+                        .pathMatchers("/tickets/**").hasAnyRole("USER", "ADMIN")
+                        .pathMatchers("/ticketOrders/**").hasAnyRole("USER", "ADMIN")
+                        .pathMatchers("/ticketsOrders/**").hasAnyRole("USER", "ADMIN")
+
                         .pathMatchers(HttpMethod.POST, "/movieEmissions").hasRole("ADMIN")
                         .pathMatchers("/movieEmissions/**").hasAnyRole("USER", "ADMIN")
 
                         .pathMatchers("/admin/ticketPurchases/**").hasRole("ADMIN")
-                        .pathMatchers("/ticketPurchases/**").hasRole("USER")
+                        .pathMatchers("/ticketPurchases/**").hasAnyRole("USER", "ADMIN")
 
-                        .pathMatchers("/docs/**").permitAll()
-                        .pathMatchers("/docs").permitAll()
-                        .pathMatchers("/swagger-ui/**").permitAll()
-                        .pathMatchers("/swagger-ui.html").permitAll()
-                        .pathMatchers("/v3/api-docs/**").permitAll()
-                        .pathMatchers("/v3/api-docs").permitAll()
-                        .pathMatchers("/webjars/swagger-ui/**").permitAll()
-
+                        .pathMatchers("/docs/**", "/docs", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs", "/webjars/swagger-ui/**").permitAll()
                         .pathMatchers("/actuator/health").permitAll()
 
                         .anyExchange().denyAll()

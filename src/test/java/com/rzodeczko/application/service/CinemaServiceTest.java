@@ -112,8 +112,6 @@ class CinemaServiceTest {
                     .build();
 
             when(createCinemaDtoValidator.validate(dto)).thenReturn(Map.of());
-            when(cinemaHallRepository.addOrUpdateMany(anyList())).thenReturn(Flux.just(cinemaHall));
-            when(cinemaRepository.addOrUpdate(any())).thenReturn(Mono.just(cinema));
             when(cityRepository.findByName("Atlantis")).thenReturn(Mono.empty());
             when(transactionPort.inTransaction(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 

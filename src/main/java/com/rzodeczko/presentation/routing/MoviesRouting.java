@@ -21,6 +21,7 @@ public class MoviesRouting extends BaseJsonRouter {
             @RouterOperation(method = RequestMethod.POST, path = "/movies", beanClass = MoviesHandler.class, beanMethod = "addMovieToDatabase"),
             @RouterOperation(method = RequestMethod.DELETE, path = "/movies/id/{id}", beanClass = MoviesHandler.class, beanMethod = "deleteMovieById"),
             @RouterOperation(method = RequestMethod.GET, path = "/movies", beanClass = MoviesHandler.class, beanMethod = "getAllMovies"),
+            @RouterOperation(method = RequestMethod.DELETE, path = "/movies", beanClass = MoviesHandler.class, beanMethod = "deleteAllMovies"),
             @RouterOperation(method = RequestMethod.GET, path = "/movies/filter/premiereDate", beanClass = MoviesHandler.class, beanMethod = "getMoviesFilteredByPremiereDate"),
             @RouterOperation(method = RequestMethod.GET, path = "/movies/filter/duration", beanClass = MoviesHandler.class, beanMethod = "getMoviesFilteredByDuration"),
             @RouterOperation(method = RequestMethod.GET, path = "/movies/filter/name/{name}", beanClass = MoviesHandler.class, beanMethod = "getMoviesFilteredByName"),
@@ -38,6 +39,7 @@ public class MoviesRouting extends BaseJsonRouter {
                                 .POST("", moviesHandler::addMovieToDatabase)
                                 .DELETE("/id/{id}", moviesHandler::deleteMovieById)
                                 .GET("", _ -> moviesHandler.getAllMovies())
+                                .DELETE("", _ -> moviesHandler.deleteAllMovies())
                                 .GET("/filter/premiereDate", moviesHandler::getMoviesFilteredByPremiereDate)
                                 .GET("/filter/duration", moviesHandler::getMoviesFilteredByDuration)
                                 .GET("/filter/name/{name}", moviesHandler::getMoviesFilteredByName)

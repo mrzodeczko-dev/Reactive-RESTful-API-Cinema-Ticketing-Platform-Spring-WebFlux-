@@ -54,28 +54,35 @@ public class CinemaService {
         return transactionPort.inTransaction(result).map(CinemaMapper::toDto);
     }
 
+
     private Mono<Cinema> saveCinema(CreateCinemaDto createCinemaDto) {
-        return cinemaHallPort
-                .addOrUpdateMany(createCinemaDto
-                        .cinemaHallsCapacity().stream()
-                        .map(dtoVal -> CinemaHall.builder()
-                                .positions(ServiceUtils.buildPositions(dtoVal.rowNo(), dtoVal.colNo()))
-                                .movieEmissions(Collections.emptyList())
-                                .build())
-                        .collect(Collectors.toList()))
-                .collectList()
-                .flatMap(cinemaHalls -> cinemaPort.addOrUpdate(Cinema.builder()
-                        .cinemaHalls(cinemaHalls)
-                        .street(createCinemaDto.street())
-                        .build()))
-                .flatMap(cinema ->
-                        cityPort.findByName(createCinemaDto.city())
-                                .switchIfEmpty(Mono.error(() -> new CinemaServiceException(
-                                        "No city with name: %s".formatted(createCinemaDto.city()))))
-                                .flatMap(city -> cinemaPort
-                                        .addOrUpdate(cinema.setCityId(city.getName()).setCinemasIdForCinemaHalls(cinema.getId()))
-                                        .flatMap(savedCinema -> cityPort.addOrUpdate(city.addCinema(savedCinema))
-                                                .thenReturn(savedCinema))));
+        return cityPort.findByName(createCinemaDto.city())
+                .switchIfEmpty(Mono.error(() -> new CinemaServiceException(
+                        "No city with name: %s".formatted(createCinemaDto.city()))))
+                .flatMap(city -> cinemaHallPort
+                        .addOrUpdateMany(createCinemaDto
+                                .cinemaHallsCapacity().stream()
+                                .map(dtoVal -> CinemaHall.builder()
+                                        .positions(ServiceUtils.buildPositions(dtoVal.rowNo(), dtoVal.colNo()))
+                                        .movieEmissions(Collections.emptyList())
+                                        .build())
+                                .collect(Collectors.toList()))
+                        .collectList()
+                        .flatMap(cinemaHalls -> cinemaPort.addOrUpdate(Cinema.builder()
+                                .cinemaHalls(cinemaHalls)
+                                .street(createCinemaDto.street())
+                                .build()))
+                        .flatMap(cinema -> {
+                            var updatedCinema = cinema
+                                    .setCityId(city.getName())
+                                    .setCinemasIdForCinemaHalls(cinema.getId());
+                            return cinemaHallPort
+                                    .addOrUpdateMany(updatedCinema.getCinemaHalls())
+                                    .collectList()
+                                    .flatMap(_ -> cinemaPort.addOrUpdate(updatedCinema))
+                                    .flatMap(savedCinema -> cityPort.addOrUpdate(city.addCinema(savedCinema))
+                                            .thenReturn(savedCinema));
+                        }));
     }
 
     public Flux<CinemaDto> getAll() {
