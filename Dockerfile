@@ -1,5 +1,5 @@
 FROM eclipse-temurin:25-jre
-MAINTAINER CoderNoOne firelight.code@gmail.com
+MAINTAINER mrzodeczko-dev firelight.code@gmail.com
 
 ARG DEPENDENCY=target/dependency
 COPY ${DEPENDENCY}/BOOT-INF/lib /app/lib
