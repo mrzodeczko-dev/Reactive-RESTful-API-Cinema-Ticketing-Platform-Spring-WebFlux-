@@ -119,43 +119,12 @@ public class WebSecurityConfig {
                 )
 
                 .authorizeExchange(exchanges -> exchanges
+                        .pathMatchers("/admin/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
                         .pathMatchers("/register", "/login", "/refresh").permitAll()
-
-                        .pathMatchers("/users/**").hasRole("ADMIN")
-
-                        .pathMatchers(HttpMethod.POST, "/emails/send/multiple").hasRole("ADMIN")
-                        .pathMatchers("/emails/send/single").hasAnyRole("USER", "ADMIN")
-
-                        .pathMatchers("/statistics/**").hasRole("ADMIN")
-
-                        .pathMatchers(HttpMethod.POST, "/cities/csv").hasRole("ADMIN")
-                        .pathMatchers(HttpMethod.POST, "/cinemas/csv").hasRole("ADMIN")
-                        .pathMatchers( "/cinemaHalls/**").hasRole("ADMIN")
-                        .pathMatchers(HttpMethod.POST, "/movies/csv").hasRole("ADMIN")
-                        .pathMatchers(HttpMethod.POST, "/movieEmissions/csv").hasRole("ADMIN")
-
-                        .pathMatchers(HttpMethod.GET, "/cinemas").hasAnyRole("USER", "ADMIN")
-                        .pathMatchers("/cinemas/**").hasRole("ADMIN")
-                        .pathMatchers("/cities/**").hasAnyRole("USER", "ADMIN")
-
-                        .pathMatchers(HttpMethod.DELETE, "/movies/**").hasRole("ADMIN")
-                        .pathMatchers("/movies/**").hasAnyRole("USER", "ADMIN")
-
-                        .pathMatchers("/tickets/**").hasAnyRole("USER", "ADMIN")
-                        .pathMatchers("/ticketOrders/**").hasAnyRole("USER", "ADMIN")
-                        .pathMatchers("/ticketsOrders/**").hasAnyRole("USER", "ADMIN")
-
-                        .pathMatchers(HttpMethod.POST, "/movieEmissions").hasRole("ADMIN")
-                        .pathMatchers("/movieEmissions/**").hasAnyRole("USER", "ADMIN")
-
-                        .pathMatchers("/admin/ticketPurchases/**").hasRole("ADMIN")
-                        .pathMatchers("/ticketPurchases/**").hasAnyRole("USER", "ADMIN")
-
                         .pathMatchers("/docs/**", "/docs", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs", "/webjars/swagger-ui/**").permitAll()
                         .pathMatchers("/actuator/health").permitAll()
-
-                        .anyExchange().denyAll()
+                        .anyExchange().hasAnyRole("USER", "ADMIN")
                 )
                 .build();
     }

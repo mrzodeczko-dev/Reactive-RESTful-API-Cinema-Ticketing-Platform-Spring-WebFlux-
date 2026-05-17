@@ -18,16 +18,12 @@ public class MoviesRouting extends BaseJsonRouter {
     @RouterOperations({
             @RouterOperation(method = RequestMethod.GET, path = "/movies/id/{id}", beanClass = MoviesHandler.class, beanMethod = "getById"),
             @RouterOperation(method = RequestMethod.PATCH, path = "/movies/addToFavorites/{id}", beanClass = MoviesHandler.class, beanMethod = "addMovieToFavorites"),
-            @RouterOperation(method = RequestMethod.POST, path = "/movies", beanClass = MoviesHandler.class, beanMethod = "addMovieToDatabase"),
-            @RouterOperation(method = RequestMethod.DELETE, path = "/movies/id/{id}", beanClass = MoviesHandler.class, beanMethod = "deleteMovieById"),
             @RouterOperation(method = RequestMethod.GET, path = "/movies", beanClass = MoviesHandler.class, beanMethod = "getAllMovies"),
-            @RouterOperation(method = RequestMethod.DELETE, path = "/movies", beanClass = MoviesHandler.class, beanMethod = "deleteAllMovies"),
             @RouterOperation(method = RequestMethod.GET, path = "/movies/filter/premiereDate", beanClass = MoviesHandler.class, beanMethod = "getMoviesFilteredByPremiereDate"),
             @RouterOperation(method = RequestMethod.GET, path = "/movies/filter/duration", beanClass = MoviesHandler.class, beanMethod = "getMoviesFilteredByDuration"),
             @RouterOperation(method = RequestMethod.GET, path = "/movies/filter/name/{name}", beanClass = MoviesHandler.class, beanMethod = "getMoviesFilteredByName"),
             @RouterOperation(method = RequestMethod.GET, path = "/movies/filter/genre/{genre}", beanClass = MoviesHandler.class, beanMethod = "getMoviesFilteredByGenre"),
             @RouterOperation(method = RequestMethod.GET, path = "/movies/filter/keyword/{keyword}", beanClass = MoviesHandler.class, beanMethod = "getMoviesFilteredByKeyword"),
-            @RouterOperation(method = RequestMethod.POST, path = "/movies/csv", beanClass = MoviesHandler.class, beanMethod = "addMovieToDatabaseWithCsvFile"),
             @RouterOperation(method = RequestMethod.GET, path = "/movies/favorites", beanClass = MoviesHandler.class, beanMethod = "getFavoriteMovies")
     })
     public RouterFunction<ServerResponse> moviesRouterFunction(MoviesHandler moviesHandler) {
@@ -36,10 +32,7 @@ public class MoviesRouting extends BaseJsonRouter {
                         .nest(jsonAccept(), nested -> nested
                                 .GET("/id/{id}", moviesHandler::getById)
                                 .PATCH("/addToFavorites/{id}", moviesHandler::addMovieToFavorites)
-                                .POST("", moviesHandler::addMovieToDatabase)
-                                .DELETE("/id/{id}", moviesHandler::deleteMovieById)
                                 .GET("", _ -> moviesHandler.getAllMovies())
-                                .DELETE("", _ -> moviesHandler.deleteAllMovies())
                                 .GET("/filter/premiereDate", moviesHandler::getMoviesFilteredByPremiereDate)
                                 .GET("/filter/duration", moviesHandler::getMoviesFilteredByDuration)
                                 .GET("/filter/name/{name}", moviesHandler::getMoviesFilteredByName)
@@ -47,7 +40,6 @@ public class MoviesRouting extends BaseJsonRouter {
                                 .GET("/filter/keyword/{keyword}", moviesHandler::getMoviesFilteredByKeyword)
                                 .GET("/favorites", _ -> moviesHandler.getFavoriteMovies())
                         )
-                        .POST("/csv", jsonAccept(), moviesHandler::addMovieToDatabaseWithCsvFile)
                 )
                 .build();
     }

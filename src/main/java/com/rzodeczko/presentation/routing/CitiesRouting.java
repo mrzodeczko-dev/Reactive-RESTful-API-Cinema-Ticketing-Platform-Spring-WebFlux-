@@ -16,21 +16,15 @@ public class CitiesRouting extends BaseJsonRouter {
 
     @Bean
     @RouterOperations({
-            @RouterOperation(method = RequestMethod.POST, path = "/cities", beanClass = CitiesHandler.class, beanMethod = "addCity"),
-            @RouterOperation(method = RequestMethod.POST, path = "/cities/csv", beanClass = CitiesHandler.class, beanMethod = "addCitiesWithCsvFile"),
             @RouterOperation(method = RequestMethod.GET, path = "/cities/name/{name}", beanClass = CitiesHandler.class, beanMethod = "findByName"),
-            @RouterOperation(method = RequestMethod.GET, path = "/cities", beanClass = CitiesHandler.class, beanMethod = "getAll"),
-            @RouterOperation(method = RequestMethod.PUT, path = "/cities", beanClass = CitiesHandler.class, beanMethod = "addCinemaToCity")
+            @RouterOperation(method = RequestMethod.GET, path = "/cities", beanClass = CitiesHandler.class, beanMethod = "getAll")
     })
     public RouterFunction<ServerResponse> citiesRouterFunction(CitiesHandler citiesHandler) {
         return route()
                 .path("/cities", builder -> builder
                         .nest(jsonAccept(), nested -> nested
-                                .POST("", citiesHandler::addCity)
-                                .POST("/csv", citiesHandler::addCitiesWithCsvFile)
                                 .GET("/name/{name}", citiesHandler::findByName)
                                 .GET("", _ -> citiesHandler.getAll())
-                                .PUT("", citiesHandler::addCinemaToCity)
                         )
                 )
                 .build();

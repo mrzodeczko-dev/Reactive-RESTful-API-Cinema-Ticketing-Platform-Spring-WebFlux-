@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-cities-name-unique
+      author: rzodeczko-dev
+      comment: "Unique index on cities.name — prevents duplicate cities"
+      changes:
+        - createIndex:
+            collectionName: cities
+            keys: '{ name: 1 }'
+            options: '{ unique: true, name: "cities_name_unique" }'

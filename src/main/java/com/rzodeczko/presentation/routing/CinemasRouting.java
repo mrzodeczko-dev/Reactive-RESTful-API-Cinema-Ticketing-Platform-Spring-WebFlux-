@@ -16,21 +16,15 @@ public class CinemasRouting extends BaseJsonRouter {
 
     @Bean
     @RouterOperations({
-            @RouterOperation(method = RequestMethod.POST, path = "/cinemas", beanClass = CinemasHandler.class, beanMethod = "addCinema"),
-            @RouterOperation(method = RequestMethod.POST, path = "/cinemas/csv", beanClass = CinemasHandler.class, beanMethod = "addCinemasWithCsvFile"),
             @RouterOperation(method = RequestMethod.GET, path = "/cinemas", beanClass = CinemasHandler.class, beanMethod = "getAll"),
-            @RouterOperation(method = RequestMethod.GET, path = "/cinemas/city/{city}", beanClass = CinemasHandler.class, beanMethod = "getAllCinemasByCity"),
-            @RouterOperation(method = RequestMethod.PUT, path = "/cinemas/id/{id}/addCinemaHall", beanClass = CinemasHandler.class, beanMethod = "addCinemaHall")
+            @RouterOperation(method = RequestMethod.GET, path = "/cinemas/city/{city}", beanClass = CinemasHandler.class, beanMethod = "getAllCinemasByCity")
     })
     public RouterFunction<ServerResponse> cinemasRouterFunction(CinemasHandler cinemasHandler) {
         return route()
                 .path("/cinemas", builder -> builder
                         .nest(jsonAccept(), nested -> nested
-                                .POST("", cinemasHandler::addCinema)
-                                .POST("/csv", cinemasHandler::addCinemasWithCsvFile)
                                 .GET("", _ -> cinemasHandler.getAll())
                                 .GET("/city/{cityName}", cinemasHandler::getAllCinemasByCity)
-                                .PUT("/id/{id}/addCinemaHall", cinemasHandler::addCinemaHall)
                         )
                 )
                 .build();
