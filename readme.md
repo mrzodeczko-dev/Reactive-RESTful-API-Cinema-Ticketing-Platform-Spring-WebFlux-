@@ -1,6 +1,6 @@
 # Reactive RESTful API – Cinema Ticketing Platform (Spring WebFlux)
 
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.6-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://openjdk.org/)
 [![WebFlux](https://img.shields.io/badge/Spring-WebFlux-6db33f.svg)](https://docs.spring.io/spring-framework/reference/web/webflux.html)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Replica%20Set-green.svg)](https://www.mongodb.com/)
@@ -9,7 +9,7 @@
 [![codecov](https://codecov.io/github/mrzodeczko-dev/Reactive-RESTful-API-Cinema-Ticketing-Platform-Spring-WebFlux-/graph/badge.svg)](https://codecov.io/github/mrzodeczko-dev/Reactive-RESTful-API-Cinema-Ticketing-Platform-Spring-WebFlux-)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
->  Originally built as a learning exercise on Spring Boot 2.4.4 / Java 17, then iteratively migrated to **Spring Boot 4.0.5 / Java 25** and refactored into a hexagonal / DDD-inspired layout. Kept for reference and portfolio purposes — see [Migration History](#migration-history).
+>  Originally built as a learning exercise on Spring Boot 2.4.4 / Java 17, then iteratively migrated to **Spring Boot 4.0.6 / Java 25** and refactored into a hexagonal / DDD-inspired layout. Kept for reference and portfolio purposes.
 
 <a id="toc"></a>
 ## Table of Contents
@@ -53,7 +53,9 @@ The codebase follows a **hexagonal / DDD-inspired** layering: a `domain` layer w
 
 [↑ Back to top](#toc)
 
-End-to-end flow for the canonical use case — a registered user purchasing a ticket:
+The system has two distinct actor flows: a **regular user** browsing and buying tickets, and an **admin** building and maintaining the catalog.
+
+### User flow — browsing and purchasing a ticket
 
 ```mermaid
 sequenceDiagram
@@ -114,6 +116,14 @@ sequenceDiagram
 4. **Authenticated requests** — `SecurityContextRepository` + `AuthenticationManager` parse the bearer token and populate the reactive security context.
 5. **Ticket ordering** — reserves seats atomically inside a **MongoDB distributed transaction**.
 6. **Ticket purchase** — finalises an order in a transaction, then sends a confirmation email via SMTP (offloaded to `boundedElastic` with retries).
+
+### Admin flow — building and maintaining the catalog
+
+1. **Catalog bootstrapping** — admin uploads CSV files in order: cities → cinemas → cinema halls → movies → movie emissions. Each import is **atomic**: if any row fails validation, the entire file is rejected with a collected list of per-row errors — no partial saves.
+2. **Individual resource management** — single-item `POST`/`PUT`/`DELETE` endpoints under `/admin/**` for fine-grained catalog control (add a movie, cancel a screening, promote a user to admin, etc.).
+3. **Purchase oversight** — `/admin/ticketPurchases/**` exposes all purchases with filtering by city, cinema, hall, movie, and date range.
+4. **Statistics** — `/admin/statistics/**` provides aggregated views: city frequency, most popular movies per city and genre, average ticket price.
+5. **Email broadcasting** — `POST /admin/emails/send/multiple` sends a batch email to an arbitrary list of recipients.
 
 ---
 
@@ -189,35 +199,11 @@ Domain entities (`com.rzodeczko.domain`) are plain immutable Java records — no
 
 [↑ Back to top](#toc)
 
-Authentication is JWT-based. Each account has role **USER** or **ADMIN**. ADMIN can be granted via `POST /users/promoteToAdmin/username/{username}`.
+Authentication is JWT-based. Every account holds one of two roles: **USER** or **ADMIN**. Access control is enforced globally in `WebSecurityConfig` — no per-handler security annotations are needed.
 
-| Endpoint | Public | USER | ADMIN |
-|---|:---:|:---:|:---:|
-| `POST /register` | ✅ | | |
-| `POST /login` | ✅ | | |
-| `POST /refresh` | ✅ | | |
-| `/docs`, `/v3/api-docs/**` (Swagger) | ✅ | | |
-| `/actuator/health` | ✅ | | |
-| `GET /cities/**` | | ✅ | |
-| `GET /cinemas` | | ✅ | |
-| `/movies/**` | | ✅ | ✅ |
-| `/tickets/**` | | ✅ | |
-| `/ticketOrders/**` | | ✅ | |
-| `/ticketsOrders/**` | | ✅ | |
-| `/ticketPurchases/**` | | ✅ | |
-| `/movieEmissions/**` (read) | | ✅ | ✅ |
-| `POST /emails/send/single` | | ✅ | ✅ |
-| `/users/**` | | | ✅ |
-| `/statistics/**` | | | ✅ |
-| `/cinemas/**` (write) | | | ✅ |
-| `POST /movieEmissions` | | | ✅ |
-| `/admin/ticketPurchases/**` | | | ✅ |
-| `POST /emails/send/multiple` | | | ✅ |
-| `POST /cities/csv` (bulk import) | | | ✅ |
-| `POST /cinemas/csv` (bulk import) | | | ✅ |
-| `POST /cinemaHalls/cinemaId/{id}/csv` | | | ✅ |
-| `POST /movies/csv` (bulk import) | | | ✅ |
-| `POST /movieEmissions/csv` (bulk import) | | | ✅ |
+- **Public** (`/register`, `/login`, `/refresh`, `/docs`, `/actuator/health`) — no token required.
+- **USER** — authenticated endpoints for browsing the catalog, placing orders, and purchasing tickets.
+- **ADMIN** — all endpoints under the `/admin/**` prefix: catalog management, statistics, user administration, and bulk CSV imports. An admin account is automatically bootstrapped on startup via `AdminBootstrapper`.
 
 ---
 
@@ -226,95 +212,104 @@ Authentication is JWT-based. Each account has role **USER** or **ADMIN**. ADMIN 
 
 [↑ Back to top](#toc)
 
-Base URL (local): `http://localhost:8080`. Authentication via `Authorization: Bearer <accessToken>`.
+Base URL (local): `http://localhost:8080`. Authenticated endpoints require `Authorization: Bearer <accessToken>`.
 
-### Auth & Users
+> Full interactive contract available at **Swagger UI** (`http://localhost:8080/docs`).
 
-| Method | Path | Description | Roles |
-|---|---|---|---|
-| `POST` | `/register` | Create a new account | Public |
-| `POST` | `/login` | Issue access + refresh JWTs | Public |
-| `POST` | `/refresh` | Rotate tokens using a valid refresh JWT | Public |
-| `GET` | `/users` | List all users | ADMIN |
-| `GET` | `/users/username/{username}` | Get user by username | ADMIN |
-| `POST` | `/users/promoteToAdmin/username/{username}` | Grant ADMIN role | ADMIN |
+### Public (no authentication)
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/register` | Create a new account |
+| `POST` | `/login` | Issue access + refresh JWTs |
+| `POST` | `/refresh` | Rotate tokens using a valid refresh JWT |
 
 ### Cities, Cinemas, Halls
 
-| Method | Path | Description | Roles |
-|---|---|---|---|
-| `POST` | `/cities` | Create city | ADMIN |
-| `GET` | `/cities` | List cities | USER |
-| `GET` | `/cities/name/{name}` | Find city by name | USER |
-| `PUT` | `/cities` | Attach a cinema to a city | ADMIN |
-| `POST` | `/cities/csv` | Bulk import from CSV | ADMIN |
-| `POST` | `/cinemas` | Create cinema | ADMIN |
-| `GET` | `/cinemas` | List cinemas | USER |
-| `GET` | `/cinemas/city/{city}` | List cinemas in a city | USER |
-| `PUT` | `/cinemas/id/{id}/addCinemaHall` | Add hall to cinema | ADMIN |
-| `POST` | `/cinemas/csv` | Bulk import from CSV | ADMIN |
-| `GET` | `/cinemaHalls` | List all halls | USER |
-| `GET` | `/cinemaHalls/cinemaId/{cinemaId}` | List halls of a cinema | USER |
-| `POST` | `/cinemaHalls/addToCinema/cinemaId/{cinemaId}` | Add hall | ADMIN |
-| `POST` | `/cinemaHalls/cinemaId/{cinemaId}/csv` | Bulk import halls from CSV | ADMIN |
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/cities` | List all cities |
+| `GET` | `/cities/name/{name}` | Find city by name |
+| `POST` | `/admin/cities` | Create city |
+| `PUT` | `/admin/cities` | Attach a cinema to a city |
+| `POST` | `/admin/cities/csv` | Bulk import from CSV |
+| `GET` | `/cinemas` | List all cinemas |
+| `GET` | `/cinemas/city/{city}` | List cinemas in a city |
+| `POST` | `/admin/cinemas` | Create cinema |
+| `PUT` | `/admin/cinemas/id/{id}/addCinemaHall` | Add hall to cinema |
+| `POST` | `/admin/cinemas/csv` | Bulk import from CSV |
+| `GET` | `/cinemaHalls` | List all halls |
+| `GET` | `/cinemaHalls/cinemaId/{cinemaId}` | List halls of a cinema |
+| `POST` | `/admin/cinemaHalls/addToCinema/cinemaId/{cinemaId}` | Add cinema hall |
+| `POST` | `/admin/cinemaHalls/cinemaId/{cinemaId}/csv` | Bulk import halls from CSV |
 
 ### Movies & Screenings
 
-| Method | Path | Description | Roles |
-|---|---|---|---|
-| `GET` | `/movies` | List all movies | USER / ADMIN |
-| `GET` | `/movies/id/{id}` | Get movie by id | USER / ADMIN |
-| `POST` | `/movies` | Add a movie | ADMIN |
-| `DELETE` | `/movies/id/{id}` | Delete a movie | ADMIN |
-| `PATCH` | `/movies/addToFavorites/{id}` | Add to user's favorites | USER |
-| `GET` | `/movies/favorites` | List user's favorites | USER |
-| `GET` | `/movies/filter/premiereDate` | Filter by premiere date | USER / ADMIN |
-| `GET` | `/movies/filter/duration` | Filter by duration | USER / ADMIN |
-| `GET` | `/movies/filter/name/{name}` | Filter by name | USER / ADMIN |
-| `GET` | `/movies/filter/genre/{genre}` | Filter by genre | USER / ADMIN |
-| `GET` | `/movies/filter/keyword/{keyword}` | Keyword filter (name + genre) | USER / ADMIN |
-| `POST` | `/movies/csv` | Bulk import from CSV (atomic) | ADMIN |
-| `POST` | `/movieEmissions` | Schedule a screening | ADMIN |
-| `GET` | `/movieEmissions` | List all screenings | USER / ADMIN |
-| `GET` | `/movieEmissions/movieId/{movieId}` | Screenings of a movie | USER / ADMIN |
-| `GET` | `/movieEmissions/cinemaHallId/{cinemaHallId}` | Screenings in a hall | USER / ADMIN |
-| `DELETE` | `/movieEmissions/{id}` | Cancel a screening | ADMIN |
-| `POST` | `/movieEmissions/csv` | Bulk import from CSV | ADMIN |
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/movies` | List all movies |
+| `GET` | `/movies/id/{id}` | Get movie by id |
+| `GET` | `/movies/favorites` | List logged user's favourites |
+| `PATCH` | `/movies/addToFavorites/{id}` | Add movie to favourites |
+| `GET` | `/movies/filter/premiereDate` | Filter by premiere date |
+| `GET` | `/movies/filter/duration` | Filter by duration |
+| `GET` | `/movies/filter/name/{name}` | Filter by name |
+| `GET` | `/movies/filter/genre/{genre}` | Filter by genre |
+| `GET` | `/movies/filter/keyword/{keyword}` | Keyword filter (name + genre) |
+| `POST` | `/admin/movies` | Add a movie |
+| `DELETE` | `/admin/movies/id/{id}` | Delete a movie by id |
+| `DELETE` | `/admin/movies` | Delete all movies |
+| `POST` | `/admin/movies/csv` | Bulk import from CSV (atomic) |
+| `GET` | `/movieEmissions` | List all screenings |
+| `GET` | `/movieEmissions/movieId/{movieId}` | Screenings of a movie |
+| `GET` | `/movieEmissions/cinemaHallId/{cinemaHallId}` | Screenings in a hall |
+| `GET` | `/movieEmissions/cinema/{cinemaId}/movie/{movieId}` | Screenings for a movie in a specific cinema |
+| `POST` | `/admin/movieEmissions` | Schedule a screening |
+| `DELETE` | `/admin/movieEmissions/{id}` | Cancel a screening |
+| `POST` | `/admin/movieEmissions/csv` | Bulk import from CSV |
 
 ### Orders & Purchases
 
-| Method | Path | Description | Roles |
-|---|---|---|---|
-| `POST` | `/ticketOrders` | Place a ticket order | USER |
-| `PUT` | `/ticketsOrders/cancel/orderId/{orderId}` | Cancel an order | USER |
-| `GET` | `/ticketsOrders/username` | List logged user's orders | USER |
-| `POST` | `/ticketPurchases` | Buy a ticket directly | USER |
-| `POST` | `/ticketPurchases/ticketOrderId/{id}` | Finalise an existing order | USER |
-| `GET` | `/ticketPurchases` | Logged user's purchases | USER |
-| `GET` | `/ticketPurchases/city/{city}` | …filtered by city | USER |
-| `GET` | `/ticketPurchases/cinemaId/{cinemaId}` | …filtered by cinema | USER |
-| `GET` | `/ticketPurchases/movieId/{movieId}` | …filtered by movie | USER |
-| `GET` | `/admin/ticketPurchases` | All purchases | ADMIN |
-| `GET` | `/admin/ticketPurchases/dates` | All purchases by date range | ADMIN |
-| `GET` | `/admin/ticketPurchases/city/{city}` | All purchases by city | ADMIN |
-| `GET` | `/admin/ticketPurchases/cinemaId/{cinemaId}` | …by cinema | ADMIN |
-| `GET` | `/admin/ticketPurchases/cinemaHallId/{cinemaHallId}` | …by hall | ADMIN |
-| `GET` | `/admin/ticketPurchases/movieId/{movieId}` | …by movie | ADMIN |
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/ticketOrders` | Place a ticket order |
+| `PUT` | `/ticketsOrders/cancel/orderId/{orderId}` | Cancel an order |
+| `GET` | `/ticketsOrders/username` | List logged user's orders |
+| `POST` | `/ticketPurchases` | Buy a ticket directly |
+| `POST` | `/ticketPurchases/ticketOrderId/{ticketOrderId}` | Finalise an existing order |
+| `GET` | `/ticketPurchases` | Logged user's purchases |
+| `GET` | `/ticketPurchases/city/{city}` | Logged user's purchases by city |
+| `GET` | `/ticketPurchases/cinemaId/{cinemaId}` | Logged user's purchases by cinema |
+| `GET` | `/ticketPurchases/movieId/{movieId}` | Logged user's purchases by movie |
+| `GET` | `/admin/ticketPurchases` | All purchases |
+| `GET` | `/admin/ticketPurchases/dates` | All purchases by date range (`?from=dd-MM-yyyy&to=dd-MM-yyyy`) |
+| `GET` | `/admin/ticketPurchases/city/{city}` | All purchases by city |
+| `GET` | `/admin/ticketPurchases/cinemaId/{cinemaId}` | All purchases by cinema |
+| `GET` | `/admin/ticketPurchases/cinemaHallId/{cinemaHallId}` | All purchases by hall |
+| `GET` | `/admin/ticketPurchases/movieId/{movieId}` | All purchases by movie |
+
+### Users
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/admin/users` | List all users |
+| `GET` | `/admin/users/username/{username}` | Get user by username |
+| `DELETE` | `/admin/users/username/{username}` | Delete user by username |
+| `DELETE` | `/admin/users` | Delete all users |
+| `POST` | `/admin/users/promoteToAdmin/username/{username}` | Grant ADMIN role |
 
 ### Email & Statistics
 
-| Method | Path | Description | Roles |
-|---|---|---|---|
-| `POST` | `/emails/send/single` | Send email to self | USER / ADMIN |
-| `POST` | `/emails/send/multiple` | Send batch to multiple recipients | ADMIN |
-| `GET` | `/statistics/cities/cinemaFrequency` | Cinema count per city | ADMIN |
-| `GET` | `/statistics/cities/cinemaFrequency/max` | City with most cinemas | ADMIN |
-| `GET` | `/statistics/movies/mostPopular/byCity` | Most popular movie per city | ADMIN |
-| `GET` | `/statistics/movies/frequency` | Per-movie ticket frequency | ADMIN |
-| `GET` | `/statistics/movies/mostPopularGroupedByGenre/byCity/{city}` | Top movies per genre in a city | ADMIN |
-| `GET` | `/statistics/averageTicketPrice` | Average ticket price per city | ADMIN |
-
-> Browse the interactive contract at **Swagger UI** (`http://localhost:8080/docs`) once the application is running.
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/emails/send/single` | Send email to self |
+| `POST` | `/admin/emails/send/multiple` | Send batch to multiple recipients |
+| `GET` | `/admin/statistics/cities/cinemaFrequency` | Cinema count per city |
+| `GET` | `/admin/statistics/cities/cinemaFrequency/max` | City with most cinemas |
+| `GET` | `/admin/statistics/movies/mostPopular/byCity` | Most popular movie per city |
+| `GET` | `/admin/statistics/movies/frequency` | Per-movie ticket frequency |
+| `GET` | `/admin/statistics/movies/mostPopularGroupedByGenre/byCity/{city}` | Top movies per genre in a city |
+| `GET` | `/admin/statistics/averageTicketPrice` | Average ticket price per city |
 
 ---
 
@@ -386,6 +381,8 @@ Copy `.env.sample` to `.env` and fill in real values. The file is git-ignored.
 | `RS_NAME` | Replica set name (e.g. `rs0`) |
 | `JWT_SECRET_KEY` | HS512 signing key |
 | `APP_PORT` | Spring Boot listening port |
+| `REDIS_HOST` | Redis hostname (default `localhost`; inside Compose auto-set to `redis`) |
+| `REDIS_PORT` | Redis port (default `6379`) |
 
 ---
 
@@ -400,7 +397,9 @@ Hexagonal / DDD-inspired layering with a strict dependency direction (`presentat
 graph TD
     Client(["Client / HTTP Request"]) --> NETTY["Netty event-loop<br/>(Spring WebFlux)"]
     NETTY --> REQID["RequestIdWebFilter<br/>(X-Request-Id tracing)"]
-    REQID --> SEC["SecurityContextRepository<br/>+ AuthenticationManager (JWT)"]
+    REQID --> RATELIMIT["RateLimitingWebFilter<br/>(per-IP fixed-window, /login /register)"]
+    RATELIMIT --> SEC["SecurityContextRepository<br/>+ AuthenticationManager (JWT)"]
+    RATELIMIT -. "INCR + EXPIRE (Lua, atomic)" .-> REDIS[("Redis 7<br/>rate-limit counters")]
     SEC --> ROUTER["*Routing beans<br/>(RouterFunction per resource domain)"]
     ROUTER --> H["Handlers<br/>(UsersHandler, MoviesHandler, …)"]
     H --> APP["Application Services<br/>(use-case orchestration)"]
@@ -414,7 +413,7 @@ graph TD
     MAILADAPTER -.boundedElastic.-> SMTP{{"SMTP server"}}
     APP --> CSVPORT["*CsvParserPort"]
     CSVPORT -.implemented by.-> CSVADAPTER["Csv*ParserAdapter<br/>(infrastructure.csv)"]
-    MONGOCK["Liquibase / Mongock<br/>@ChangeUnit migrations"] --> MDB
+    LIQUIBASE["Liquibase container<br/>(docker-compose, YAML changesets)"] --> MDB
 ```
 
 ### Layer responsibilities
@@ -424,7 +423,7 @@ graph TD
 | Presentation | `com.rzodeczko.presentation` | HTTP routing (`*Routing` classes extending `BaseJsonRouter`), handler beans with `@Operation`/`@ApiResponses`, springdoc wiring via `@RouterOperations`. |
 | Application | `com.rzodeczko.application` | Use-case orchestration, DTO ↔ domain mapping, input validation, output port interfaces. `Mono`/`Flux` are used in port and service signatures. |
 | Domain | `com.rzodeczko.domain.*` | Immutable Java records, value objects (`Money`, `Discount`, `Position`). No Spring / Mongo / Lombok imports. |
-| Infrastructure | `com.rzodeczko.infrastructure.*` | Port implementations: reactive Mongo repositories, `*Document` types, security configuration, CSV parser adapters, Mongock migrations, AOP logging, HTTP filter. |
+| Infrastructure | `com.rzodeczko.infrastructure.*` | Port implementations: reactive Mongo repositories, `*Document` types, security configuration, CSV parser adapters, Liquibase migrations (run via dedicated Docker container), AOP logging, HTTP filters (request-ID tracing, per-IP rate limiting). |
 
 > The Docker image is **layered**: `maven-dependency-plugin unpack` splits the fat JAR into a cached dependencies layer and a small per-build classes layer.
 
@@ -473,23 +472,6 @@ Database migrations are applied via a **Liquibase container** (`liquibase-mongo`
 - Executes before the `app` service starts (dependency chain in Compose).
 - Changesets are versioned and tracked in MongoDB's `DATABASECHANGELOG` collection.
 
-To add a migration:
-1. Create a new YAML file in `db/changelog/` (e.g., `db/changelog/001-initial-schema.yaml`).
-2. Define changesets with `@id` and `@author` attributes.
-3. Re-build and restart the stack: `docker compose up -d --build`.
-
-Example changeset structure:
-```yaml
-databaseChangeLog:
-  - changeSet:
-      id: "001-create-users"
-      author: "system"
-      changes:
-        - insert:
-            collectionName: "users"
-            # … insert/update operations
-```
-
 ---
 
 <a id="non-blocking-integrations"></a>
@@ -506,6 +488,7 @@ Every CPU-bound or blocking call is wrapped in `Mono.fromCallable(...)` and offl
 | Email sending (blocking SMTP) | `JavaMailSenderAdapter` | With exponential backoff retry; consider adding circuit-breaker |
 | CSV parsing (OpenCSV, synchronous) | `Csv*ParserAdapter` — errors collected before any DB write | All parsing on boundedElastic |
 | MongoDB persistence | _No offload needed_ — reactive driver is non-blocking natively | Operations stay on Netty |
+| Redis rate-limit counters | `RateLimiterService` — `ReactiveStringRedisTemplate` + Lua script | Non-blocking natively; fails open on Redis outage |
 
 ---
 
@@ -518,7 +501,7 @@ Every CPU-bound or blocking call is wrapped in `Mono.fromCallable(...)` and offl
 - **Functional routing** — per-resource `*Routing` classes extend `BaseJsonRouter`; springdoc wired via `@RouterOperations` on each router `@Bean`.
 - **MongoDB distributed transactions** — three-node replica set; seat reservation and purchase are atomic across collections via `TransactionPort` (`TransactionalOperator`-backed).
 - **Schedulers discipline** — every CPU-bound or blocking call explicitly offloaded to `Schedulers.boundedElastic()`.
-- **Liquibase migrations** — versioned YAML changesets applied by a dedicated Compose service before the app starts; tracked in MongoDB.
+- **Liquibase migrations** — versioned YAML changesets (in `db/changelog/`) applied by a dedicated `liquibase-mongo` Compose service before `app` starts; tracked in MongoDB's `DATABASECHANGELOG` collection. Mongock was dropped because it does not yet support Spring Boot 4.
 - **Async admin bootstrap with health gate** — `AdminBootstrapper` runs asynchronously (non-blocking startup) with retry/backoff; `AdminBootstrapHealthIndicator` keeps `/actuator/health` in DOWN state until bootstrap succeeds. This prevents traffic to an app without an admin account.
 - **JWT with token rotation** — HS512-signed access tokens (5 min) + refresh tokens (8 h). `POST /refresh` validates the refresh JWT, rejects access tokens passed by mistake (via the `AccessTokenKey` claim check), and issues a fresh token pair on every call (rotation).
 - **Hexagonal layering** — domain free of Spring / Mongo / Lombok; ports in `application.port.out`, adapters in `infrastructure`; services expose `Mono`/`Flux` for end-to-end pipeline composition.
@@ -527,6 +510,7 @@ Every CPU-bound or blocking call is wrapped in `Mono.fromCallable(...)` and offl
 - **AOP logging** — `@Loggable` on handler methods triggers `@Around` advice that logs args (sensitive DTOs redacted), reactive signal type, and execution time.
 - **Atomic CSV import** — bulk import either fully succeeds or rejects with a collected list of row-level errors; no partial saves.
 - **Reactive error handling** — security error handlers use reactive chains with proper error handling (no fire-and-forget `.subscribe()`); all async operations have fallback/error recovery.
+- **Per-IP rate limiter** — `RateLimitingWebFilter` protects `/login` and `/register` using a Redis-backed fixed-window counter. The counter is incremented atomically via a single Lua script (`INCR` + conditional `EXPIRE`), making it safe across multiple application instances. Exceeding the limit returns HTTP 429 with a `Retry-After` header. On Redis failure the limiter **fails open** (requests are allowed through) to avoid a Redis outage blocking all logins.
 
 ---
 
@@ -543,7 +527,8 @@ Every CPU-bound or blocking call is wrapped in `Mono.fromCallable(...)` and offl
 | Reactive runtime | Project Reactor | via Boot |
 | Database | MongoDB (replica set) | 8.3.1 |
 | Reactive driver | `spring-boot-starter-data-mongodb-reactive` | via Boot |
-| DB migrations | Mongock (`mongodb-springdata-v4-driver`) | 5.4.4 |
+| Cache / rate-limit store | Redis (`spring-boot-starter-data-redis-reactive`) | 7.4-alpine |
+| DB migrations | Liquibase (`liquibase-mongodb` extension, dedicated Docker service) | 4.31.0 |
 | Security | Spring Security (WebFlux) | via Boot |
 | JWT | JJWT (`jjwt-api` / `-impl` / `-jackson`) | 0.12.x |
 | Logging | Log4j2 (Logback excluded) | via Boot |
@@ -736,7 +721,7 @@ Both handlers use reactive chains with proper error recovery — no fire-and-for
 │   │   │   │   │   ├── config/                       # ReactiveMongoConfig, ConvertersConfig
 │   │   │   │   │   │   └── converter/                # 9 custom Mongo converters
 │   │   │   │   │   ├── document/                     # *Document types — @Document + Lombok
-│   │   │   │   │   ├── initscripts/                  # Mongock @ChangeUnit migrations + AdminBootstrapper
+│   │   │   │   │   ├── initscripts/                  # AdminBootstrapper (async, retry/backoff) + health gate
 │   │   │   │   │   ├── mapper/                       # Document ↔ Domain mappers
 │   │   │   │   │   └── repository/
 │   │   │   │   │       ├── Mongo*Repository.java     # Spring Data reactive interfaces
@@ -824,3 +809,4 @@ Java 21+ introduced **Virtual Threads** (Project Loom, JEP 444), which changed t
 
 Designed and implemented by **Michał Rzodeczko**.  
 Other projects: [github.com/mrzodeczko-dev](https://github.com/mrzodeczko-dev)
+                                                
