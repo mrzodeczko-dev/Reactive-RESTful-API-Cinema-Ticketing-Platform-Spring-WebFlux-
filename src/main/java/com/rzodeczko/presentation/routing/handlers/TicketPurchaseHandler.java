@@ -224,7 +224,9 @@ public class TicketPurchaseHandler {
             })
     })
     public Mono<ServerResponse> getAllTicketPurchasesByDate(ServerRequest serverRequest) {
-        return ticketPurchaseService.getAllTicketPurchasesByDate(serverRequest.queryParam("from"), serverRequest.queryParam("to"))
+        return ticketPurchaseService.getAllTicketPurchasesByDate(
+                        serverRequest.queryParam("from").orElse(null),
+                        serverRequest.queryParam("to").orElse(null))
                 .as(flux -> ServerResponse
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)

@@ -185,7 +185,7 @@ class CityTest {
         void shouldSetCinemas() {
             City city = new City("city-1", "Warsaw", new ArrayList<>());
             List<Cinema> newCinemas = List.of(
-                    Cinema.builder().id("c1").name("Cinema 1").build()
+                    Cinema.builder().id("c1").city("Cinema 1").build()
             );
 
             City updated = city.setCinemas(newCinemas);

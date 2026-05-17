@@ -31,7 +31,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -100,7 +99,7 @@ class TicketPurchaseServiceTest {
         when(createTicketPurchaseDtoValidator.validate(dto)).thenReturn(errors);
 
         StepVerifier.create(ticketPurchaseService.purchaseTicket(Mono.empty(), dto))
-                .expectError(TicketOrderServiceException.class)
+                .expectError(TicketPurchaseServiceException.class)
                 .verify();
     }
 
@@ -127,7 +126,17 @@ class TicketPurchaseServiceTest {
         StepVerifier.create(ticketPurchaseService.purchaseTicketFromOrder("alice", null))
                 .expectErrorSatisfies(ex -> assertThat(ex)
                         .isInstanceOf(TicketPurchaseServiceException.class)
-                        .hasMessageContaining("null"))
+                        .hasMessageContaining("required and cannot be empty"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("purchaseTicketFromOrder — emits error when ticket order id is blank")
+    void purchaseTicketFromOrder_whenBlankId_shouldEmitError() {
+        StepVerifier.create(ticketPurchaseService.purchaseTicketFromOrder("alice", "   "))
+                .expectErrorSatisfies(ex -> assertThat(ex)
+                        .isInstanceOf(TicketPurchaseServiceException.class)
+                        .hasMessageContaining("required and cannot be empty"))
                 .verify();
     }
 
@@ -177,7 +186,7 @@ class TicketPurchaseServiceTest {
         StepVerifier.create(ticketPurchaseService.purchaseTicketFromOrder("alice", "order-1"))
                 .expectErrorSatisfies(ex -> assertThat(ex)
                         .isInstanceOf(TicketPurchaseServiceException.class)
-                        .hasMessageContaining("1 day before emission"))
+                        .hasMessageContaining("already started"))
                 .verify();
     }
 
@@ -195,9 +204,6 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchasesByUserAndCity — emits error when city name is null")
     void getAllTicketPurchasesByUserAndCity_whenNullCity_shouldEmitError() {
-        when(ticketPurchasePort.findAllByUserUsername("alice"))
-                .thenReturn(Flux.just(samplePurchase));
-
         StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByUserAndCity("alice", null))
                 .expectError(TicketPurchaseServiceException.class)
                 .verify();
@@ -206,8 +212,6 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchasesByUserAndCity — emits error when city not found")
     void getAllTicketPurchasesByUserAndCity_whenCityMissing_shouldEmitError() {
-        when(ticketPurchasePort.findAllByUserUsername("alice"))
-                .thenReturn(Flux.just(samplePurchase));
         when(cityPort.findByName("Unknown")).thenReturn(Mono.empty());
 
         StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByUserAndCity("alice", "Unknown"))
@@ -250,9 +254,9 @@ class TicketPurchaseServiceTest {
     }
 
     @Test
-    @DisplayName("getAllTicketPurchasesByDate — emits error when both dates empty")
+    @DisplayName("getAllTicketPurchasesByDate — emits error when both dates are null")
     void getAllTicketPurchasesByDate_whenBothEmpty_shouldEmitError() {
-        StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByDate(Optional.empty(), Optional.empty()))
+        StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByDate(null, null))
                 .expectError(TicketPurchaseServiceException.class)
                 .verify();
     }
@@ -260,8 +264,7 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchasesByDate — emits error when from date format invalid")
     void getAllTicketPurchasesByDate_whenInvalidFrom_shouldEmitError() {
-        StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByDate(
-                        Optional.of("not-a-date"), Optional.empty()))
+        StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByDate("not-a-date", null))
                 .expectErrorSatisfies(ex -> assertThat(ex)
                         .isInstanceOf(TicketPurchaseServiceException.class)
                         .hasMessageContaining("Date from has not valid format"))
@@ -271,8 +274,7 @@ class TicketPurchaseServiceTest {
     @Test
     @DisplayName("getAllTicketPurchasesByDate — emits error when from is after to")
     void getAllTicketPurchasesByDate_whenFromAfterTo_shouldEmitError() {
-        StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByDate(
-                        Optional.of("10-12-2025"), Optional.of("01-12-2025")))
+        StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByDate("10-12-2025", "01-12-2025"))
                 .expectErrorSatisfies(ex -> assertThat(ex)
                         .isInstanceOf(TicketPurchaseServiceException.class)
                         .hasMessageContaining("From date cannot be after to date"))
@@ -286,8 +288,7 @@ class TicketPurchaseServiceTest {
                 LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 10)))
                 .thenReturn(Flux.just(samplePurchase));
 
-        StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByDate(
-                        Optional.of("01-12-2025"), Optional.of("10-12-2025")))
+        StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByDate("01-12-2025", "10-12-2025"))
                 .assertNext(dto -> assertThat(dto.id()).isEqualTo("tp-1"))
                 .verifyComplete();
     }
@@ -298,8 +299,7 @@ class TicketPurchaseServiceTest {
         when(ticketPurchasePort.findAllByPurchaseDateAfter(LocalDate.of(2025, 12, 1)))
                 .thenReturn(Flux.just(samplePurchase));
 
-        StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByDate(
-                        Optional.of("01-12-2025"), Optional.empty()))
+        StepVerifier.create(ticketPurchaseService.getAllTicketPurchasesByDate("01-12-2025", null))
                 .assertNext(dto -> assertThat(dto.id()).isEqualTo("tp-1"))
                 .verifyComplete();
     }

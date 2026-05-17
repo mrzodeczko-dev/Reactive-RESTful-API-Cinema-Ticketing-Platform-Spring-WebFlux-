@@ -25,9 +25,10 @@ import reactor.core.publisher.Mono;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
@@ -70,7 +71,7 @@ public class TicketPurchaseService {
 
         var errors = createTicketPurchaseDtoValidator.validate(createPurchaseDto);
         if (Validations.hasErrors(errors)) {
-            return Mono.error(() -> new TicketOrderServiceException(
+            return Mono.error(() -> new TicketPurchaseServiceException(
                     "Validation errors: %s".formatted(Validations.createErrorMessage(errors))));
         }
 
@@ -81,7 +82,7 @@ public class TicketPurchaseService {
                 .flatMap(movieEmission ->
                         createPurchaseDto.areAllPositionsAvailable(movieEmission.getFreePositions())
                                 ? Mono.just(movieEmission)
-                                : Mono.error(new TicketOrderServiceException("Positions are not available")))
+                                : Mono.error(() -> new TicketOrderServiceException("Positions are not available")))
                 .flatMap(movieEmission -> Mono.zip(
                         movieEmissionPort.addOrUpdate(movieEmission.removeFreePositions(
                                 createPurchaseDto.ticketsDetails().stream()
@@ -99,7 +100,7 @@ public class TicketPurchaseService {
                                     Discount totalDiscount = createPurchaseDto.getBaseDiscount()
                                             .add(ticketDetailsDto.individualTicketType().getDiscount());
                                     Money ticketPrice = computeTicketPrice(
-                                            movieEmission.getBaseTicketPrice(), totalDiscount);
+                                            tuple.getT1().getBaseTicketPrice(), totalDiscount);
                                     return Ticket.builder()
                                             .position(ticketDetailsDto.position())
                                             .type(ticketDetailsDto.individualTicketType())
@@ -123,8 +124,8 @@ public class TicketPurchaseService {
     }
 
     public Mono<TicketPurchaseDto> purchaseTicketFromOrder(String username, String ticketOrderId) {
-        if (isNull(ticketOrderId)) {
-            return Mono.error(new TicketPurchaseServiceException("Ticket order id is null"));
+        if (isNull(ticketOrderId) || StringUtils.isBlank(ticketOrderId)) {
+            return Mono.error(new TicketPurchaseServiceException("Ticket order id is required and cannot be empty"));
         }
 
         Mono<TicketPurchase> result = ticketOrderPort.findById(ticketOrderId)
@@ -150,9 +151,9 @@ public class TicketPurchaseService {
         if (ticketOrder.getTicketOrderStatus() != TicketOrderStatus.ORDERED) {
             return Mono.error(new TicketPurchaseServiceException("Only ordered tickets can be purchased"));
         }
-        if (ticketOrder.getMovieEmission().getStartDateTime().toLocalDate()
-                .compareTo(LocalDate.now().minusDays(1)) < 0) {
-            return Mono.error(new TicketPurchaseServiceException("You cannot purchase ticket 1 day before emission"));
+        if (!ticketOrder.getMovieEmission().getStartDateTime().toLocalDate()
+                .isAfter(LocalDate.now())) {
+            return Mono.error(new TicketPurchaseServiceException("You cannot purchase a ticket for an emission that has already started"));
         }
         return Mono.just(ticketOrder);
     }
@@ -164,14 +165,16 @@ public class TicketPurchaseService {
     }
 
     public Flux<TicketPurchaseDto> getAllTicketPurchasesByUserAndCity(String username, String cityName) {
-        return getAllTicketPurchasesByCityUtility(cityName, ticketPurchasePort.findAllByUserUsername(username));
+        return getAllTicketPurchasesByCityUtility(cityName,
+                ids -> ticketPurchasePort.findAllByCinemaHallsIdsAndUsername(ids, username));
     }
 
     public Flux<TicketPurchaseDto> getAllTicketPurchasesByCity(String cityName) {
-        return getAllTicketPurchasesByCityUtility(cityName, ticketPurchasePort.findAll());
+        return getAllTicketPurchasesByCityUtility(cityName, ticketPurchasePort::findAllByCinemaHallsIds);
     }
 
-    private Flux<TicketPurchaseDto> getAllTicketPurchasesByCityUtility(String cityName, Flux<TicketPurchase> ticketPurchases) {
+    private Flux<TicketPurchaseDto> getAllTicketPurchasesByCityUtility(String cityName,
+                                                                       Function<List<String>, Flux<TicketPurchase>> purchasesFetcher) {
         if (isNull(cityName) || StringUtils.isBlank(cityName)) {
             return Flux.error(() -> new TicketPurchaseServiceException("City name is required and cannot be empty"));
         }
@@ -179,13 +182,12 @@ public class TicketPurchaseService {
         return cityPort.findByName(cityName)
                 .switchIfEmpty(Mono.error(() -> new TicketPurchaseServiceException(
                         "No city with name %s".formatted(cityName))))
-                .map(city -> (Set<String>) city.getCinemas()
+                .map(city -> city.getCinemas()
                         .stream()
                         .flatMap(cinema -> cinema.getCinemaHalls().stream())
                         .map(CinemaHall::getId)
-                        .collect(Collectors.toSet()))
-                .flatMapMany(cinemaHallIds -> ticketPurchases
-                        .filter(tp -> cinemaHallIds.contains(tp.getMovieEmission().getCinemaHallId())))
+                        .collect(Collectors.toList()))
+                .flatMapMany(purchasesFetcher::apply)
                 .map(TicketPurchaseMapper::toDto);
     }
 
@@ -227,15 +229,15 @@ public class TicketPurchaseService {
                 .map(TicketPurchaseMapper::toDto);
     }
 
-    public Flux<TicketPurchaseDto> getAllTicketPurchasesByDate(Optional<String> from, Optional<String> to) {
+    public Flux<TicketPurchaseDto> getAllTicketPurchasesByDate(String from, String to) {
         final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-        if (from.isEmpty() && to.isEmpty()) {
+        if (StringUtils.isBlank(from) && StringUtils.isBlank(to)) {
             return Flux.error(new TicketPurchaseServiceException("At least one of dates [from, to] is required!"));
         }
 
-        boolean validFrom = from.map(s -> GenericValidator.isDate(s, "dd-MM-yyyy", true)).orElse(true);
-        boolean validTo = to.map(s -> GenericValidator.isDate(s, "dd-MM-yyyy", true)).orElse(true);
+        boolean validFrom = StringUtils.isBlank(from) || GenericValidator.isDate(from, "dd-MM-yyyy", true);
+        boolean validTo = StringUtils.isBlank(to) || GenericValidator.isDate(to, "dd-MM-yyyy", true);
 
         if (!validFrom && !validTo) {
             return Flux.error(new TicketPurchaseServiceException("Date from and date to has not valid format"));
@@ -247,22 +249,26 @@ public class TicketPurchaseService {
             return Flux.error(new TicketPurchaseServiceException("Date to has not valid format"));
         }
 
-        LocalDate fromDate = from.map(s -> LocalDate.parse(s, fmt)).orElse(null);
-        LocalDate toDate = to.map(s -> LocalDate.parse(s, fmt)).orElse(null);
+        Optional<LocalDate> fromDate = StringUtils.isBlank(from)
+                ? Optional.empty()
+                : Optional.of(LocalDate.parse(from, fmt));
+        Optional<LocalDate> toDate = StringUtils.isBlank(to)
+                ? Optional.empty()
+                : Optional.of(LocalDate.parse(to, fmt));
 
-        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+        if (fromDate.isPresent() && toDate.isPresent() && fromDate.get().isAfter(toDate.get())) {
             return Flux.error(new TicketPurchaseServiceException("From date cannot be after to date!"));
         }
 
-        if (fromDate != null && toDate != null) {
-            return ticketPurchasePort.findAllByPurchaseDateBetween(fromDate, toDate)
+        if (fromDate.isPresent() && toDate.isPresent()) {
+            return ticketPurchasePort.findAllByPurchaseDateBetween(fromDate.get(), toDate.get())
                     .map(TicketPurchaseMapper::toDto);
         }
-        if (fromDate != null) {
-            return ticketPurchasePort.findAllByPurchaseDateAfter(fromDate)
+        if (fromDate.isPresent()) {
+            return ticketPurchasePort.findAllByPurchaseDateAfter(fromDate.get())
                     .map(TicketPurchaseMapper::toDto);
         }
-        return ticketPurchasePort.findAllByPurchaseDateBefore(toDate)
+        return ticketPurchasePort.findAllByPurchaseDateBefore(toDate.get())
                 .map(TicketPurchaseMapper::toDto);
     }
 
