@@ -78,7 +78,7 @@ public class RateLimitingWebFilter implements WebFilter {
             return forwarded.split(",")[0].trim();
         }
         InetSocketAddress remoteAddress = exchange.getRequest().getRemoteAddress();
-        return remoteAddress != null ? remoteAddress.getAddress().getHostAddress() : "unknown";
+        return remoteAddress != null ? remoteAddress.getHostString() : "unknown";
     }
 
     private Mono<Void> rejectWith429(ServerWebExchange exchange, String reqId) {

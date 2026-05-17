@@ -36,7 +36,7 @@ public record Discount(BigDecimal value) {
     }
 
     private static BigDecimal init(String value) {
-        if (value == null) {
+        if (value == null || value.isBlank() || !Character.isDigit(value.charAt(0))) {
             throw new DiscountException("discount value is not correct");
         }
         final BigDecimal decimalValue;
