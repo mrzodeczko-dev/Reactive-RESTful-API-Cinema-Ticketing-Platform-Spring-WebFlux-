@@ -54,7 +54,7 @@ class TicketPurchaseMapperTest {
         @Test
         @DisplayName("Purchase without tickets: empty tickets list")
         void shouldMapMissingTicketsToEmptyList() {
-            TicketPurchase purchase = ticketPurchase().setTickets(null);
+            TicketPurchase purchase = ticketPurchase().withTickets(null);
 
             assertThat(TicketPurchaseMapper.toDto(purchase).tickets()).isEmpty();
         }

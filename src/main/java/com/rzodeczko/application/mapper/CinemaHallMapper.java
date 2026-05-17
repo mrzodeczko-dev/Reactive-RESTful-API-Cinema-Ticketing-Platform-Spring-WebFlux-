@@ -17,19 +17,19 @@ public final class CinemaHallMapper {
             return null;
         }
         return CinemaHallDto.builder()
-                .id(ch.getId())
-                .cinemaId(ch.getCinemaId())
-                .movieEmissions(ch.getMovieEmissions() == null ? null :
-                        ch.getMovieEmissions().stream()
+                .id(ch.id())
+                .cinemaId(ch.cinemaId())
+                .movieEmissions(ch.movieEmissions() == null ? null :
+                        ch.movieEmissions().stream()
                                 .map(MovieEmissionMapper::toDto)
                                 .collect(Collectors.toList()))
-                .rowNo(getMaxNumber(ch, Position::getRowNo))
-                .colNo(getMaxNumber(ch, Position::getColNo))
+                .rowNo(getMaxNumber(ch, Position::rowNo))
+                .colNo(getMaxNumber(ch, Position::colNo))
                 .build();
     }
 
     private static Integer getMaxNumber(CinemaHall ch, Function<Position, Integer> f) {
-        return ch.getPositions()
+        return ch.positions()
                 .stream()
                 .map(f)
                 .reduce(1, (a, b) -> a > b ? a : b);

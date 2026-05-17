@@ -17,18 +17,18 @@ public final class CityMapper {
             return null;
         }
         return CityDto.builder()
-                .id(city.getId())
-                .name(city.getName())
-                .cinemas(city.getCinemas() == null ? null :
-                        city.getCinemas().stream()
+                .id(city.id())
+                .name(city.name())
+                .cinemas(city.cinemas() == null ? null :
+                        city.cinemas().stream()
                                 .map(cinema -> CinemaInCityDto.builder()
-                                        .id(cinema.getId())
-                                        .cinemaHallsCapacities(cinema.getCinemaHalls() == null ? null :
-                                                cinema.getCinemaHalls()
+                                        .id(cinema.id())
+                                        .cinemaHallsCapacities(cinema.cinemaHalls() == null ? null :
+                                                cinema.cinemaHalls()
                                                         .stream()
                                                         .collect(Collectors.toMap(
-                                                                CinemaHall::getId,
-                                                                e -> e.getPositions().size())))
+                                                                CinemaHall::id,
+                                                                e -> e.positions().size())))
                                         .build())
                                 .collect(Collectors.toList()))
                 .build();

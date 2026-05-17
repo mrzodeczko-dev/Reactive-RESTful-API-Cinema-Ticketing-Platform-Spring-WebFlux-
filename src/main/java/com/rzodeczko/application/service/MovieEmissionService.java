@@ -73,12 +73,12 @@ public class MovieEmissionService {
                 .switchIfEmpty(Mono.error(() -> new MovieEmissionServiceException(
                         "No movie with id: [%s]".formatted(createMovieEmission.movieId()))))
                 .flatMap(movie -> {
-                    if (movie.getPremiereDate().isAfter(toLocalDateTime(createMovieEmission.startTime()).toLocalDate())) {
+                    if (movie.premiereDate().isAfter(toLocalDateTime(createMovieEmission.startTime()).toLocalDate())) {
                         return Mono.error(new MovieEmissionServiceException(
                                 "Movie with id: %s cannot be displayed in %s - before premiere date: %s"
                                         .formatted(createMovieEmission.movieId(),
                                                 createMovieEmission.startTime(),
-                                                movie.getPremiereDate())));
+                                                movie.premiereDate())));
                     }
                     return cinemaHallPort.findById(createMovieEmission.cinemaHallId())
                             .switchIfEmpty(Mono.error(() -> new MovieEmissionServiceException(
@@ -86,7 +86,7 @@ public class MovieEmissionService {
                             .map(x -> Pair.of(x, movie));
                 })
                 .flatMap(pair -> {
-                    if (!pair.getLeft().getMovieEmissions().isEmpty()
+                    if (!pair.getLeft().movieEmissions().isEmpty()
                             && !isFreeSpaceForMovieEmissionInCinemaHall(
                             pair.getLeft(), pair.getRight(), createMovieEmission.startTime())) {
                         return Mono.error(new MovieEmissionServiceException(
@@ -96,9 +96,9 @@ public class MovieEmissionService {
                                     MovieEmission.builder()
                                             .movie(pair.getRight())
                                             .startDateTime(toLocalDateTime(createMovieEmission.startTime()))
-                                            .cinemaHallId(pair.getLeft().getId())
+                                            .cinemaHallId(pair.getLeft().id())
                                             .baseTicketPrice(Money.of(createMovieEmission.baseTicketPrice()))
-                                            .isPositionFree(pair.getLeft().getPositions().stream()
+                                            .isPositionFree(pair.getLeft().positions().stream()
                                                     .collect(Collectors.toMap(
                                                             Function.identity(),
                                                             position -> true,
@@ -135,7 +135,7 @@ public class MovieEmissionService {
                 })
                 .collect(Collectors.toList());
 
-        var endDateTime = startDateTime.plusMinutes(movie.getDuration());
+        var endDateTime = startDateTime.plusMinutes(movie.duration());
         var movieInterval = new Interval(
                 startDateTime.toEpochSecond(ZoneOffset.UTC) * 1000,
                 endDateTime.toEpochSecond(ZoneOffset.UTC) * 1000);
@@ -172,7 +172,7 @@ public class MovieEmissionService {
                         .switchIfEmpty(Mono.error(() -> new MovieEmissionServiceException(
                                 "No cinema hall connected to movie emission with id %s".formatted(movieEmissionId))))
                         .flatMap(cinemaHall -> cinemaHallPort
-                                .addOrUpdate(cinemaHall.removeMovieEmissionById(movieEmission.getId()))
+                                .addOrUpdate(cinemaHall.removeMovieEmissionById(movieEmission.id()))
                                 .then(Mono.just(movieEmission))));
         return transactionPort.inTransaction(result).map(MovieEmissionMapper::toDto);
     }
@@ -200,14 +200,14 @@ public class MovieEmissionService {
     }
 
     private List<Interval> getMovieEmissionTimesInDay(LocalDate date, CinemaHall cinemaHall) {
-        return cinemaHall.getMovieEmissions()
+        return cinemaHall.movieEmissions()
                 .stream()
-                .filter(movieEmission -> movieEmission.getStartDateTime().toLocalDate().isEqual(date))
-                .sorted(Comparator.comparing(MovieEmission::getStartDateTime))
+                .filter(movieEmission -> movieEmission.startDateTime().toLocalDate().isEqual(date))
+                .sorted(Comparator.comparing(MovieEmission::startDateTime))
                 .map(movieEmission -> new Interval(
-                        movieEmission.getStartDateTime().toEpochSecond(ZoneOffset.UTC) * 1000,
-                        movieEmission.getStartDateTime()
-                                .plusMinutes(movieEmission.getMovie().getDuration())
+                        movieEmission.startDateTime().toEpochSecond(ZoneOffset.UTC) * 1000,
+                        movieEmission.startDateTime()
+                                .plusMinutes(movieEmission.movie().duration())
                                 .toEpochSecond(ZoneOffset.UTC) * 1000))
                 .collect(Collectors.toList());
     }

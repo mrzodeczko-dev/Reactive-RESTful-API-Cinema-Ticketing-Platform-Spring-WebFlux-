@@ -82,7 +82,7 @@ public class TicketOrderService {
                                                         .build())
                                                 .toList())
                                         .build())))
-                .flatMap(ticketOrder -> ticketPort.addOrUpdateMany(ticketOrder.getTickets())
+                .flatMap(ticketOrder -> ticketPort.addOrUpdateMany(ticketOrder.tickets())
                         .collectList()
                         .flatMap(savedTickets -> ticketOrderPort.addOrUpdate(
                                 ticketOrder.toBuilder().tickets(savedTickets).build())));
@@ -98,10 +98,10 @@ public class TicketOrderService {
         Mono<TicketOrder> result = ticketOrderPort.findById(orderId)
                 .switchIfEmpty(Mono.error(new TicketOrderServiceException("No order with id: %s".formatted(orderId))))
                 .flatMap(ticketOrder -> {
-                    if (!Objects.equals(ticketOrder.getUser().getUsername(), username)) {
+                    if (!Objects.equals(ticketOrder.user().username(), username)) {
                         return Mono.error(new TicketOrderServiceException("That ticket order does not belong to you"));
                     }
-                    if (ticketOrder.getTicketOrderStatus() != TicketOrderStatus.ORDERED) {
+                    if (ticketOrder.ticketOrderStatus() != TicketOrderStatus.ORDERED) {
                         return Mono.error(new TicketOrderServiceException("Only ordered tickets can be cancelled"));
                     }
                     return ticketOrderPort.addOrUpdate(ticketOrder.changeOrderStatusToCancelled());

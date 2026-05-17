@@ -71,7 +71,7 @@ public class CityService {
                                 .switchIfEmpty(Mono.error(() -> new CityServiceException(
                                         "No city with name: %s".formatted(addCinemaToCityDto.city()))))
                                 .flatMap(cityEntity -> {
-                                    var cinemaWithCity = cinema.setCityId(cityEntity.getName());
+                                    var cinemaWithCity = cinema.withCityId(cityEntity.name());
                                     return cinemaPort.addOrUpdate(cinemaWithCity)
                                             .then(cityPort.addOrUpdate(cityEntity.addCinema(cinemaWithCity)));
                                 }));
@@ -94,7 +94,7 @@ public class CityService {
                             .toList();
                     return Flux.fromIterable(cities)
                             .index()
-                            .concatMap(indexed -> cityPort.findByName(indexed.getT2().getName())
+                            .concatMap(indexed -> cityPort.findByName(indexed.getT2().name())
                                     .hasElement()
                                     .mapNotNull(exists -> exists
                                             ? "City in row no. %s is not unique by name".formatted(indexed.getT1() + 1)

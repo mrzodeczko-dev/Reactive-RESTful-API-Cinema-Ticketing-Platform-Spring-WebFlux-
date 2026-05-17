@@ -22,7 +22,7 @@ class DiscountTest {
         void shouldCreateDiscountFromValidBigDecimal() {
             Discount discount = new Discount(BigDecimal.valueOf(0.5));
 
-            assertThat(discount.getValue()).isEqualTo(BigDecimal.valueOf(0.5));
+            assertThat(discount.value()).isEqualTo(BigDecimal.valueOf(0.5));
         }
 
         @Test
@@ -30,7 +30,7 @@ class DiscountTest {
         void shouldCreateDiscountWithZero() {
             Discount discount = new Discount(BigDecimal.ZERO);
 
-            assertThat(discount.getValue()).isEqualTo(BigDecimal.ZERO);
+            assertThat(discount.value()).isEqualTo(BigDecimal.ZERO);
         }
 
         @Test
@@ -38,7 +38,7 @@ class DiscountTest {
         void shouldCreateDiscountWithOne() {
             Discount discount = new Discount(BigDecimal.ONE);
 
-            assertThat(discount.getValue()).isEqualTo(BigDecimal.ONE);
+            assertThat(discount.value()).isEqualTo(BigDecimal.ONE);
         }
 
         @Test
@@ -75,7 +75,7 @@ class DiscountTest {
         void shouldCreateDiscountFromValidBigDecimal() {
             Discount discount = Discount.of(BigDecimal.valueOf(0.25));
 
-            assertThat(discount.getValue()).isEqualTo(BigDecimal.valueOf(0.25));
+            assertThat(discount.value()).isEqualTo(BigDecimal.valueOf(0.25));
         }
     }
 
@@ -88,7 +88,7 @@ class DiscountTest {
         void shouldCreateDiscountFromValidString() {
             Discount discount = Discount.of("0.50");
 
-            assertThat(discount.getValue()).isEqualByComparingTo(BigDecimal.valueOf(0.50));
+            assertThat(discount.value()).isEqualByComparingTo(BigDecimal.valueOf(0.50));
         }
 
         @Test
@@ -127,7 +127,7 @@ class DiscountTest {
 
             Discount inversed = discount.inverse();
 
-            assertThat(inversed.getValue()).isEqualTo(BigDecimal.ONE);
+            assertThat(inversed.value()).isEqualTo(BigDecimal.ONE);
         }
 
         @Test
@@ -137,7 +137,7 @@ class DiscountTest {
 
             Discount inversed = discount.inverse();
 
-            assertThat(inversed.getValue()).isEqualTo(BigDecimal.ZERO);
+            assertThat(inversed.value()).isEqualTo(BigDecimal.ZERO);
         }
 
         @Test
@@ -147,7 +147,7 @@ class DiscountTest {
 
             Discount inversed = discount.inverse();
 
-            assertThat(inversed.getValue()).isEqualTo(BigDecimal.valueOf(0.7));
+            assertThat(inversed.value()).isEqualTo(BigDecimal.valueOf(0.7));
         }
     }
 
@@ -163,7 +163,7 @@ class DiscountTest {
 
             Discount result = discount1.add(discount2);
 
-            assertThat(result.getValue()).isEqualTo(BigDecimal.valueOf(0.5));
+            assertThat(result.value()).isEqualTo(BigDecimal.valueOf(0.5));
         }
 
         @Test
@@ -185,7 +185,7 @@ class DiscountTest {
 
             Discount result = discount1.add(discount2);
 
-            assertThat(result.getValue()).isEqualTo(BigDecimal.valueOf(0.5));
+            assertThat(result.value()).isEqualTo(BigDecimal.valueOf(0.5));
         }
     }
 
@@ -198,10 +198,10 @@ class DiscountTest {
         void shouldSetNewValue() {
             Discount discount = new Discount(BigDecimal.valueOf(0.2));
 
-            Discount updated = discount.setValue(BigDecimal.valueOf(0.8));
+            Discount updated = discount.withValue(BigDecimal.valueOf(0.8));
 
-            assertThat(updated.getValue()).isEqualTo(BigDecimal.valueOf(0.8));
-            assertThat(discount.getValue()).isEqualTo(BigDecimal.valueOf(0.2)); // Original unchanged
+            assertThat(updated.value()).isEqualTo(BigDecimal.valueOf(0.8));
+            assertThat(discount.value()).isEqualTo(BigDecimal.valueOf(0.2)); // Original unchanged
         }
 
         @Test
@@ -209,7 +209,7 @@ class DiscountTest {
         void shouldThrowWhenSettingInvalidValue() {
             Discount discount = new Discount(BigDecimal.valueOf(0.5));
 
-            assertThatThrownBy(() -> discount.setValue(BigDecimal.valueOf(1.5)))
+            assertThatThrownBy(() -> discount.withValue(BigDecimal.valueOf(1.5)))
                     .isInstanceOf(DiscountException.class);
         }
     }
@@ -238,7 +238,7 @@ class DiscountTest {
         void shouldCreateDiscountWithZero() {
             Discount discount = new Discount();
 
-            assertThat(discount.getValue()).isEqualTo(BigDecimal.ZERO);
+            assertThat(discount.value()).isEqualTo(BigDecimal.ZERO);
         }
     }
 
@@ -251,7 +251,7 @@ class DiscountTest {
         void shouldReturnValue() {
             Discount discount = new Discount(BigDecimal.valueOf(0.42));
 
-            assertThat(discount.getValue()).isEqualTo(BigDecimal.valueOf(0.42));
+            assertThat(discount.value()).isEqualTo(BigDecimal.valueOf(0.42));
         }
     }
 }

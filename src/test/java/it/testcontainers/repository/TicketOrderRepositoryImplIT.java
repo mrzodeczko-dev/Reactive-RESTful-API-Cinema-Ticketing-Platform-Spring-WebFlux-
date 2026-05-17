@@ -67,7 +67,7 @@ class TicketOrderRepositoryImplIT extends AbstractMongoIT {
         StepVerifier.create(ticketOrderPort.findAllByUsername("jan").collectList())
                 .assertNext(l -> {
                     assertThat(l).hasSize(2);
-                    assertThat(l).extracting(o -> o.getUser().getUsername())
+                    assertThat(l).extracting(o -> o.user().username())
                             .containsOnly("jan");
                 })
                 .verifyComplete();
@@ -85,7 +85,7 @@ class TicketOrderRepositoryImplIT extends AbstractMongoIT {
     @DisplayName("Order status (ORDERED / DONE) round-trips through Mongo")
     void shouldPreserveOrderStatus() {
         StepVerifier.create(ticketOrderPort.findAllByUsername("jan").collectList())
-                .assertNext(l -> assertThat(l).extracting(TicketOrder::getTicketOrderStatus)
+                .assertNext(l -> assertThat(l).extracting(TicketOrder::ticketOrderStatus)
                         .containsExactlyInAnyOrder(TicketOrderStatus.ORDERED, TicketOrderStatus.DONE))
                 .verifyComplete();
     }

@@ -59,12 +59,12 @@ public class CinemaHallService {
                 .switchIfEmpty(Mono.error(new CinemaHallServiceException(
                         "No cinema with id: %s".formatted(dto.cinemaId()))))
                 .flatMap(cinema -> cinemaHallPort.addOrUpdate(CinemaHall.builder()
-                                .cinemaId(cinema.getId())
+                                .cinemaId(cinema.id())
                                 .movieEmissions(new ArrayList<>())
                                 .positions(createPositions(dto.colNo(), dto.rowNo()))
                                 .build())
                         .flatMap(savedCinemaHall -> {
-                            cinema.getCinemaHalls().add(savedCinemaHall);
+                            cinema.cinemaHalls().add(savedCinemaHall);
                             return cinemaPort.addOrUpdate(cinema)
                                     .thenReturn(savedCinemaHall);
                         })

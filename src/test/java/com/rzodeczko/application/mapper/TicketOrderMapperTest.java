@@ -56,7 +56,7 @@ class TicketOrderMapperTest {
         @Test
         @DisplayName("Order without user: username mapped as null")
         void shouldMapNullUserAsNullUsername() {
-            TicketOrder order = ticketOrder().setUser(null);
+            TicketOrder order = ticketOrder().withUser(null);
 
             assertThat(TicketOrderMapper.toDto(order).username()).isNull();
         }

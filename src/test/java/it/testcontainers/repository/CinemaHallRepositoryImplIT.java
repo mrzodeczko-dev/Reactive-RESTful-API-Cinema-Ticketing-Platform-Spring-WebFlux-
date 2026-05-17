@@ -45,13 +45,13 @@ class CinemaHallRepositoryImplIT extends AbstractMongoIT {
     void shouldFindAllForCinema() {
         CinemaHall hall1 = CinemaHall.builder().positions(Collections.emptyList())
                 .movieEmissions(Collections.emptyList()).build();
-        hall1 = hall1.setCinemaId("cinema-1");
+        hall1 = hall1.withCinemaId("cinema-1");
         CinemaHall hall2 = CinemaHall.builder().positions(Collections.emptyList())
                 .movieEmissions(Collections.emptyList()).build();
-        hall2 = hall2.setCinemaId("cinema-1");
+        hall2 = hall2.withCinemaId("cinema-1");
         CinemaHall hall3 = CinemaHall.builder().positions(Collections.emptyList())
                 .movieEmissions(Collections.emptyList()).build();
-        hall3 = hall3.setCinemaId("cinema-2");
+        hall3 = hall3.withCinemaId("cinema-2");
 
         cinemaHallPort.addOrUpdateMany(List.of(hall1, hall2, hall3)).blockLast();
 
@@ -66,7 +66,7 @@ class CinemaHallRepositoryImplIT extends AbstractMongoIT {
     void shouldFindHallByEmbeddedMovieEmissionId() {
         Movie movie = Movie.builder().name("Inception").genre("Drama").duration(148)
                 .premiereDate(LocalDate.of(2010, 7, 16)).build();
-        movie = movie.setId("movie-1");
+        movie = movie.withId("movie-1");
 
         MovieEmission emission = MovieEmission.builder()
                 .movie(movie)
@@ -75,20 +75,20 @@ class CinemaHallRepositoryImplIT extends AbstractMongoIT {
                 .cinemaHallId("hall-7")
                 .isPositionFree(new HashMap<>())
                 .build();
-        emission = emission.setId("emission-42");
+        emission = emission.withId("emission-42");
 
         CinemaHall hall = CinemaHall.builder()
                 .positions(List.of(Position.builder().rowNo(1).colNo(1).build()))
                 .movieEmissions(List.of(emission))
                 .build();
-        hall = hall.setCinemaId("cinema-7");
+        hall = hall.withCinemaId("cinema-7");
 
         cinemaHallPort.addOrUpdate(hall).block();
 
         StepVerifier.create(cinemaHallPort.getByMovieEmissionId("emission-42"))
                 .assertNext(found -> {
-                    assertThat(found.getCinemaId()).isEqualTo("cinema-7");
-                    assertThat(found.getMovieEmissions()).hasSize(1);
+                    assertThat(found.cinemaId()).isEqualTo("cinema-7");
+                    assertThat(found.movieEmissions()).hasSize(1);
                 })
                 .verifyComplete();
     }

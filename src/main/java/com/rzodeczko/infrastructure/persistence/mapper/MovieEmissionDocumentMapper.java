@@ -16,12 +16,12 @@ public final class MovieEmissionDocumentMapper {
             return null;
         }
         return new MovieEmissionDocument(
-                me.getId(),
-                MovieDocumentMapper.toDocument(me.getMovie()),
-                me.getStartDateTime(),
-                me.getBaseTicketPrice(),
-                me.getCinemaHallId(),
-                me.getIsPositionFree());
+                me.id(),
+                MovieDocumentMapper.toDocument(me.movie()),
+                me.startDateTime(),
+                me.baseTicketPrice(),
+                me.cinemaHallId(),
+                me.isPositionFree());
     }
 
     public static MovieEmission toDomain(MovieEmissionDocument doc) {

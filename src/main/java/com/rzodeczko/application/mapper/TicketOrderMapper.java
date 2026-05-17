@@ -15,14 +15,14 @@ public final class TicketOrderMapper {
             return null;
         }
         return TicketOrderDto.builder()
-                .id(o.getId())
-                .username(o.getUser() == null ? null : o.getUser().getUsername())
-                .movieEmissionDto(MovieEmissionMapper.toDto(o.getMovieEmission()))
-                .orderDate(o.getOrderDate())
-                .ticketGroupType(o.getTicketGroupType())
-                .ticketOrderStatus(o.getTicketOrderStatus())
-                .tickets(o.getTickets() == null ? null :
-                        o.getTickets().stream().map(TicketMapper::toDto).collect(Collectors.toList()))
+                .id(o.id())
+                .username(o.user() == null ? null : o.user().username())
+                .movieEmissionDto(MovieEmissionMapper.toDto(o.movieEmission()))
+                .orderDate(o.orderDate())
+                .ticketGroupType(o.ticketGroupType())
+                .ticketOrderStatus(o.ticketOrderStatus())
+                .tickets(o.tickets() == null ? null :
+                        o.tickets().stream().map(TicketMapper::toDto).collect(Collectors.toList()))
                 .build();
     }
 }

@@ -19,8 +19,8 @@ class PositionTest {
         void shouldCreatePositionFromIntegers() {
             Position position = new Position(5, 10);
 
-            assertThat(position.getRowNo()).isEqualTo(5);
-            assertThat(position.getColNo()).isEqualTo(10);
+            assertThat(position.rowNo()).isEqualTo(5);
+            assertThat(position.colNo()).isEqualTo(10);
         }
 
         @Test
@@ -28,8 +28,8 @@ class PositionTest {
         void shouldCreatePositionWithZeros() {
             Position position = new Position(0, 0);
 
-            assertThat(position.getRowNo()).isEqualTo(0);
-            assertThat(position.getColNo()).isEqualTo(0);
+            assertThat(position.rowNo()).isEqualTo(0);
+            assertThat(position.colNo()).isEqualTo(0);
         }
 
         @Test
@@ -37,8 +37,8 @@ class PositionTest {
         void shouldCreatePositionWithNulls() {
             Position position = new Position(null, null);
 
-            assertThat(position.getRowNo()).isNull();
-            assertThat(position.getColNo()).isNull();
+            assertThat(position.rowNo()).isNull();
+            assertThat(position.colNo()).isNull();
         }
 
         @Test
@@ -46,8 +46,8 @@ class PositionTest {
         void shouldCreatePositionWithNegatives() {
             Position position = new Position(-1, -2);
 
-            assertThat(position.getRowNo()).isEqualTo(-1);
-            assertThat(position.getColNo()).isEqualTo(-2);
+            assertThat(position.rowNo()).isEqualTo(-1);
+            assertThat(position.colNo()).isEqualTo(-2);
         }
     }
 
@@ -60,8 +60,8 @@ class PositionTest {
         void shouldCreatePositionFromValidString() {
             Position position = new Position("rowNo: 5, colNo: 10");
 
-            assertThat(position.getRowNo()).isEqualTo(5);
-            assertThat(position.getColNo()).isEqualTo(10);
+            assertThat(position.rowNo()).isEqualTo(5);
+            assertThat(position.colNo()).isEqualTo(10);
         }
 
         @Test
@@ -69,8 +69,8 @@ class PositionTest {
         void shouldParseStringWithSingleDigits() {
             Position position = new Position("rowNo: 1, colNo: 2");
 
-            assertThat(position.getRowNo()).isEqualTo(1);
-            assertThat(position.getColNo()).isEqualTo(2);
+            assertThat(position.rowNo()).isEqualTo(1);
+            assertThat(position.colNo()).isEqualTo(2);
         }
 
         @Test
@@ -78,8 +78,8 @@ class PositionTest {
         void shouldParseStringWithLargeValues() {
             Position position = new Position("rowNo: 999, colNo: 888");
 
-            assertThat(position.getRowNo()).isEqualTo(999);
-            assertThat(position.getColNo()).isEqualTo(888);
+            assertThat(position.rowNo()).isEqualTo(999);
+            assertThat(position.colNo()).isEqualTo(888);
         }
 
         @Test
@@ -87,8 +87,8 @@ class PositionTest {
         void shouldResultInNullsForInvalidFormat() {
             Position position = new Position("rowNo: 5 colNo: 10");
 
-            assertThat(position.getRowNo()).isNull();
-            assertThat(position.getColNo()).isNull();
+            assertThat(position.rowNo()).isNull();
+            assertThat(position.colNo()).isNull();
         }
 
         @Test
@@ -96,8 +96,8 @@ class PositionTest {
         void shouldHandleMalformedString() {
             Position position = new Position("invalid");
 
-            assertThat(position.getRowNo()).isNull();
-            assertThat(position.getColNo()).isNull();
+            assertThat(position.rowNo()).isNull();
+            assertThat(position.colNo()).isNull();
         }
     }
 
@@ -110,8 +110,8 @@ class PositionTest {
         void shouldCreatePositionWithNulls() {
             Position position = new Position();
 
-            assertThat(position.getRowNo()).isNull();
-            assertThat(position.getColNo()).isNull();
+            assertThat(position.rowNo()).isNull();
+            assertThat(position.colNo()).isNull();
         }
     }
 
@@ -124,11 +124,11 @@ class PositionTest {
         void shouldSetNewRowNo() {
             Position position = new Position(5, 10);
 
-            Position updated = position.setRowNo(15);
+            Position updated = position.withRowNo(15);
 
-            assertThat(updated.getRowNo()).isEqualTo(15);
-            assertThat(updated.getColNo()).isEqualTo(10);
-            assertThat(position.getRowNo()).isEqualTo(5); // Original unchanged
+            assertThat(updated.rowNo()).isEqualTo(15);
+            assertThat(updated.colNo()).isEqualTo(10);
+            assertThat(position.rowNo()).isEqualTo(5); // Original unchanged
         }
 
         @Test
@@ -136,10 +136,10 @@ class PositionTest {
         void shouldSetRowNoToNull() {
             Position position = new Position(5, 10);
 
-            Position updated = position.setRowNo(null);
+            Position updated = position.withRowNo(null);
 
-            assertThat(updated.getRowNo()).isNull();
-            assertThat(updated.getColNo()).isEqualTo(10);
+            assertThat(updated.rowNo()).isNull();
+            assertThat(updated.colNo()).isEqualTo(10);
         }
     }
 
@@ -152,11 +152,11 @@ class PositionTest {
         void shouldSetNewColNo() {
             Position position = new Position(5, 10);
 
-            Position updated = position.setColNo(20);
+            Position updated = position.withColNo(20);
 
-            assertThat(updated.getRowNo()).isEqualTo(5);
-            assertThat(updated.getColNo()).isEqualTo(20);
-            assertThat(position.getColNo()).isEqualTo(10); // Original unchanged
+            assertThat(updated.rowNo()).isEqualTo(5);
+            assertThat(updated.colNo()).isEqualTo(20);
+            assertThat(position.colNo()).isEqualTo(10); // Original unchanged
         }
 
         @Test
@@ -164,10 +164,10 @@ class PositionTest {
         void shouldSetColNoToNull() {
             Position position = new Position(5, 10);
 
-            Position updated = position.setColNo(null);
+            Position updated = position.withColNo(null);
 
-            assertThat(updated.getRowNo()).isEqualTo(5);
-            assertThat(updated.getColNo()).isNull();
+            assertThat(updated.rowNo()).isEqualTo(5);
+            assertThat(updated.colNo()).isNull();
         }
     }
 
@@ -218,8 +218,8 @@ class PositionTest {
                     .colNo(14)
                     .build();
 
-            assertThat(position.getRowNo()).isEqualTo(7);
-            assertThat(position.getColNo()).isEqualTo(14);
+            assertThat(position.rowNo()).isEqualTo(7);
+            assertThat(position.colNo()).isEqualTo(14);
         }
 
         @Test
@@ -229,8 +229,8 @@ class PositionTest {
                     .rowNo(3)
                     .build();
 
-            assertThat(position.getRowNo()).isEqualTo(3);
-            assertThat(position.getColNo()).isNull();
+            assertThat(position.rowNo()).isEqualTo(3);
+            assertThat(position.colNo()).isNull();
         }
 
         @Test
@@ -240,8 +240,8 @@ class PositionTest {
                     .colNo(8)
                     .build();
 
-            assertThat(position.getRowNo()).isNull();
-            assertThat(position.getColNo()).isEqualTo(8);
+            assertThat(position.rowNo()).isNull();
+            assertThat(position.colNo()).isEqualTo(8);
         }
 
         @Test
@@ -250,8 +250,8 @@ class PositionTest {
             Position position = Position.builder()
                     .build();
 
-            assertThat(position.getRowNo()).isNull();
-            assertThat(position.getColNo()).isNull();
+            assertThat(position.rowNo()).isNull();
+            assertThat(position.colNo()).isNull();
         }
 
         @Test
@@ -266,11 +266,11 @@ class PositionTest {
                     .rowNo(3)
                     .build();
 
-            assertThat(position1.getRowNo()).isEqualTo(5);
-            assertThat(position1.getColNo()).isEqualTo(10);
+            assertThat(position1.rowNo()).isEqualTo(5);
+            assertThat(position1.colNo()).isEqualTo(10);
 
-            assertThat(position2.getRowNo()).isEqualTo(3);
-            assertThat(position2.getColNo()).isEqualTo(10);
+            assertThat(position2.rowNo()).isEqualTo(3);
+            assertThat(position2.colNo()).isEqualTo(10);
         }
     }
 

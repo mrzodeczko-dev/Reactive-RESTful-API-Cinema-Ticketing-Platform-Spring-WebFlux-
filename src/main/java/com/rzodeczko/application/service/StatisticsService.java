@@ -30,9 +30,9 @@ public class StatisticsService {
     }
 
     private List<String> cinemaHallIdsForCity(com.rzodeczko.domain.city.City city) {
-        return city.getCinemas()
+        return city.cinemas()
                 .stream()
-                .flatMap(cinema -> cinema.getCinemaHalls().stream().map(CinemaHall::getId))
+                .flatMap(cinema -> cinema.cinemaHalls().stream().map(CinemaHall::id))
                 .collect(Collectors.toList());
     }
 
@@ -44,10 +44,10 @@ public class StatisticsService {
                         .findAllByMovieEmissionInDateAndByCinemaHallsIdIn(
                                 currentDate,
                                 cinemaHallIdsForCity(city))
-                        .map(ticketPurchase -> ticketPurchase.getTickets().size())
+                        .map(ticketPurchase -> ticketPurchase.tickets().size())
                         .reduce(0, Integer::sum)
                         .map(totalTickets -> CityFrequencyDto.builder()
-                                .city(city.getName())
+                                .city(city.name())
                                 .frequency(totalTickets)
                                 .build()));
     }
@@ -68,12 +68,12 @@ public class StatisticsService {
 
     public Flux<MovieFrequencyDto> findAllMoviesFrequency() {
         return moviePort.findAll()
-                .flatMap(movie -> ticketPurchasePort.findAllByMovieId(movie.getId())
+                .flatMap(movie -> ticketPurchasePort.findAllByMovieId(movie.id())
                         .collectList()
                         .map(purchases -> MovieFrequencyDto.builder()
                                 .movie(MovieMapper.toDto(movie))
                                 .frequency(purchases.stream()
-                                        .map(tp -> tp.getTickets().size())
+                                        .map(tp -> tp.tickets().size())
                                         .reduce(0, Integer::sum))
                                 .build()));
     }
@@ -89,8 +89,8 @@ public class StatisticsService {
                 .flatMapMany(city -> ticketPurchasePort
                         .findAllByCinemaHallsIds(cinemaHallIdsForCity(city))
                         .collectMultimap(
-                                tp -> tp.getMovieEmission().getMovie().getGenre(),
-                                tp -> tp.getTickets().size())
+                                tp -> tp.movieEmission().movie().getGenre(),
+                                tp -> tp.tickets().size())
                         .map(this::reduceMultiMapToMapWithMaxElementOf)
                         .flatMapMany(maxByGenre -> Flux.fromIterable(
                                 maxByGenre.entrySet().stream()
@@ -106,11 +106,11 @@ public class StatisticsService {
                 .flatMap(city -> ticketPurchasePort
                         .findAllByCinemaHallsIds(cinemaHallIdsForCity(city))
                         .collectMultimap(
-                                tp -> tp.getMovieEmission().getMovie(),
-                                tp -> tp.getTickets().size())
+                                tp -> tp.movieEmission().movie(),
+                                tp -> tp.tickets().size())
                         .map(this::reduceMultiMapToMapWithMaxElementOf)
                         .map(maxByMovie -> MostPopularMovieGroupedByCityDto.builder()
-                                .city(city.getName())
+                                .city(city.name())
                                 .movieFrequency(maxByMovie.entrySet().stream()
                                         .map(e -> MovieFrequencyDto.builder()
                                                 .movie(MovieMapper.toDto(e.getKey()))
@@ -143,10 +143,10 @@ public class StatisticsService {
         return cityPort.findAll()
                 .flatMap(city -> ticketPurchasePort
                         .findAllByCinemaHallsIds(cinemaHallIdsForCity(city))
-                        .flatMap(tp -> Flux.fromIterable(tp.getTickets()))
+                        .flatMap(tp -> Flux.fromIterable(tp.tickets()))
                         .collectList()
                         .map(tickets -> AverageTicketPriceByCityDto.builder()
-                                .city(city.getName())
+                                .city(city.name())
                                 .averageTicketPrice(averageTicketPrice(tickets))
                                 .build()));
     }
@@ -156,7 +156,7 @@ public class StatisticsService {
             return BigDecimal.ZERO;
         }
         return tickets.stream()
-                .map(ticket -> ticket.getPrice().getValue())
+                .map(ticket -> ticket.price().value())
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .divide(new BigDecimal(tickets.size()), 2, RoundingMode.HALF_UP);
     }

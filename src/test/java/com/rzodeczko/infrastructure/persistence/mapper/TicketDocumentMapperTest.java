@@ -50,8 +50,8 @@ class TicketDocumentMapperTest {
         @DisplayName("Ticket list: documents preserve order")
         void shouldMapDomainListToDocuments() {
             List<TicketDocument> documents = TicketDocumentMapper.toDocuments(List.of(
-                    ticket().setId("ticket-1"),
-                    ticket().setId("ticket-2")
+                    ticket().withId("ticket-1"),
+                    ticket().withId("ticket-2")
             ));
 
             assertThat(documents).extracting(TicketDocument::getId)
@@ -74,12 +74,12 @@ class TicketDocumentMapperTest {
         void shouldMapDocumentToDomain() {
             Ticket ticket = TicketDocumentMapper.toDomain(document("ticket-1"));
 
-            assertThat(ticket.getId()).isEqualTo("ticket-1");
-            assertThat(ticket.getTicketStatus()).isEqualTo(TicketStatus.PURCHASED);
-            assertThat(ticket.getType()).isEqualTo(IndividualTicketType.STUDENT);
-            assertThat(ticket.getPosition()).isEqualTo(new Position(2, 3));
-            assertThat(ticket.getDiscount()).isEqualTo(Discount.of("0.2"));
-            assertThat(ticket.getPrice()).isEqualTo(Money.of("28.00"));
+            assertThat(ticket.id()).isEqualTo("ticket-1");
+            assertThat(ticket.ticketStatus()).isEqualTo(TicketStatus.PURCHASED);
+            assertThat(ticket.type()).isEqualTo(IndividualTicketType.STUDENT);
+            assertThat(ticket.position()).isEqualTo(new Position(2, 3));
+            assertThat(ticket.discount()).isEqualTo(Discount.of("0.2"));
+            assertThat(ticket.price()).isEqualTo(Money.of("28.00"));
         }
 
         @Test
@@ -96,7 +96,7 @@ class TicketDocumentMapperTest {
                     document("ticket-2")
             ));
 
-            assertThat(tickets).extracting(Ticket::getId)
+            assertThat(tickets).extracting(Ticket::id)
                     .containsExactly("ticket-1", "ticket-2");
         }
     }

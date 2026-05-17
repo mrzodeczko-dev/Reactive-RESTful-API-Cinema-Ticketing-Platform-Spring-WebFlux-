@@ -14,10 +14,10 @@ public final class CinemaDocumentMapper {
     public static CinemaDocument toDocument(Cinema c) {
         if (c == null) return null;
         return new CinemaDocument(
-                c.getId(),
-                c.getCityId(),
-                c.getStreet(),
-                CinemaHallDocumentMapper.toDocuments(c.getCinemaHalls()));
+                c.id(),
+                c.cityName(),
+                c.street(),
+                CinemaHallDocumentMapper.toDocuments(c.cinemaHalls()));
     }
 
     public static Cinema toDomain(CinemaDocument doc) {

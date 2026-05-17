@@ -43,9 +43,9 @@ public class AuthenticationManager implements ReactiveAuthenticationManager {
                             .flatMap(userPort::findById)
                             .switchIfEmpty(Mono.error(() -> new AuthenticationException("Wrong username")))
                             .map(userFromDb -> (Authentication) new UsernamePasswordAuthenticationToken(
-                                    userFromDb.getUsername(),
+                                    userFromDb.username(),
                                     null,
-                                    List.of(new SimpleGrantedAuthority(userFromDb.getRole().toString()))
+                                    List.of(new SimpleGrantedAuthority(userFromDb.role().toString()))
                             ));
                 });
     }

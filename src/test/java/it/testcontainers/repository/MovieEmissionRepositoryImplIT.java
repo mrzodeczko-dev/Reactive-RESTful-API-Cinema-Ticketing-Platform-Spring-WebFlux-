@@ -42,11 +42,11 @@ class MovieEmissionRepositoryImplIT extends AbstractMongoIT {
 
         Movie movie1 = Movie.builder().name("Inception").genre("Drama").duration(148)
                 .premiereDate(LocalDate.of(2010, 7, 16)).build();
-        movie1 = movie1.setId("movie-1");
+        movie1 = movie1.withId("movie-1");
 
         Movie movie2 = Movie.builder().name("Joker").genre("Thriller").duration(122)
                 .premiereDate(LocalDate.of(2019, 10, 4)).build();
-        movie2 = movie2.setId("movie-2");
+        movie2 = movie2.withId("movie-2");
 
         emissionA = MovieEmission.builder()
                 .movie(movie1).cinemaHallId("hall-A")
@@ -74,7 +74,7 @@ class MovieEmissionRepositoryImplIT extends AbstractMongoIT {
     void shouldFindByMovieId() {
         StepVerifier.create(movieEmissionPort.findMovieEmissionsByMovieId("movie-1").collectList())
                 .assertNext(l -> assertThat(l).hasSize(2)
-                        .extracting(MovieEmission::getCinemaHallId)
+                        .extracting(MovieEmission::cinemaHallId)
                         .containsExactlyInAnyOrder("hall-A", "hall-B"))
                 .verifyComplete();
     }
@@ -84,7 +84,7 @@ class MovieEmissionRepositoryImplIT extends AbstractMongoIT {
     void shouldFindByCinemaHallId() {
         StepVerifier.create(movieEmissionPort.findMovieEmissionsByCinemaHallId("hall-A").collectList())
                 .assertNext(l -> assertThat(l).hasSize(2)
-                        .extracting(e -> e.getMovie().getId())
+                        .extracting(e -> e.movie().id())
                         .containsExactlyInAnyOrder("movie-1", "movie-2"))
                 .verifyComplete();
     }
@@ -100,8 +100,8 @@ class MovieEmissionRepositoryImplIT extends AbstractMongoIT {
     @Test
     @DisplayName("Money value object round-trips through Mongo via custom converter")
     void shouldRoundTripMoney() {
-        StepVerifier.create(movieEmissionPort.findById(emissionC.getId()))
-                .assertNext(e -> assertThat(e.getBaseTicketPrice().getValue().toPlainString())
+        StepVerifier.create(movieEmissionPort.findById(emissionC.id()))
+                .assertNext(e -> assertThat(e.baseTicketPrice().value().toPlainString())
                         .isEqualTo("30.00"))
                 .verifyComplete();
     }

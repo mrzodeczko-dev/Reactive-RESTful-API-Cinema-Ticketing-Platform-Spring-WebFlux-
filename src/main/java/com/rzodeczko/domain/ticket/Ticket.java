@@ -24,18 +24,12 @@ public record Ticket(
         return new Builder();
     }
 
-    public String getId() { return id; }
-    public Ticket setId(String id) { return new Ticket(id, ticketStatus, type, position, discount, price); }
-    public TicketStatus getTicketStatus() { return ticketStatus; }
-    public Ticket setTicketStatus(TicketStatus ticketStatus) { return new Ticket(id, ticketStatus, type, position, discount, price); }
-    public IndividualTicketType getType() { return type; }
-    public Ticket setType(IndividualTicketType type) { return new Ticket(id, ticketStatus, type, position, discount, price); }
-    public Position getPosition() { return position; }
-    public Ticket setPosition(Position position) { return new Ticket(id, ticketStatus, type, position, discount, price); }
-    public Discount getDiscount() { return discount; }
-    public Ticket setDiscount(Discount discount) { return new Ticket(id, ticketStatus, type, position, discount, price); }
-    public Money getPrice() { return price; }
-    public Ticket setPrice(Money price) { return new Ticket(id, ticketStatus, type, position, discount, price); }
+    public Ticket withId(String id) { return new Ticket(id, ticketStatus, type, position, discount, price); }
+    public Ticket withTicketStatus(TicketStatus ticketStatus) { return new Ticket(id, ticketStatus, type, position, discount, price); }
+    public Ticket withType(IndividualTicketType type) { return new Ticket(id, ticketStatus, type, position, discount, price); }
+    public Ticket withPosition(Position position) { return new Ticket(id, ticketStatus, type, position, discount, price); }
+    public Ticket withDiscount(Discount discount) { return new Ticket(id, ticketStatus, type, position, discount, price); }
+    public Ticket withPrice(Money price) { return new Ticket(id, ticketStatus, type, position, discount, price); }
 
     public static class Builder {
         private String id;

@@ -13,11 +13,11 @@ public final class MovieMapper {
             return null;
         }
         return MovieDto.builder()
-                .id(movie.getId())
-                .name(movie.getName())
+                .id(movie.id())
+                .name(movie.name())
                 .genre(movie.getGenre())
-                .premiereDate(movie.getPremiereDate())
-                .duration(movie.getDuration())
+                .premiereDate(movie.premiereDate())
+                .duration(movie.duration())
                 .build();
     }
 }

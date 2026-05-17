@@ -138,7 +138,7 @@ class CinemaHallServiceTest {
                     .verifyComplete();
 
             verify(cinemaHallRepository).addOrUpdate(captor.capture());
-            assertThat(captor.getValue().getPositions()).hasSize(6);
+            assertThat(captor.getValue().positions()).hasSize(6);
         }
     }
 

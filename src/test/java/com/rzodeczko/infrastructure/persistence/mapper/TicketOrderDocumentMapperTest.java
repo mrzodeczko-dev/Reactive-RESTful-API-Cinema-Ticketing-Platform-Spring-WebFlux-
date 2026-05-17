@@ -60,13 +60,13 @@ class TicketOrderDocumentMapperTest {
         void shouldMapDocumentToDomain() {
             TicketOrder domain = TicketOrderDocumentMapper.toDomain(documentOrder());
 
-            assertThat(domain.getId()).isEqualTo("order-1");
-            assertThat(domain.getUser().getUsername()).isEqualTo("jan@example.com");
-            assertThat(domain.getOrderDate()).isEqualTo(LocalDate.of(2026, 6, 1));
-            assertThat(domain.getTicketOrderStatus()).isEqualTo(TicketOrderStatus.ORDERED);
-            assertThat(domain.getMovieEmission().getId()).isEqualTo("emission-1");
-            assertThat(domain.getTickets()).hasSize(1);
-            assertThat(domain.getTicketGroupType()).isEqualTo(TicketGroupType.FAMILY);
+            assertThat(domain.id()).isEqualTo("order-1");
+            assertThat(domain.user().username()).isEqualTo("jan@example.com");
+            assertThat(domain.orderDate()).isEqualTo(LocalDate.of(2026, 6, 1));
+            assertThat(domain.ticketOrderStatus()).isEqualTo(TicketOrderStatus.ORDERED);
+            assertThat(domain.movieEmission().id()).isEqualTo("emission-1");
+            assertThat(domain.tickets()).hasSize(1);
+            assertThat(domain.ticketGroupType()).isEqualTo(TicketGroupType.FAMILY);
         }
     }
 

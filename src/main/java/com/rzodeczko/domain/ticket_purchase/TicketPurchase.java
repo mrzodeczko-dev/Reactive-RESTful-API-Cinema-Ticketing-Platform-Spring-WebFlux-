@@ -31,18 +31,12 @@ public record TicketPurchase(
         return new Builder();
     }
 
-    public String getId() { return id; }
-    public TicketPurchase setId(String id) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
-    public User getUser() { return user; }
-    public TicketPurchase setUser(User user) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
-    public LocalDate getPurchaseDate() { return purchaseDate; }
-    public TicketPurchase setPurchaseDate(LocalDate purchaseDate) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
-    public MovieEmission getMovieEmission() { return movieEmission; }
-    public TicketPurchase setMovieEmission(MovieEmission movieEmission) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
-    public List<Ticket> getTickets() { return tickets; }
-    public TicketPurchase setTickets(List<Ticket> tickets) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
-    public TicketGroupType getTicketGroupType() { return ticketGroupType; }
-    public TicketPurchase setTicketGroupType(TicketGroupType ticketGroupType) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
+    public TicketPurchase withId(String id) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
+    public TicketPurchase withUser(User user) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
+    public TicketPurchase withPurchaseDate(LocalDate purchaseDate) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
+    public TicketPurchase withMovieEmission(MovieEmission movieEmission) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
+    public TicketPurchase withTickets(List<Ticket> tickets) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
+    public TicketPurchase withTicketGroupType(TicketGroupType ticketGroupType) { return new TicketPurchase(id, user, purchaseDate, movieEmission, tickets, ticketGroupType); }
 
     public static class Builder {
         private String id;

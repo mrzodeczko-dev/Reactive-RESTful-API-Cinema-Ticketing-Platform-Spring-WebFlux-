@@ -14,12 +14,12 @@ public final class TicketDocumentMapper {
     public static TicketDocument toDocument(Ticket t) {
         if (t == null) return null;
         return new TicketDocument(
-                t.getId(),
-                t.getTicketStatus(),
-                t.getType(),
-                t.getPosition(),
-                t.getDiscount(),
-                t.getPrice());
+                t.id(),
+                t.ticketStatus(),
+                t.type(),
+                t.position(),
+                t.discount(),
+                t.price());
     }
 
     public static Ticket toDomain(TicketDocument doc) {

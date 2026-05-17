@@ -28,8 +28,7 @@ public record Discount(BigDecimal value) {
         return new Discount(value);
     }
 
-    public BigDecimal getValue() { return value; }
-    public Discount setValue(BigDecimal value) { return new Discount(value); }
+    public Discount withValue(BigDecimal value) { return new Discount(value); }
 
     public Discount inverse() {
         return new Discount(BigDecimal.ONE.subtract(value));
@@ -52,7 +51,7 @@ public record Discount(BigDecimal value) {
     }
 
     public Discount add(Discount toAdd) {
-        return Discount.of(this.getValue().add(toAdd.getValue()));
+        return Discount.of(this.value().add(toAdd.value()));
     }
 
     @Override

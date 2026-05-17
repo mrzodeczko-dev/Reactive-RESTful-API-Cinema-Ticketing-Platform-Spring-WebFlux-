@@ -12,14 +12,14 @@ public interface UserPort extends PersistencePort<User, String> {
 
     default Mono<User> deleteUserByUsername(String username) {
         return findByUsername(username)
-                .filter(user -> user.getRole() != Role.ROLE_ADMIN)
-                .flatMap(user -> deleteById(user.getId()).thenReturn(user));
+                .filter(user -> user.role() != Role.ROLE_ADMIN)
+                .flatMap(user -> deleteById(user.id()).thenReturn(user));
     }
 
     default Flux<User> deleteAllExceptAdmins() {
         return findAll()
-                .filter(user -> user.getRole() != Role.ROLE_ADMIN)
-                .flatMap(user -> deleteById(user.getId())
+                .filter(user -> user.role() != Role.ROLE_ADMIN)
+                .flatMap(user -> deleteById(user.id())
                         .thenReturn(user));
     }
 }

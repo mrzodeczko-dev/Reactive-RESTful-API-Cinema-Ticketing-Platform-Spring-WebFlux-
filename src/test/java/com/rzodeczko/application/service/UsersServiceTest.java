@@ -201,7 +201,7 @@ class UsersServiceTest {
 
             ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
             verify(userPort).addOrUpdate(captor.capture());
-            assertThat(captor.getValue().getRole()).isEqualTo(Role.ROLE_ADMIN);
+            assertThat(captor.getValue().role()).isEqualTo(Role.ROLE_ADMIN);
             verify(userPort, times(0)).deleteById(any());
         }
 

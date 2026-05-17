@@ -61,11 +61,11 @@ class CinemaHallDocumentMapperTest {
         void shouldMapDocumentToDomain() {
             CinemaHall domain = CinemaHallDocumentMapper.toDomain(cinemaHallDocument("hall-1"));
 
-            assertThat(domain.getId()).isEqualTo("hall-1");
-            assertThat(domain.getCinemaId()).isEqualTo("cinema-1");
-            assertThat(domain.getPositions()).containsExactly(new Position(1, 1), new Position(1, 2));
-            assertThat(domain.getMovieEmissions()).hasSize(1);
-            assertThat(domain.getMovieEmissions().getFirst().getId()).isEqualTo("emission-1");
+            assertThat(domain.id()).isEqualTo("hall-1");
+            assertThat(domain.cinemaId()).isEqualTo("cinema-1");
+            assertThat(domain.positions()).containsExactly(new Position(1, 1), new Position(1, 2));
+            assertThat(domain.movieEmissions()).hasSize(1);
+            assertThat(domain.movieEmissions().getFirst().id()).isEqualTo("emission-1");
         }
 
         @Test
@@ -76,7 +76,7 @@ class CinemaHallDocumentMapperTest {
                     cinemaHallDocument("hall-2")
             ));
 
-            assertThat(domains).extracting(CinemaHall::getId)
+            assertThat(domains).extracting(CinemaHall::id)
                     .containsExactly("hall-1", "hall-2");
         }
     }

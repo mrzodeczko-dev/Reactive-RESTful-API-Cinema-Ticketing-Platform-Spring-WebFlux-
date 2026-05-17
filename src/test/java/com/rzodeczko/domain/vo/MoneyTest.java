@@ -22,7 +22,7 @@ class MoneyTest {
         void shouldCreateMoneyFromValidBigDecimal() {
             Money money = new Money(BigDecimal.TEN);
 
-            assertThat(money.getValue()).isEqualTo(BigDecimal.TEN);
+            assertThat(money.value()).isEqualTo(BigDecimal.TEN);
         }
 
         @Test
@@ -30,7 +30,7 @@ class MoneyTest {
         void shouldCreateMoneyFromZero() {
             Money money = new Money(BigDecimal.ZERO);
 
-            assertThat(money.getValue()).isEqualTo(BigDecimal.ZERO);
+            assertThat(money.value()).isEqualTo(BigDecimal.ZERO);
         }
 
         @Test
@@ -59,7 +59,7 @@ class MoneyTest {
         void shouldCreateMoneyFromValidString() {
             Money money = Money.of("19.99");
 
-            assertThat(money.getValue()).isEqualTo(BigDecimal.valueOf(19.99));
+            assertThat(money.value()).isEqualTo(BigDecimal.valueOf(19.99));
         }
 
         @Test
@@ -67,7 +67,7 @@ class MoneyTest {
         void shouldCreateMoneyFromIntegerString() {
             Money money = Money.of("100");
 
-            assertThat(money.getValue()).isEqualTo(BigDecimal.valueOf(100));
+            assertThat(money.value()).isEqualTo(BigDecimal.valueOf(100));
         }
 
         @Test
@@ -105,7 +105,7 @@ class MoneyTest {
             Money money = new Money(BigDecimal.TEN);
             Money result = money.add("5.50");
 
-            assertThat(result.getValue()).isEqualByComparingTo(BigDecimal.valueOf(15.50));
+            assertThat(result.value()).isEqualByComparingTo(BigDecimal.valueOf(15.50));
         }
 
         @Test
@@ -130,7 +130,7 @@ class MoneyTest {
 
             Money result = money1.add(money2);
 
-            assertThat(result.getValue()).isEqualTo(BigDecimal.valueOf(15.50));
+            assertThat(result.value()).isEqualTo(BigDecimal.valueOf(15.50));
         }
 
         @Test
@@ -141,7 +141,7 @@ class MoneyTest {
 
             Money result = money1.add(money2);
 
-            assertThat(result.getValue()).isEqualTo(BigDecimal.TEN);
+            assertThat(result.value()).isEqualTo(BigDecimal.TEN);
         }
     }
 
@@ -156,7 +156,7 @@ class MoneyTest {
 
             Money result = money.multiply(3);
 
-            assertThat(result.getValue()).isEqualTo(BigDecimal.valueOf(30));
+            assertThat(result.value()).isEqualTo(BigDecimal.valueOf(30));
         }
 
         @Test
@@ -166,7 +166,7 @@ class MoneyTest {
 
             Money result = money.multiply(0);
 
-            assertThat(result.getValue()).isEqualTo(BigDecimal.ZERO);
+            assertThat(result.value()).isEqualTo(BigDecimal.ZERO);
         }
 
         @Test
@@ -201,7 +201,7 @@ class MoneyTest {
 
             Money result = money.multiply("1.5");
 
-            assertThat(result.getValue()).isEqualByComparingTo(BigDecimal.valueOf(15));
+            assertThat(result.value()).isEqualByComparingTo(BigDecimal.valueOf(15));
         }
 
         @Test
@@ -223,10 +223,10 @@ class MoneyTest {
         void shouldSetNewValue() {
             Money money = new Money(BigDecimal.TEN);
 
-            Money updated = money.setValue(BigDecimal.valueOf(25));
+            Money updated = money.withValue(BigDecimal.valueOf(25));
 
-            assertThat(updated.getValue()).isEqualTo(BigDecimal.valueOf(25));
-            assertThat(money.getValue()).isEqualTo(BigDecimal.TEN); // Original unchanged
+            assertThat(updated.value()).isEqualTo(BigDecimal.valueOf(25));
+            assertThat(money.value()).isEqualTo(BigDecimal.TEN); // Original unchanged
         }
 
         @Test
@@ -234,7 +234,7 @@ class MoneyTest {
         void shouldThrowWhenSettingNegativeValue() {
             Money money = new Money(BigDecimal.TEN);
 
-            assertThatThrownBy(() -> money.setValue(BigDecimal.valueOf(-10)))
+            assertThatThrownBy(() -> money.withValue(BigDecimal.valueOf(-10)))
                     .isInstanceOf(DiscountException.class);
         }
     }
@@ -263,7 +263,7 @@ class MoneyTest {
         void shouldCreateMoneyWithZero() {
             Money money = new Money();
 
-            assertThat(money.getValue()).isEqualTo(BigDecimal.ZERO);
+            assertThat(money.value()).isEqualTo(BigDecimal.ZERO);
         }
     }
 }

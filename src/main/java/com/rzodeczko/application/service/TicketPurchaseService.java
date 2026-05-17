@@ -100,7 +100,7 @@ public class TicketPurchaseService {
                                     Discount totalDiscount = createPurchaseDto.getBaseDiscount()
                                             .add(ticketDetailsDto.individualTicketType().getDiscount());
                                     Money ticketPrice = computeTicketPrice(
-                                            tuple.getT1().getBaseTicketPrice(), totalDiscount);
+                                            tuple.getT1().baseTicketPrice(), totalDiscount);
                                     return Ticket.builder()
                                             .position(ticketDetailsDto.position())
                                             .type(ticketDetailsDto.individualTicketType())
@@ -112,15 +112,15 @@ public class TicketPurchaseService {
                                 .collect(Collectors.toList()))
                         .build()))
                 .flatMap(ticketPurchase ->
-                        ticketPort.addOrUpdateMany(ticketPurchase.getTickets())
+                        ticketPort.addOrUpdateMany(ticketPurchase.tickets())
                                 .collectList()
-                                .flatMap(savedTickets -> ticketPurchasePort.addOrUpdate(ticketPurchase.setTickets(savedTickets))));
+                                .flatMap(savedTickets -> ticketPurchasePort.addOrUpdate(ticketPurchase.withTickets(savedTickets))));
 
         return transactionPort.inTransaction(result).map(TicketPurchaseMapper::toDto);
     }
 
     private Money computeTicketPrice(Money baseTicketPrice, Discount totalDiscount) {
-        return baseTicketPrice.multiply(totalDiscount.inverse().getValue().toPlainString());
+        return baseTicketPrice.multiply(totalDiscount.inverse().value().toPlainString());
     }
 
     public Mono<TicketPurchaseDto> purchaseTicketFromOrder(String username, String ticketOrderId) {
@@ -134,24 +134,24 @@ public class TicketPurchaseService {
                 .flatMap(ticketOrder -> validateTicketOrderOwnership(ticketOrder, username))
                 .flatMap(ticketOrder -> {
                     var ticketPurchase = ticketOrder.toTicketPurchase();
-                    return ticketPort.addOrUpdateMany(ticketPurchase.getTickets())
+                    return ticketPort.addOrUpdateMany(ticketPurchase.tickets())
                                 .collectList()
                                 .flatMap(purchasedTickets -> ticketOrderPort
-                                        .addOrUpdate(ticketOrder.changeOrderStatusToDone().setTickets(purchasedTickets))
-                                        .then(ticketPurchasePort.addOrUpdate(ticketPurchase.setTickets(purchasedTickets))));
+                                        .addOrUpdate(ticketOrder.changeOrderStatusToDone().withTickets(purchasedTickets))
+                                        .then(ticketPurchasePort.addOrUpdate(ticketPurchase.withTickets(purchasedTickets))));
                 });
 
         return transactionPort.inTransaction(result).map(TicketPurchaseMapper::toDto);
     }
 
     private Mono<TicketOrder> validateTicketOrderOwnership(TicketOrder ticketOrder, String username) {
-        if (!Objects.equals(username, ticketOrder.getUser().getUsername())) {
+        if (!Objects.equals(username, ticketOrder.user().username())) {
             return Mono.error(new TicketPurchaseServiceException("Ticket order is not done by you!"));
         }
-        if (ticketOrder.getTicketOrderStatus() != TicketOrderStatus.ORDERED) {
+        if (ticketOrder.ticketOrderStatus() != TicketOrderStatus.ORDERED) {
             return Mono.error(new TicketPurchaseServiceException("Only ordered tickets can be purchased"));
         }
-        if (!ticketOrder.getMovieEmission().getStartDateTime().toLocalDate()
+        if (!ticketOrder.movieEmission().startDateTime().toLocalDate()
                 .isAfter(LocalDate.now())) {
             return Mono.error(new TicketPurchaseServiceException("You cannot purchase a ticket for an emission that has already started"));
         }
@@ -182,10 +182,10 @@ public class TicketPurchaseService {
         return cityPort.findByName(cityName)
                 .switchIfEmpty(Mono.error(() -> new TicketPurchaseServiceException(
                         "No city with name %s".formatted(cityName))))
-                .map(city -> city.getCinemas()
+                .map(city -> city.cinemas()
                         .stream()
-                        .flatMap(cinema -> cinema.getCinemaHalls().stream())
-                        .map(CinemaHall::getId)
+                        .flatMap(cinema -> cinema.cinemaHalls().stream())
+                        .map(CinemaHall::id)
                         .collect(Collectors.toList()))
                 .flatMapMany(purchasesFetcher::apply)
                 .map(TicketPurchaseMapper::toDto);
@@ -201,8 +201,8 @@ public class TicketPurchaseService {
                         "No cinema with id: %s".formatted(cinemaId))))
                 .flatMapMany(cinema -> ticketPurchasePort
                         .findAllByCinemaHallsIds(
-                                cinema.getCinemaHalls().stream()
-                                        .map(CinemaHall::getId)
+                                cinema.cinemaHalls().stream()
+                                        .map(CinemaHall::id)
                                         .collect(Collectors.toList())))
                 .map(TicketPurchaseMapper::toDto);
     }
@@ -217,8 +217,8 @@ public class TicketPurchaseService {
                         "No cinema with id: %s".formatted(cinemaId))))
                 .flatMapMany(cinema -> ticketPurchasePort
                         .findAllByCinemaHallsIdsAndUsername(
-                                cinema.getCinemaHalls().stream()
-                                        .map(CinemaHall::getId)
+                                cinema.cinemaHalls().stream()
+                                        .map(CinemaHall::id)
                                         .collect(Collectors.toList()), username))
                 .map(TicketPurchaseMapper::toDto);
     }
@@ -264,12 +264,9 @@ public class TicketPurchaseService {
             return ticketPurchasePort.findAllByPurchaseDateBetween(fromDate.get(), toDate.get())
                     .map(TicketPurchaseMapper::toDto);
         }
-        if (fromDate.isPresent()) {
-            return ticketPurchasePort.findAllByPurchaseDateAfter(fromDate.get())
-                    .map(TicketPurchaseMapper::toDto);
-        }
-        return ticketPurchasePort.findAllByPurchaseDateBefore(toDate.get())
-                .map(TicketPurchaseMapper::toDto);
+        return fromDate.map(localDate -> ticketPurchasePort.findAllByPurchaseDateAfter(localDate)
+                .map(TicketPurchaseMapper::toDto)).orElseGet(() -> ticketPurchasePort.findAllByPurchaseDateBefore(toDate.get())
+                .map(TicketPurchaseMapper::toDto));
     }
 
     public Flux<TicketPurchaseDto> getAllTicketPurchasesWithMovieId(String movieId) {
@@ -277,7 +274,7 @@ public class TicketPurchaseService {
                 .findById(movieId)
                 .switchIfEmpty(Mono.error(() -> new TicketPurchaseServiceException(
                         "No movie with id: %s".formatted(movieId))))
-                .flatMapMany(movie -> ticketPurchasePort.findAllByMovieId(movie.getId()))
+                .flatMapMany(movie -> ticketPurchasePort.findAllByMovieId(movie.id()))
                 .map(TicketPurchaseMapper::toDto);
     }
 
@@ -287,7 +284,7 @@ public class TicketPurchaseService {
                 .switchIfEmpty(Mono.error(() -> new TicketPurchaseServiceException(
                         "No movie with id: %s".formatted(movieId))))
                 .flatMapMany(movie -> ticketPurchasePort
-                        .findAllByMovieIdAndUserUsername(movie.getId(), username))
+                        .findAllByMovieIdAndUserUsername(movie.id(), username))
                 .map(TicketPurchaseMapper::toDto);
     }
 
@@ -296,7 +293,7 @@ public class TicketPurchaseService {
                 .findById(cinemaHallId)
                 .switchIfEmpty(Mono.error(() -> new TicketPurchaseServiceException(
                         "No cinema hall with id: %s".formatted(cinemaHallId))))
-                .flatMapMany(cinemaHall -> ticketPurchasePort.findAllByCinemaHallId(cinemaHall.getId()))
+                .flatMapMany(cinemaHall -> ticketPurchasePort.findAllByCinemaHallId(cinemaHall.id()))
                 .map(TicketPurchaseMapper::toDto);
     }
 }

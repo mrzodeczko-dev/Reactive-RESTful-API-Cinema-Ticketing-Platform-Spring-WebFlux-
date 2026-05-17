@@ -61,7 +61,7 @@ public class EmailHandler {
                 .zipWith(currentUserProvider.username())
                 .flatMap(tuple -> userPort.findByUsername(tuple.getT2())
                         .switchIfEmpty(Mono.error(() -> new EmailServiceException("Logged user not found")))
-                        .flatMap(user -> emailService.sendEmailToSelf(tuple.getT1(), user.getEmail())))
+                        .flatMap(user -> emailService.sendEmailToSelf(tuple.getT1(), user.email())))
                 .flatMap(mailDto -> ServerResponse
                         .status(HttpStatus.CREATED)
                         .contentType(MediaType.APPLICATION_JSON)

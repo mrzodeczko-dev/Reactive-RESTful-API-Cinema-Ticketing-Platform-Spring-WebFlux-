@@ -61,11 +61,11 @@ class MovieDocumentMapperTest {
 
             Movie movie = MovieDocumentMapper.toDomain(document);
 
-            assertThat(movie.getId()).isEqualTo("movie-1");
-            assertThat(movie.getName()).isEqualTo("Quiet Storm");
+            assertThat(movie.id()).isEqualTo("movie-1");
+            assertThat(movie.name()).isEqualTo("Quiet Storm");
             assertThat(movie.getGenre()).isEqualTo("Drama");
-            assertThat(movie.getDuration()).isEqualTo(120);
-            assertThat(movie.getPremiereDate()).isEqualTo(LocalDate.of(2026, 6, 1));
+            assertThat(movie.duration()).isEqualTo(120);
+            assertThat(movie.premiereDate()).isEqualTo(LocalDate.of(2026, 6, 1));
         }
     }
 

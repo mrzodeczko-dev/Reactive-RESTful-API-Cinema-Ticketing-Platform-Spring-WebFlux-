@@ -43,7 +43,7 @@ class CityRepositoryImplIT extends AbstractMongoIT {
         )).blockLast();
 
         StepVerifier.create(cityPort.findByName("Krakow"))
-                .assertNext(city -> assertThat(city.getName()).isEqualTo("Krakow"))
+                .assertNext(city -> assertThat(city.name()).isEqualTo("Krakow"))
                 .verifyComplete();
     }
 
@@ -64,10 +64,10 @@ class CityRepositoryImplIT extends AbstractMongoIT {
     @Test
     @DisplayName("addOrUpdate persists then findById returns it")
     void shouldRoundTrip() {
-        String id = cityPort.addOrUpdate(City.builder().name("Wroclaw").build()).map(City::getId).block();
+        String id = cityPort.addOrUpdate(City.builder().name("Wroclaw").build()).map(City::id).block();
         assertThat(id).isNotBlank();
         StepVerifier.create(cityPort.findById(id))
-                .assertNext(c -> assertThat(c.getName()).isEqualTo("Wroclaw"))
+                .assertNext(c -> assertThat(c.name()).isEqualTo("Wroclaw"))
                 .verifyComplete();
     }
 }

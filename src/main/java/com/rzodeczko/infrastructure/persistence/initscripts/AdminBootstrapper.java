@@ -35,12 +35,12 @@ public class AdminBootstrapper implements ApplicationRunner {
         userPort
                 .findByUsername(username)
                 .flatMap(existing -> {
-                    if (existing.getRole() == Role.ROLE_ADMIN) {
+                    if (existing.role() == Role.ROLE_ADMIN) {
                         log.info("Admin '{}' already present — no-op", username);
                         return Mono.just(existing);
                     }
-                    log.info("User '{}' exists with role {} — promoting to ADMIN", username, existing.getRole());
-                    return userPort.addOrUpdate(existing.setRole(Role.ROLE_ADMIN));
+                    log.info("User '{}' exists with role {} — promoting to ADMIN", username, existing.role());
+                    return userPort.addOrUpdate(existing.withRole(Role.ROLE_ADMIN));
                 })
                 .switchIfEmpty(Mono.defer(() -> userPort.addOrUpdate(User.builder()
                                 .username(username)

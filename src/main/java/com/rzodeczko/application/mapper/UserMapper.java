@@ -19,16 +19,16 @@ public final class UserMapper {
             return null;
         }
         return UserDto.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .role(user.getRole() != null ? user.getRole().name() : null)
-                .birthDate(nonNull(user.getBirthDate()) ? user.getBirthDate().toString() : null)
-                .favoriteMovies(isNull(user.getFavoriteMovies()) ? Collections.emptyList() :
-                        user.getFavoriteMovies()
+                .id(user.id())
+                .username(user.username())
+                .role(user.role() != null ? user.role().name() : null)
+                .birthDate(nonNull(user.birthDate()) ? user.birthDate().toString() : null)
+                .favoriteMovies(isNull(user.favoriteMovies()) ? Collections.emptyList() :
+                        user.favoriteMovies()
                                 .stream()
                                 .map(MovieMapper::toDto)
                                 .collect(Collectors.toList()))
-                .email(user.getEmail())
+                .email(user.email())
                 .build();
     }
 }

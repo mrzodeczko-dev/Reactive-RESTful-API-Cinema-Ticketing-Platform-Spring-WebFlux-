@@ -20,8 +20,8 @@ public class TicketBaseValidationUtils {
 
 
     public static boolean isPositionValid(Position position) {
-        return nonNull(position) && nonNull(position.getColNo()) && position.getColNo() >= 1
-                && nonNull(position.getRowNo()) && position.getRowNo() >= 1;
+        return nonNull(position) && nonNull(position.colNo()) && position.colNo() >= 1
+                && nonNull(position.rowNo()) && position.rowNo() >= 1;
     }
 
     public static boolean isMovieEmissionIdValid(String movieEmissionId) {

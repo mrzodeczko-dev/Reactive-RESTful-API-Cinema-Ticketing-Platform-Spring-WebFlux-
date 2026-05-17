@@ -13,12 +13,12 @@ public final class TicketMapper {
             return null;
         }
         return TicketDto.builder()
-                .id(t.getId())
-                .position(t.getPosition())
-                .discount(t.getDiscount())
-                .type(t.getType())
-                .ticketStatus(t.getTicketStatus())
-                .price(t.getPrice())
+                .id(t.id())
+                .position(t.position())
+                .discount(t.discount())
+                .type(t.type())
+                .ticketStatus(t.ticketStatus())
+                .price(t.price())
                 .build();
     }
 }

@@ -17,13 +17,13 @@ public final class UserDocumentMapper {
     public static UserDocument toDocument(User u) {
         if (u == null) return null;
         UserDocument doc = new UserDocument();
-        doc.setId(u.getId());
-        doc.setUsername(u.getUsername());
-        doc.setPassword(u.getPassword());
-        doc.setRole(u.getRole());
-        doc.setBirthDate(u.getBirthDate());
-        doc.setEmail(u.getEmail());
-        doc.setFavoriteMovies(toDocs(u.getFavoriteMovies()));
+        doc.setId(u.id());
+        doc.setUsername(u.username());
+        doc.setPassword(u.password());
+        doc.setRole(u.role());
+        doc.setBirthDate(u.birthDate());
+        doc.setEmail(u.email());
+        doc.setFavoriteMovies(toDocs(u.favoriteMovies()));
         return doc;
     }
 

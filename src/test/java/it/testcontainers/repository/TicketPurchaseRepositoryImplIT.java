@@ -51,22 +51,22 @@ class TicketPurchaseRepositoryImplIT extends AbstractMongoIT {
 
         Movie drama = Movie.builder().name("Inception").genre("Drama").duration(148)
                 .premiereDate(LocalDate.of(2010, 7, 16)).build();
-        drama = drama.setId("movie-1");
+        drama = drama.withId("movie-1");
         Movie thriller = Movie.builder().name("Joker").genre("Thriller").duration(122)
                 .premiereDate(LocalDate.of(2019, 10, 4)).build();
-        thriller = thriller.setId("movie-2");
+        thriller = thriller.withId("movie-2");
 
         emissionDramaInHallA = MovieEmission.builder()
                 .movie(drama).cinemaHallId("hall-A")
                 .startDateTime(LocalDateTime.of(2026, 5, 10, 18, 0))
                 .baseTicketPrice(Money.of("25.00")).isPositionFree(new HashMap<>()).build();
-        emissionDramaInHallA = emissionDramaInHallA.setId("em-1");
+        emissionDramaInHallA = emissionDramaInHallA.withId("em-1");
 
         emissionThrillerInHallB = MovieEmission.builder()
                 .movie(thriller).cinemaHallId("hall-B")
                 .startDateTime(LocalDateTime.of(2026, 6, 1, 20, 0))
                 .baseTicketPrice(Money.of("30.00")).isPositionFree(new HashMap<>()).build();
-        emissionThrillerInHallB = emissionThrillerInHallB.setId("em-2");
+        emissionThrillerInHallB = emissionThrillerInHallB.withId("em-2");
 
         TicketPurchase janInHallA = TicketPurchase.builder()
                 .user(jan).movieEmission(emissionDramaInHallA)
@@ -97,7 +97,7 @@ class TicketPurchaseRepositoryImplIT extends AbstractMongoIT {
             StepVerifier.create(ticketPurchasePort.findAllByUserUsername("jan").collectList())
                     .assertNext(l -> {
                         assertThat(l).hasSize(2);
-                        assertThat(l).extracting(p -> p.getUser().getUsername())
+                        assertThat(l).extracting(p -> p.user().username())
                                 .containsOnly("jan");
                     })
                     .verifyComplete();

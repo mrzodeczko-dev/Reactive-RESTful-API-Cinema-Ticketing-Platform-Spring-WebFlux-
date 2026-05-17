@@ -65,11 +65,11 @@ class CinemaDocumentMapperTest {
         void shouldMapDocumentToDomain() {
             Cinema domain = CinemaDocumentMapper.toDomain(cinemaDocument("cinema-1"));
 
-            assertThat(domain.getId()).isEqualTo("cinema-1");
-            assertThat(domain.getCityId()).isEqualTo("city-1");
-            assertThat(domain.getStreet()).isEqualTo("Long Street");
-            assertThat(domain.getCinemaHalls()).hasSize(1);
-            assertThat(domain.getCinemaHalls().getFirst().getId()).isEqualTo("hall-1");
+            assertThat(domain.id()).isEqualTo("cinema-1");
+            assertThat(domain.cityName()).isEqualTo("city-1");
+            assertThat(domain.street()).isEqualTo("Long Street");
+            assertThat(domain.cinemaHalls()).hasSize(1);
+            assertThat(domain.cinemaHalls().getFirst().id()).isEqualTo("hall-1");
         }
 
         @Test

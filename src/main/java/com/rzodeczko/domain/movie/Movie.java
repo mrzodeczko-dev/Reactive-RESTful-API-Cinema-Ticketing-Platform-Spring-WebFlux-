@@ -21,17 +21,13 @@ public record Movie(
         return new Builder();
     }
 
-    public String getId() { return id; }
-    public Movie setId(String id) { return new Movie(id, name, genre, duration, premiereDate); }
-    public String getName() { return name; }
-    public Movie setName(String name) { return new Movie(id, name, genre, duration, premiereDate); }
+    public Movie withId(String id) { return new Movie(id, name, genre, duration, premiereDate); }
+    public Movie withName(String name) { return new Movie(id, name, genre, duration, premiereDate); }
     public String getGenre() { return genre == null ? null : genre.getDesc(); }
-    public Movie setGenre(String genre) { return new Movie(id, name, MovieGenre.fromDesc(genre), duration, premiereDate); }
-    public Movie setGenre(MovieGenre genre) { return new Movie(id, name, genre, duration, premiereDate); }
-    public Integer getDuration() { return duration; }
-    public Movie setDuration(Integer duration) { return new Movie(id, name, genre, duration, premiereDate); }
-    public LocalDate getPremiereDate() { return premiereDate; }
-    public Movie setPremiereDate(LocalDate premiereDate) { return new Movie(id, name, genre, duration, premiereDate); }
+    public Movie withGenre(String genre) { return new Movie(id, name, MovieGenre.fromDesc(genre), duration, premiereDate); }
+    public Movie withGenre(MovieGenre genre) { return new Movie(id, name, genre, duration, premiereDate); }
+    public Movie withDuration(Integer duration) { return new Movie(id, name, genre, duration, premiereDate); }
+    public Movie withPremiereDate(LocalDate premiereDate) { return new Movie(id, name, genre, duration, premiereDate); }
 
     public static class Builder {
         private String id;

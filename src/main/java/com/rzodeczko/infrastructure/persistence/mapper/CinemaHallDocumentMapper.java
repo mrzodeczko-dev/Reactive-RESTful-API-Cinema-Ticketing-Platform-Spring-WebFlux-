@@ -16,11 +16,11 @@ public final class CinemaHallDocumentMapper {
             return null;
         }
         return new CinemaHallDocument(
-                ch.getId(),
-                ch.getPositions(),
-                ch.getCinemaId(),
-                ch.getMovieEmissions() == null ? null :
-                        ch.getMovieEmissions().stream()
+                ch.id(),
+                ch.positions(),
+                ch.cinemaId(),
+                ch.movieEmissions() == null ? null :
+                        ch.movieEmissions().stream()
                                 .map(MovieEmissionDocumentMapper::toDocument)
                                 .collect(Collectors.toList()));
     }

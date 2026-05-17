@@ -15,13 +15,13 @@ public final class TicketPurchaseMapper {
             return null;
         }
         return TicketPurchaseDto.builder()
-                .id(ticketPurchase.getId())
-                .username(ticketPurchase.getUser() == null ? null : ticketPurchase.getUser().getUsername())
-                .movieEmissionDto(MovieEmissionMapper.toDto(ticketPurchase.getMovieEmission()))
-                .purchaseDate(ticketPurchase.getPurchaseDate())
-                .tickets(ticketPurchase.getTickets() == null ? null :
-                        ticketPurchase.getTickets().stream().map(TicketMapper::toDto).collect(Collectors.toList()))
-                .ticketGroupType(ticketPurchase.getTicketGroupType())
+                .id(ticketPurchase.id())
+                .username(ticketPurchase.user() == null ? null : ticketPurchase.user().username())
+                .movieEmissionDto(MovieEmissionMapper.toDto(ticketPurchase.movieEmission()))
+                .purchaseDate(ticketPurchase.purchaseDate())
+                .tickets(ticketPurchase.tickets() == null ? null :
+                        ticketPurchase.tickets().stream().map(TicketMapper::toDto).collect(Collectors.toList()))
+                .ticketGroupType(ticketPurchase.ticketGroupType())
                 .build();
     }
 }

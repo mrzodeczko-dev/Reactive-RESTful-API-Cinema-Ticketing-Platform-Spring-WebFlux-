@@ -78,10 +78,10 @@ public class CinemaService {
                                 .build()))
                         .flatMap(cinema -> {
                             var updatedCinema = cinema
-                                    .setCityId(city.getName())
-                                    .setCinemasIdForCinemaHalls(cinema.getId());
+                                    .withCityId(city.name())
+                                    .withCinemasIdForCinemaHalls(cinema.id());
                             return cinemaHallPort
-                                    .addOrUpdateMany(updatedCinema.getCinemaHalls())
+                                    .addOrUpdateMany(updatedCinema.cinemaHalls())
                                     .collectList()
                                     .flatMap(_ -> cinemaPort.addOrUpdate(updatedCinema))
                                     .flatMap(savedCinema -> cityPort.addOrUpdate(city.addCinema(savedCinema))
@@ -111,7 +111,7 @@ public class CinemaService {
                 .switchIfEmpty(Mono.error(() -> new CinemaServiceException(
                         "No cinema with id: %s".formatted(cinemaId))))
                 .flatMap(cinema -> cinemaHallPort
-                        .addOrUpdate(createCinemaHallDto.toEntity(cinema.getId()))
+                        .addOrUpdate(createCinemaHallDto.toEntity(cinema.id()))
                         .flatMap(savedCinemaHall -> cinemaPort.addOrUpdate(addCinemaHallToCinema(cinema, savedCinemaHall))));
         return transactionPort.inTransaction(result).map(CinemaMapper::toDto);
     }

@@ -60,14 +60,14 @@ class UserDocumentMapperTest {
         void shouldMapDocumentToDomain() {
             User domain = UserDocumentMapper.toDomain(userDocument(Role.ROLE_ADMIN));
 
-            assertThat(domain.getId()).isEqualTo("user-1");
-            assertThat(domain.getUsername()).isEqualTo("jan@example.com");
-            assertThat(domain.getPassword()).isEqualTo("hashed-pass");
-            assertThat(domain.getRole()).isEqualTo(Role.ROLE_ADMIN);
-            assertThat(domain.getBirthDate()).isEqualTo(LocalDate.of(1990, 1, 2));
-            assertThat(domain.getEmail()).isEqualTo("jan@example.com");
-            assertThat(domain.getFavoriteMovies()).hasSize(1);
-            assertThat(domain.getFavoriteMovies().getFirst().getId()).isEqualTo("movie-1");
+            assertThat(domain.id()).isEqualTo("user-1");
+            assertThat(domain.username()).isEqualTo("jan@example.com");
+            assertThat(domain.password()).isEqualTo("hashed-pass");
+            assertThat(domain.role()).isEqualTo(Role.ROLE_ADMIN);
+            assertThat(domain.birthDate()).isEqualTo(LocalDate.of(1990, 1, 2));
+            assertThat(domain.email()).isEqualTo("jan@example.com");
+            assertThat(domain.favoriteMovies()).hasSize(1);
+            assertThat(domain.favoriteMovies().getFirst().id()).isEqualTo("movie-1");
         }
 
         @Test
@@ -75,7 +75,7 @@ class UserDocumentMapperTest {
         void shouldDefaultMissingRoleToUser() {
             User domain = UserDocumentMapper.toDomain(userDocument(null));
 
-            assertThat(domain.getRole()).isEqualTo(Role.ROLE_USER);
+            assertThat(domain.role()).isEqualTo(Role.ROLE_USER);
         }
     }
 

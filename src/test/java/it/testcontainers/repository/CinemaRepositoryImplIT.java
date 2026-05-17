@@ -40,20 +40,20 @@ class CinemaRepositoryImplIT extends AbstractMongoIT {
         // Cinema halls with explicit ids — must be unique to test the $elemMatch query.
         CinemaHall hallA1 = CinemaHall.builder().positions(Collections.emptyList())
                 .movieEmissions(Collections.emptyList()).build();
-        hallA1 = hallA1.setId("hall-a1");
+        hallA1 = hallA1.withId("hall-a1");
         CinemaHall hallA2 = CinemaHall.builder().positions(Collections.emptyList())
                 .movieEmissions(Collections.emptyList()).build();
-        hallA2 = hallA2.setId("hall-a2");
+        hallA2 = hallA2.withId("hall-a2");
         CinemaHall hallB1 = CinemaHall.builder().positions(Collections.emptyList())
                 .movieEmissions(Collections.emptyList()).build();
-        hallB1 = hallB1.setId("hall-b1");
+        hallB1 = hallB1.withId("hall-b1");
 
         cinemaA = Cinema.builder().street("Main St 1").cinemaHalls(List.of(hallA1, hallA2)).build();
-        cinemaA = cinemaA.setCityId("Warsaw");
+        cinemaA = cinemaA.withCityId("Warsaw");
         cinemaB = Cinema.builder().street("Other St 5").cinemaHalls(List.of(hallB1)).build();
-        cinemaB = cinemaB.setCityId("Warsaw");
+        cinemaB = cinemaB.withCityId("Warsaw");
         cinemaC = Cinema.builder().street("Floriańska 10").cinemaHalls(Collections.emptyList()).build();
-        cinemaC = cinemaC.setCityId("Krakow");
+        cinemaC = cinemaC.withCityId("Krakow");
 
         cinemaPort.addOrUpdateMany(List.of(cinemaA, cinemaB, cinemaC)).blockLast();
     }
@@ -63,8 +63,8 @@ class CinemaRepositoryImplIT extends AbstractMongoIT {
     void shouldFindCinemaByEmbeddedCinemaHallId() {
         StepVerifier.create(cinemaPort.findByCinemaHallId("hall-a2"))
                 .assertNext(c -> {
-                    assertThat(c.getStreet()).isEqualTo("Main St 1");
-                    assertThat(c.getCinemaHalls()).extracting(CinemaHall::getId)
+                    assertThat(c.street()).isEqualTo("Main St 1");
+                    assertThat(c.cinemaHalls()).extracting(CinemaHall::id)
                             .containsExactlyInAnyOrder("hall-a1", "hall-a2");
                 })
                 .verifyComplete();
@@ -81,7 +81,7 @@ class CinemaRepositoryImplIT extends AbstractMongoIT {
     @DisplayName("findAllByCity returns all cinemas with matching city")
     void shouldFindAllByCity() {
         StepVerifier.create(cinemaPort.findAllByCity("Warsaw").collectList())
-                .assertNext(l -> assertThat(l).extracting(Cinema::getStreet)
+                .assertNext(l -> assertThat(l).extracting(Cinema::street)
                         .containsExactlyInAnyOrder("Main St 1", "Other St 5"))
                 .verifyComplete();
     }

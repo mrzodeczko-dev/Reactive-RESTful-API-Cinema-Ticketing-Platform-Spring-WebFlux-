@@ -11,9 +11,9 @@ public final class CityDocumentMapper {
     public static CityDocument toDocument(City c) {
         if (c == null) return null;
         return new CityDocument(
-                c.getId(),
-                c.getName(),
-                CinemaDocumentMapper.toDocuments(c.getCinemas()));
+                c.id(),
+                c.name(),
+                CinemaDocumentMapper.toDocuments(c.cinemas()));
     }
 
     public static City toDomain(CityDocument doc) {

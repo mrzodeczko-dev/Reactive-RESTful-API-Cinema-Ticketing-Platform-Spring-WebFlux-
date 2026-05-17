@@ -16,15 +16,15 @@ public final class CinemaMapper {
             return null;
         }
         return CinemaDto.builder()
-                .id(cinema.getId())
-                .city(cinema.getCityId())
-                .street(cinema.getStreet())
-                .hallsCapacity(cinema.getCinemaHalls() == null ? null :
-                        cinema.getCinemaHalls()
+                .id(cinema.id())
+                .city(cinema.cityName())
+                .street(cinema.street())
+                .hallsCapacity(cinema.cinemaHalls() == null ? null :
+                        cinema.cinemaHalls()
                                 .stream()
                                 .collect(Collectors.toMap(
-                                        CinemaHall::getId,
-                                        e -> e.getPositions().size())))
+                                        CinemaHall::id,
+                                        e -> e.positions().size())))
                 .build();
     }
 }

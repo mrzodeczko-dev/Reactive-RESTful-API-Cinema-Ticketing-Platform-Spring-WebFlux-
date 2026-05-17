@@ -13,12 +13,12 @@ public final class MovieEmissionMapper {
             return null;
         }
         return MovieEmissionDto.builder()
-                .id(me.getId())
-                .movieId(me.getMovie() == null ? null : me.getMovie().getId())
-                .startTime(me.getStartDateTime())
-                .cinemaHallId(me.getCinemaHallId())
-                .isPositionFree(me.getIsPositionFree())
-                .baseTicketPrice(me.getBaseTicketPrice() == null ? null : me.getBaseTicketPrice().getValue().toString())
+                .id(me.id())
+                .movieId(me.movie() == null ? null : me.movie().id())
+                .startTime(me.startDateTime())
+                .cinemaHallId(me.cinemaHallId())
+                .isPositionFree(me.isPositionFree())
+                .baseTicketPrice(me.baseTicketPrice() == null ? null : me.baseTicketPrice().value().toString())
                 .build();
     }
 }

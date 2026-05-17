@@ -18,10 +18,10 @@ public class AppUserDetailsService {
         return userPort
                 .findByUsername(username)
                 .map(user -> new User(
-                        user.getUsername(),
-                        user.getPassword(),
+                        user.username(),
+                        user.password(),
                         true, true, true, true,
-                        List.of(new SimpleGrantedAuthority(user.getRole().toString()))
+                        List.of(new SimpleGrantedAuthority(user.role().toString()))
                 ));
     }
 }

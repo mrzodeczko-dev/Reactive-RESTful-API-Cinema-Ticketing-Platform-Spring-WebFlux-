@@ -25,52 +25,36 @@ public record Cinema(
         return new Builder();
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public Cinema setId(String id) {
+    public Cinema withId(String id) {
         return new Cinema(id, cityName, street, cinemaHalls);
     }
 
-    public String getCityId() {
-        return cityName;
-    }
-
-    public Cinema setCityId(String cityId) {
+    public Cinema withCityId(String cityId) {
         return new Cinema(id, cityId, street, cinemaHalls);
     }
 
-    public String getStreet() {
-        return street;
-    }
-
-    public Cinema setStreet(String street) {
+    public Cinema withStreet(String street) {
         return new Cinema(id, cityName, street, cinemaHalls);
     }
 
-    public List<CinemaHall> getCinemaHalls() {
-        return cinemaHalls;
-    }
-
-    public Cinema setCinemaHalls(List<CinemaHall> cinemaHalls) {
+    public Cinema withCinemaHalls(List<CinemaHall> cinemaHalls) {
         return new Cinema(id, cityName, street, cinemaHalls);
     }
 
-    public Cinema setCinemasIdForCinemaHalls(String cinemaId) {
+    public Cinema withCinemasIdForCinemaHalls(String cinemaId) {
         if (cinemaHalls == null) {
             return this;
         }
         var updatedCinemaHalls = cinemaHalls.stream()
-                .map(cinemaHall -> cinemaHall.setCinemaId(cinemaId))
+                .map(cinemaHall -> cinemaHall.withCinemaId(cinemaId))
                 .toList();
-        return setCinemaHalls(updatedCinemaHalls);
+        return withCinemaHalls(updatedCinemaHalls);
     }
 
     public Cinema addCinemaHall(CinemaHall cinemaHall) {
         var updatedCinemaHalls = new ArrayList<>(cinemaHalls);
         updatedCinemaHalls.add(cinemaHall);
-        return setCinemaHalls(updatedCinemaHalls);
+        return withCinemaHalls(updatedCinemaHalls);
     }
 
     public static class Builder {

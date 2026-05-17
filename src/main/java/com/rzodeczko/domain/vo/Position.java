@@ -19,10 +19,8 @@ public record Position(
         return new Builder();
     }
 
-    public Integer getRowNo() { return rowNo; }
-    public Position setRowNo(Integer rowNo) { return new Position(rowNo, colNo); }
-    public Integer getColNo() { return colNo; }
-    public Position setColNo(Integer colNo) { return new Position(rowNo, colNo); }
+    public Position withRowNo(Integer rowNo) { return new Position(rowNo, colNo); }
+    public Position withColNo(Integer colNo) { return new Position(rowNo, colNo); }
 
     private static Integer parseRowNo(String value) {
         String[] array = value.split(", ");

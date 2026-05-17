@@ -58,7 +58,7 @@ public class MovieService {
         return Flux.merge(
                 moviePort.findAllByName(keyWord),
                 moviePort.findAllByGenre(keyWord)
-        ).distinct(Movie::getId).map(MovieMapper::toDto);
+        ).distinct(Movie::id).map(MovieMapper::toDto);
     }
 
     public Flux<MovieDto> getFilteredByGenre(final String genre) {
@@ -129,9 +129,9 @@ public class MovieService {
                         .switchIfEmpty(Mono.error(() -> new MovieServiceException(
                                 "No user with username: %s".formatted(username))))
                         .flatMap(user -> {
-                            if (nonNull(user.getFavoriteMovies())
-                                    && user.getFavoriteMovies().stream()
-                                    .map(Movie::getId)
+                            if (nonNull(user.favoriteMovies())
+                                    && user.favoriteMovies().stream()
+                                    .map(Movie::id)
                                     .anyMatch(id -> id.equals(movieId))) {
                                 return Mono.error(new MovieServiceException(
                                         "Movie with id: %s is already in favorites movies".formatted(movieId)));
@@ -150,19 +150,20 @@ public class MovieService {
 
     public Flux<MovieDto> getFavoriteMovies(String username) {
         return userPort.findByUsername(username)
-                .map(User::getFavoriteMovies)
+                .map(User::favoriteMovies)
                 .flatMapMany(Flux::fromIterable)
                 .map(MovieMapper::toDto);
     }
 
     public Mono<MovieDto> addMovie(final Mono<CreateMovieDto> createMovieDto) {
         return createMovieDto
-                .map(dto -> {
+                .<CreateMovieDto>handle((dto, sink) -> {
                     var errors = createMovieDtoValidator.validate(dto);
                     if (Validations.hasErrors(errors)) {
-                        throw new MovieServiceException(Validations.createErrorMessage(errors));
+                        sink.error(new MovieServiceException(Validations.createErrorMessage(errors)));
+                        return;
                     }
-                    return dto;
+                    sink.next(dto);
                 })
                 .flatMap(dto -> moviePort.addOrUpdate(dto.toEntity()))
                 .doOnSuccess(movie -> log.info("Movie {} saved", movie))
@@ -184,7 +185,7 @@ public class MovieService {
                             .index()
                             .concatMap(indexed -> {
                                 var movie = indexed.getT2();
-                                return moviePort.findByNameAndGenre(movie.getName(), movie.getGenre())
+                                return moviePort.findByNameAndGenre(movie.name(), movie.getGenre())
                                         .hasElement()
                                         .mapNotNull(exists -> exists
                                                 ? "Movie in row no. %s is not unique by name and genre".formatted(indexed.getT1() + 1)

@@ -27,9 +27,9 @@ class CityTest {
 
             City city = new City("city-1", "Warsaw", cinemas);
 
-            assertThat(city.getId()).isEqualTo("city-1");
-            assertThat(city.getName()).isEqualTo("Warsaw");
-            assertThat(city.getCinemas()).hasSize(2);
+            assertThat(city.id()).isEqualTo("city-1");
+            assertThat(city.name()).isEqualTo("Warsaw");
+            assertThat(city.cinemas()).hasSize(2);
         }
 
         @Test
@@ -37,9 +37,9 @@ class CityTest {
         void shouldCreateCityWithNullCinemas() {
             City city = new City("city-1", "Warsaw", null);
 
-            assertThat(city.getId()).isEqualTo("city-1");
-            assertThat(city.getName()).isEqualTo("Warsaw");
-            assertThat(city.getCinemas()).isEmpty();
+            assertThat(city.id()).isEqualTo("city-1");
+            assertThat(city.name()).isEqualTo("Warsaw");
+            assertThat(city.cinemas()).isEmpty();
         }
 
         @Test
@@ -47,7 +47,7 @@ class CityTest {
         void shouldCreateCityWithEmptyCinemasList() {
             City city = new City("city-1", "Warsaw", new ArrayList<>());
 
-            assertThat(city.getCinemas()).isEmpty();
+            assertThat(city.cinemas()).isEmpty();
         }
 
         @Test
@@ -55,9 +55,9 @@ class CityTest {
         void shouldCreateCityWithNulls() {
             City city = new City();
 
-            assertThat(city.getId()).isNull();
-            assertThat(city.getName()).isNull();
-            assertThat(city.getCinemas()).isEmpty();
+            assertThat(city.id()).isNull();
+            assertThat(city.name()).isNull();
+            assertThat(city.cinemas()).isEmpty();
         }
 
         @Test
@@ -70,7 +70,7 @@ class CityTest {
 
             originalCinemas.add(Cinema.builder().id("c2").cityId("city-1").street("Second St").build());
 
-            assertThat(city.getCinemas()).hasSize(1);
+            assertThat(city.cinemas()).hasSize(1);
         }
     }
 
@@ -91,9 +91,9 @@ class CityTest {
                     .cinemas(cinemas)
                     .build();
 
-            assertThat(city.getId()).isEqualTo("city-1");
-            assertThat(city.getName()).isEqualTo("Warsaw");
-            assertThat(city.getCinemas()).hasSize(1);
+            assertThat(city.id()).isEqualTo("city-1");
+            assertThat(city.name()).isEqualTo("Warsaw");
+            assertThat(city.cinemas()).hasSize(1);
         }
 
         @Test
@@ -101,9 +101,9 @@ class CityTest {
         void shouldBuildCityWithNulls() {
             City city = City.builder().build();
 
-            assertThat(city.getId()).isNull();
-            assertThat(city.getName()).isNull();
-            assertThat(city.getCinemas()).isEmpty();
+            assertThat(city.id()).isNull();
+            assertThat(city.name()).isNull();
+            assertThat(city.cinemas()).isEmpty();
         }
 
         @Test
@@ -114,9 +114,9 @@ class CityTest {
                     .name("Warsaw")
                     .build();
 
-            assertThat(city.getId()).isEqualTo("city-1");
-            assertThat(city.getName()).isEqualTo("Warsaw");
-            assertThat(city.getCinemas()).isEmpty();
+            assertThat(city.id()).isEqualTo("city-1");
+            assertThat(city.name()).isEqualTo("Warsaw");
+            assertThat(city.cinemas()).isEmpty();
         }
 
         @Test
@@ -131,11 +131,11 @@ class CityTest {
                     .id("city-2")
                     .build();
 
-            assertThat(city1.getId()).isEqualTo("city-1");
-            assertThat(city1.getName()).isEqualTo("Warsaw");
+            assertThat(city1.id()).isEqualTo("city-1");
+            assertThat(city1.name()).isEqualTo("Warsaw");
 
-            assertThat(city2.getId()).isEqualTo("city-2");
-            assertThat(city2.getName()).isEqualTo("Warsaw");
+            assertThat(city2.id()).isEqualTo("city-2");
+            assertThat(city2.name()).isEqualTo("Warsaw");
         }
 
         @Test
@@ -148,7 +148,7 @@ class CityTest {
                     .build();
 
             assertThat(city).isNotNull();
-            assertThat(city.getId()).isEqualTo("city-1");
+            assertThat(city.id()).isEqualTo("city-1");
         }
     }
 
@@ -161,11 +161,11 @@ class CityTest {
         void shouldSetId() {
             City city = new City("city-1", "Warsaw", new ArrayList<>());
 
-            City updated = city.setId("city-2");
+            City updated = city.withId("city-2");
 
-            assertThat(updated.getId()).isEqualTo("city-2");
-            assertThat(updated.getName()).isEqualTo("Warsaw");
-            assertThat(city.getId()).isEqualTo("city-1"); // Original unchanged
+            assertThat(updated.id()).isEqualTo("city-2");
+            assertThat(updated.name()).isEqualTo("Warsaw");
+            assertThat(city.id()).isEqualTo("city-1"); // Original unchanged
         }
 
         @Test
@@ -173,11 +173,11 @@ class CityTest {
         void shouldSetName() {
             City city = new City("city-1", "Warsaw", new ArrayList<>());
 
-            City updated = city.setName("Krakow");
+            City updated = city.withName("Krakow");
 
-            assertThat(updated.getName()).isEqualTo("Krakow");
-            assertThat(updated.getId()).isEqualTo("city-1");
-            assertThat(city.getName()).isEqualTo("Warsaw"); // Original unchanged
+            assertThat(updated.name()).isEqualTo("Krakow");
+            assertThat(updated.id()).isEqualTo("city-1");
+            assertThat(city.name()).isEqualTo("Warsaw"); // Original unchanged
         }
 
         @Test
@@ -188,10 +188,10 @@ class CityTest {
                     Cinema.builder().id("c1").city("Cinema 1").build()
             );
 
-            City updated = city.setCinemas(newCinemas);
+            City updated = city.withCinemas(newCinemas);
 
-            assertThat(updated.getCinemas()).hasSize(1);
-            assertThat(city.getCinemas()).isEmpty(); // Original unchanged
+            assertThat(updated.cinemas()).hasSize(1);
+            assertThat(city.cinemas()).isEmpty(); // Original unchanged
         }
     }
 
@@ -207,9 +207,9 @@ class CityTest {
 
             City updated = city.addCinema(cinema);
 
-            assertThat(updated.getCinemas()).hasSize(1);
-            assertThat(updated.getCinemas().getFirst()).isEqualTo(cinema);
-            assertThat(city.getCinemas()).isEmpty(); // Original unchanged
+            assertThat(updated.cinemas()).hasSize(1);
+            assertThat(updated.cinemas().getFirst()).isEqualTo(cinema);
+            assertThat(city.cinemas()).isEmpty(); // Original unchanged
         }
 
         @Test
@@ -221,9 +221,9 @@ class CityTest {
 
             City updated = city.addCinema(cinema2);
 
-            assertThat(updated.getCinemas()).hasSize(2);
-            assertThat(updated.getCinemas()).contains(cinema1, cinema2);
-            assertThat(city.getCinemas()).hasSize(1); // Original unchanged
+            assertThat(updated.cinemas()).hasSize(2);
+            assertThat(updated.cinemas()).contains(cinema1, cinema2);
+            assertThat(city.cinemas()).hasSize(1); // Original unchanged
         }
 
         @Test
@@ -234,8 +234,8 @@ class CityTest {
 
             City updated = city.addCinema(cinema);
 
-            assertThat(updated.getCinemas()).hasSize(1);
-            assertThat(updated.getCinemas().getFirst()).isEqualTo(cinema);
+            assertThat(updated.cinemas()).hasSize(1);
+            assertThat(updated.cinemas().getFirst()).isEqualTo(cinema);
         }
     }
 

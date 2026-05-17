@@ -32,7 +32,7 @@ public class AppTokensService {
                 .switchIfEmpty(Mono.error(new SecurityException(
                         "Generate tokens failed: user not found: " + user.getUsername()
                 )))
-                .flatMap(userFromDb -> Mono.fromCallable(() -> buildTokens(userFromDb.getId()))
+                .flatMap(userFromDb -> Mono.fromCallable(() -> buildTokens(userFromDb.id()))
                         .subscribeOn(Schedulers.boundedElastic()));
     }
 
@@ -51,7 +51,7 @@ public class AppTokensService {
                 })
                 .flatMap(userId -> userPort.findById(userId)
                         .switchIfEmpty(Mono.error(() -> new AuthenticationException("User not found"))))
-                .flatMap(user -> Mono.fromCallable(() -> buildTokens(user.getId()))
+                .flatMap(user -> Mono.fromCallable(() -> buildTokens(user.id()))
                         .subscribeOn(Schedulers.boundedElastic()));
     }
 

@@ -54,13 +54,13 @@ class MovieRepositoryImplIT extends AbstractMongoIT {
         @Test
         @DisplayName("addOrUpdate generates id; findById returns the same movie")
         void shouldRoundTrip() {
-            String id = moviePort.addOrUpdate(inception).map(Movie::getId).block();
+            String id = moviePort.addOrUpdate(inception).map(Movie::id).block();
             assertThat(id).isNotBlank();
             StepVerifier.create(moviePort.findById(id))
                     .assertNext(found -> {
-                        assertThat(found.getName()).isEqualTo("Inception");
-                        assertThat(found.getDuration()).isEqualTo(148);
-                        assertThat(found.getPremiereDate()).isEqualTo(LocalDate.of(2010, 7, 16));
+                        assertThat(found.name()).isEqualTo("Inception");
+                        assertThat(found.duration()).isEqualTo(148);
+                        assertThat(found.premiereDate()).isEqualTo(LocalDate.of(2010, 7, 16));
                     })
                     .verifyComplete();
         }
@@ -69,7 +69,7 @@ class MovieRepositoryImplIT extends AbstractMongoIT {
         @DisplayName("addOrUpdate on existing id updates instead of duplicating")
         void shouldUpdateNotDuplicate() {
             Movie saved = moviePort.addOrUpdate(inception).block();
-            saved = saved.setName("Inception (Director's Cut)");
+            saved = saved.withName("Inception (Director's Cut)");
             moviePort.addOrUpdate(saved).block();
             StepVerifier.create(moviePort.findAll().count())
                     .expectNext(1L).verifyComplete();
@@ -87,9 +87,9 @@ class MovieRepositoryImplIT extends AbstractMongoIT {
         @Test
         @DisplayName("deleteById removes the doc and returns the deleted entity")
         void shouldDelete() {
-            String id = moviePort.addOrUpdate(joker).block().getId();
+            String id = moviePort.addOrUpdate(joker).block().id();
             StepVerifier.create(moviePort.deleteById(id))
-                    .assertNext(d -> assertThat(d.getName()).isEqualTo("Joker"))
+                    .assertNext(d -> assertThat(d.name()).isEqualTo("Joker"))
                     .verifyComplete();
             StepVerifier.create(moviePort.findById(id)).verifyComplete();
         }
@@ -108,7 +108,7 @@ class MovieRepositoryImplIT extends AbstractMongoIT {
         @DisplayName("findByNameAndGenre returns the unique match")
         void shouldFindByNameAndGenre() {
             StepVerifier.create(moviePort.findByNameAndGenre("Inception", "Drama"))
-                    .assertNext(m -> assertThat(m.getDuration()).isEqualTo(148))
+                    .assertNext(m -> assertThat(m.duration()).isEqualTo(148))
                     .verifyComplete();
         }
 
@@ -122,7 +122,7 @@ class MovieRepositoryImplIT extends AbstractMongoIT {
         @DisplayName("findAllByGenre returns matches, case-sensitive")
         void shouldFindAllByGenre() {
             StepVerifier.create(moviePort.findAllByGenre("Drama").collectList())
-                    .assertNext(l -> assertThat(l).extracting(Movie::getName)
+                    .assertNext(l -> assertThat(l).extracting(Movie::name)
                             .containsExactlyInAnyOrder("Inception", "Pulp Fiction"))
                     .verifyComplete();
         }
@@ -139,7 +139,7 @@ class MovieRepositoryImplIT extends AbstractMongoIT {
         @DisplayName("findAllByDurationBetween is inclusive on both bounds")
         void shouldFindByDurationRange() {
             StepVerifier.create(moviePort.findAllByDurationBetween(100, 130).collectList())
-                    .assertNext(l -> assertThat(l).extracting(Movie::getName)
+                    .assertNext(l -> assertThat(l).extracting(Movie::name)
                             .containsExactlyInAnyOrder("Joker", "The Hangover"))
                     .verifyComplete();
         }
@@ -148,7 +148,7 @@ class MovieRepositoryImplIT extends AbstractMongoIT {
         @DisplayName("findAllByDurationGreaterThanEqual lower-bound only")
         void shouldFindByDurationGte() {
             StepVerifier.create(moviePort.findAllByDurationGreaterThanEqual(150).collectList())
-                    .assertNext(l -> assertThat(l).extracting(Movie::getName)
+                    .assertNext(l -> assertThat(l).extracting(Movie::name)
                             .containsExactly("Pulp Fiction"))
                     .verifyComplete();
         }
@@ -157,7 +157,7 @@ class MovieRepositoryImplIT extends AbstractMongoIT {
         @DisplayName("findAllByDurationLessThanEqual upper-bound only")
         void shouldFindByDurationLte() {
             StepVerifier.create(moviePort.findAllByDurationLessThanEqual(110).collectList())
-                    .assertNext(l -> assertThat(l).extracting(Movie::getName)
+                    .assertNext(l -> assertThat(l).extracting(Movie::name)
                             .containsExactly("The Hangover"))
                     .verifyComplete();
         }
@@ -167,7 +167,7 @@ class MovieRepositoryImplIT extends AbstractMongoIT {
         void shouldFindByPremiereRange() {
             StepVerifier.create(moviePort.findAllByPremiereDateBetween(
                             LocalDate.of(2009, 1, 1), LocalDate.of(2019, 12, 31)).collectList())
-                    .assertNext(l -> assertThat(l).extracting(Movie::getName)
+                    .assertNext(l -> assertThat(l).extracting(Movie::name)
                             .containsExactlyInAnyOrder("The Hangover", "Inception", "Joker"))
                     .verifyComplete();
         }
@@ -177,7 +177,7 @@ class MovieRepositoryImplIT extends AbstractMongoIT {
         void shouldFindByPremiereGte() {
             StepVerifier.create(moviePort.findAllByPremiereDateGreaterThanEqual(LocalDate.of(2015, 1, 1))
                             .collectList())
-                    .assertNext(l -> assertThat(l).extracting(Movie::getName)
+                    .assertNext(l -> assertThat(l).extracting(Movie::name)
                             .containsExactly("Joker"))
                     .verifyComplete();
         }
@@ -187,7 +187,7 @@ class MovieRepositoryImplIT extends AbstractMongoIT {
         void shouldFindByPremiereLte() {
             StepVerifier.create(moviePort.findAllByPremiereDateLessThanEqual(LocalDate.of(2000, 1, 1))
                             .collectList())
-                    .assertNext(l -> assertThat(l).extracting(Movie::getName)
+                    .assertNext(l -> assertThat(l).extracting(Movie::name)
                             .containsExactly("Pulp Fiction"))
                     .verifyComplete();
         }

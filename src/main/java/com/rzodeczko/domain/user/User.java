@@ -44,66 +44,38 @@ public record User(
         this(null, username, password, role, birthDate, favoriteMovies, email);
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public User setId(String id) {
+    public User withId(String id) {
         return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public User setUsername(String username) {
+    public User withUsername(String username) {
         return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public User setPassword(String password) {
+    public User withPassword(String password) {
         return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
-    public Role getRole() {
-        return role;
-    }
-
-    public User setRole(Role role) {
+    public User withRole(Role role) {
         return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
-    public LocalDate getBirthDate() {
-        return birthDate;
-    }
-
-    public User setBirthDate(LocalDate birthDate) {
+    public User withBirthDate(LocalDate birthDate) {
         return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
-    public List<Movie> getFavoriteMovies() {
-        return favoriteMovies;
-    }
-
-    public User setFavoriteMovies(List<Movie> favoriteMovies) {
+    public User withFavoriteMovies(List<Movie> favoriteMovies) {
         return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public User setEmail(String email) {
+    public User withEmail(String email) {
         return new User(id, username, password, role, birthDate, favoriteMovies, email);
     }
 
     public User addMovieToFavorites(Movie movie) {
         var movies = isNull(favoriteMovies) ? new ArrayList<Movie>() : new ArrayList<>(favoriteMovies);
         movies.add(movie);
-        return setFavoriteMovies(movies);
+        return withFavoriteMovies(movies);
     }
 
     @Override

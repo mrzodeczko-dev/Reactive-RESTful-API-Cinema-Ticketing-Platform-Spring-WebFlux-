@@ -35,55 +35,31 @@ public record MovieEmission(
         return new Builder();
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public MovieEmission setId(String id) {
+    public MovieEmission withId(String id) {
         return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree, version);
     }
 
-    public Movie getMovie() {
-        return movie;
-    }
-
-    public MovieEmission setMovie(Movie movie) {
+    public MovieEmission withMovie(Movie movie) {
         return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree, version);
     }
 
-    public LocalDateTime getStartDateTime() {
-        return startDateTime;
-    }
-
-    public MovieEmission setStartDateTime(LocalDateTime startDateTime) {
+    public MovieEmission withStartDateTime(LocalDateTime startDateTime) {
         return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree, version);
     }
 
-    public Money getBaseTicketPrice() {
-        return baseTicketPrice;
-    }
-
-    public MovieEmission setBaseTicketPrice(Money baseTicketPrice) {
+    public MovieEmission withBaseTicketPrice(Money baseTicketPrice) {
         return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree, version);
     }
 
-    public String getCinemaHallId() {
-        return cinemaHallId;
-    }
-
-    public MovieEmission setCinemaHallId(String cinemaHallId) {
+    public MovieEmission withCinemaHallId(String cinemaHallId) {
         return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree, version);
     }
 
-    public Map<Position, Boolean> getIsPositionFree() {
-        return isPositionFree;
-    }
-
-    public MovieEmission setIsPositionFree(Map<Position, Boolean> isPositionFree) {
+    public MovieEmission withIsPositionFree(Map<Position, Boolean> isPositionFree) {
         return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree, version);
     }
 
-    public MovieEmission setVersion(Long version) {
+    public MovieEmission withVersion(Long version) {
         return new MovieEmission(id, movie, startDateTime, baseTicketPrice, cinemaHallId, isPositionFree, version);
     }
 
@@ -102,7 +78,7 @@ public record MovieEmission(
                 .map(Collection::stream)
                 .ifPresent(stream -> stream
                         .forEach(position -> updatedPositionFree.computeIfPresent(position, (key, value) -> false)));
-        return setIsPositionFree(updatedPositionFree);
+        return withIsPositionFree(updatedPositionFree);
     }
 
     public static class Builder {

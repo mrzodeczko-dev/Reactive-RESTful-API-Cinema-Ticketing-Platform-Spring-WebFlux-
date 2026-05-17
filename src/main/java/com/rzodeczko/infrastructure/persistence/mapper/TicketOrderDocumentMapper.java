@@ -11,13 +11,13 @@ public final class TicketOrderDocumentMapper {
     public static TicketOrderDocument toDocument(TicketOrder o) {
         if (o == null) return null;
         return new TicketOrderDocument(
-                o.getId(),
-                UserDocumentMapper.toDocument(o.getUser()),
-                o.getOrderDate(),
-                o.getTicketOrderStatus(),
-                MovieEmissionDocumentMapper.toDocument(o.getMovieEmission()),
-                TicketDocumentMapper.toDocuments(o.getTickets()),
-                o.getTicketGroupType());
+                o.id(),
+                UserDocumentMapper.toDocument(o.user()),
+                o.orderDate(),
+                o.ticketOrderStatus(),
+                MovieEmissionDocumentMapper.toDocument(o.movieEmission()),
+                TicketDocumentMapper.toDocuments(o.tickets()),
+                o.ticketGroupType());
     }
 
     public static TicketOrder toDomain(TicketOrderDocument doc) {

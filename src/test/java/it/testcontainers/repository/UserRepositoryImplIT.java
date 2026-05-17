@@ -47,8 +47,8 @@ class UserRepositoryImplIT extends AbstractMongoIT {
         userPort.addOrUpdate(jan).block();
         StepVerifier.create(userPort.findByUsername("jan"))
                 .assertNext(found -> {
-                    assertThat(found.getEmail()).isEqualTo("jan@example.com");
-                    assertThat(found.getBirthDate()).isEqualTo(LocalDate.of(1995, 5, 20));
+                    assertThat(found.email()).isEqualTo("jan@example.com");
+                    assertThat(found.birthDate()).isEqualTo(LocalDate.of(1995, 5, 20));
                 })
                 .verifyComplete();
     }
@@ -64,7 +64,7 @@ class UserRepositoryImplIT extends AbstractMongoIT {
     void shouldFindByEmail() {
         userPort.addOrUpdate(jan).block();
         StepVerifier.create(userPort.findByEmail("jan@example.com"))
-                .assertNext(found -> assertThat(found.getUsername()).isEqualTo("jan"))
+                .assertNext(found -> assertThat(found.username()).isEqualTo("jan"))
                 .verifyComplete();
     }
 
@@ -73,14 +73,14 @@ class UserRepositoryImplIT extends AbstractMongoIT {
     void shouldPreserveRole() {
         // Default User builder yields ROLE_USER.
         User savedUser = userPort.addOrUpdate(jan).block();
-        assertThat(savedUser.getRole()).isEqualTo(Role.ROLE_USER);
+        assertThat(savedUser.role()).isEqualTo(Role.ROLE_USER);
 
         // Promote and re-save.
-        savedUser = savedUser.setRole(Role.ROLE_ADMIN);
+        savedUser = savedUser.withRole(Role.ROLE_ADMIN);
         userPort.addOrUpdate(savedUser).block();
 
         StepVerifier.create(userPort.findByUsername("jan"))
-                .assertNext(reloaded -> assertThat(reloaded.getRole()).isEqualTo(Role.ROLE_ADMIN))
+                .assertNext(reloaded -> assertThat(reloaded.role()).isEqualTo(Role.ROLE_ADMIN))
                 .verifyComplete();
     }
 
@@ -88,7 +88,7 @@ class UserRepositoryImplIT extends AbstractMongoIT {
     @DisplayName("addOrUpdate on existing id updates rather than duplicating")
     void shouldUpdateNotDuplicate() {
         User saved = userPort.addOrUpdate(jan).block();
-        saved = saved.setEmail("jan2@example.com");
+        saved = saved.withEmail("jan2@example.com");
         userPort.addOrUpdate(saved).block();
         StepVerifier.create(userPort.findAll().count()).expectNext(1L).verifyComplete();
         StepVerifier.create(userPort.findByEmail("jan2@example.com"))
@@ -98,7 +98,7 @@ class UserRepositoryImplIT extends AbstractMongoIT {
     @Test
     @DisplayName("deleteById removes the user")
     void shouldDelete() {
-        String id = userPort.addOrUpdate(jan).block().getId();
+        String id = userPort.addOrUpdate(jan).block().id();
         userPort.deleteById(id).block();
         StepVerifier.create(userPort.findById(id)).verifyComplete();
     }

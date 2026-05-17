@@ -41,20 +41,13 @@ public record TicketOrder(
                 .movieEmission(movieEmission).tickets(tickets).ticketGroupType(ticketGroupType);
     }
 
-    public String getId() { return id; }
-    public TicketOrder setId(String id) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
-    public User getUser() { return user; }
-    public TicketOrder setUser(User user) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
-    public LocalDate getOrderDate() { return orderDate; }
-    public TicketOrder setOrderDate(LocalDate orderDate) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
-    public TicketOrderStatus getTicketOrderStatus() { return ticketOrderStatus; }
-    public TicketOrder setTicketOrderStatus(TicketOrderStatus ticketOrderStatus) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
-    public MovieEmission getMovieEmission() { return movieEmission; }
-    public TicketOrder setMovieEmission(MovieEmission movieEmission) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
-    public List<Ticket> getTickets() { return tickets; }
-    public TicketOrder setTickets(List<Ticket> tickets) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
-    public TicketGroupType getTicketGroupType() { return ticketGroupType; }
-    public TicketOrder setTicketGroupType(TicketGroupType ticketGroupType) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
+    public TicketOrder withId(String id) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
+    public TicketOrder withUser(User user) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
+    public TicketOrder withOrderDate(LocalDate orderDate) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
+    public TicketOrder withTicketOrderStatus(TicketOrderStatus ticketOrderStatus) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
+    public TicketOrder withMovieEmission(MovieEmission movieEmission) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
+    public TicketOrder withTickets(List<Ticket> tickets) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
+    public TicketOrder withTicketGroupType(TicketGroupType ticketGroupType) { return new TicketOrder(id, user, orderDate, ticketOrderStatus, movieEmission, tickets, ticketGroupType); }
 
     public TicketPurchase toTicketPurchase() {
         return TicketPurchase.builder()
@@ -67,16 +60,16 @@ public record TicketOrder(
     }
 
     public TicketOrder changeOrderStatusToDone() {
-        return setTicketOrderStatus(TicketOrderStatus.DONE).setTickets(purchasedTickets());
+        return withTicketOrderStatus(TicketOrderStatus.DONE).withTickets(purchasedTickets());
     }
 
     public TicketOrder changeOrderStatusToCancelled() {
-        return setTicketOrderStatus(TicketOrderStatus.CANCELLED);
+        return withTicketOrderStatus(TicketOrderStatus.CANCELLED);
     }
 
     private List<Ticket> purchasedTickets() {
         return tickets == null ? List.of() : tickets.stream()
-                .map(ticket -> ticket.setTicketStatus(TicketStatus.PURCHASED))
+                .map(ticket -> ticket.withTicketStatus(TicketStatus.PURCHASED))
                 .toList();
     }
 

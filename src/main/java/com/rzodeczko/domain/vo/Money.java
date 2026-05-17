@@ -26,11 +26,7 @@ public record Money(BigDecimal value) {
         return new Money(value);
     }
 
-    public BigDecimal getValue() {
-        return value;
-    }
-
-    public Money setValue(BigDecimal value) {
+    public Money withValue(BigDecimal value) {
         return new Money(value);
     }
 

@@ -87,11 +87,11 @@ public class UsersService {
                 .switchIfEmpty(Mono.error(() -> new UserServiceException(
                         "No user with username: %s".formatted(username))))
                 .flatMap(user -> {
-                    if (user.getRole() == Role.ROLE_ADMIN) {
+                    if (user.role() == Role.ROLE_ADMIN) {
                         return Mono.error(new UserServiceException(
                                 "User with username: %s is already an admin".formatted(username)));
                     }
-                    return userPort.addOrUpdate(user.setRole(Role.ROLE_ADMIN));
+                    return userPort.addOrUpdate(user.withRole(Role.ROLE_ADMIN));
                 });
 
         return transactionPort.inTransaction(result).map(UserMapper::toDto);

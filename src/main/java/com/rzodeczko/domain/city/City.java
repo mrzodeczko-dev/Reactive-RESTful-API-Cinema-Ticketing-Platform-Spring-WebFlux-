@@ -26,17 +26,14 @@ public record City(
         return new Builder();
     }
 
-    public String getId() { return id; }
-    public City setId(String id) { return new City(id, name, cinemas); }
-    public String getName() { return name; }
-    public City setName(String name) { return new City(id, name, cinemas); }
-    public List<Cinema> getCinemas() { return cinemas; }
-    public City setCinemas(List<Cinema> cinemas) { return new City(id, name, cinemas); }
+    public City withId(String id) { return new City(id, name, cinemas); }
+    public City withName(String name) { return new City(id, name, cinemas); }
+    public City withCinemas(List<Cinema> cinemas) { return new City(id, name, cinemas); }
 
     public City addCinema(Cinema cinema) {
         var updatedCinemas = isNull(cinemas) ? new ArrayList<Cinema>() : new ArrayList<>(cinemas);
         updatedCinemas.add(cinema);
-        return setCinemas(updatedCinemas);
+        return withCinemas(updatedCinemas);
     }
 
     public static class Builder {

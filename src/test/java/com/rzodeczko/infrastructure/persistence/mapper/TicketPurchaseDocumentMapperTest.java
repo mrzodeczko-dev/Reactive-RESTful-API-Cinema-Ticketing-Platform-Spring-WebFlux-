@@ -58,12 +58,12 @@ class TicketPurchaseDocumentMapperTest {
         void shouldMapDocumentToDomain() {
             TicketPurchase domain = TicketPurchaseDocumentMapper.toDomain(documentPurchase());
 
-            assertThat(domain.getId()).isEqualTo("purchase-1");
-            assertThat(domain.getUser().getUsername()).isEqualTo("jan@example.com");
-            assertThat(domain.getPurchaseDate()).isEqualTo(LocalDate.of(2026, 6, 2));
-            assertThat(domain.getMovieEmission().getId()).isEqualTo("emission-1");
-            assertThat(domain.getTickets()).hasSize(1);
-            assertThat(domain.getTicketGroupType()).isEqualTo(TicketGroupType.NORMAL);
+            assertThat(domain.id()).isEqualTo("purchase-1");
+            assertThat(domain.user().username()).isEqualTo("jan@example.com");
+            assertThat(domain.purchaseDate()).isEqualTo(LocalDate.of(2026, 6, 2));
+            assertThat(domain.movieEmission().id()).isEqualTo("emission-1");
+            assertThat(domain.tickets()).hasSize(1);
+            assertThat(domain.ticketGroupType()).isEqualTo(TicketGroupType.NORMAL);
         }
     }
 

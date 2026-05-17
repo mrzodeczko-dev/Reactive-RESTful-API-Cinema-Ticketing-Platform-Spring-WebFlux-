@@ -56,8 +56,8 @@ class MovieEmissionDocumentMapperTest {
         @DisplayName("Emission list: documents preserve order")
         void shouldMapDomainListToDocuments() {
             List<MovieEmissionDocument> documents = MovieEmissionDocumentMapper.toDocuments(List.of(
-                    emission().setId("emission-1"),
-                    emission().setId("emission-2")
+                    emission().withId("emission-1"),
+                    emission().withId("emission-2")
             ));
 
             assertThat(documents).extracting(MovieEmissionDocument::getId)
@@ -89,12 +89,12 @@ class MovieEmissionDocumentMapperTest {
 
             MovieEmission emission = MovieEmissionDocumentMapper.toDomain(document);
 
-            assertThat(emission.getId()).isEqualTo("emission-1");
-            assertThat(emission.getMovie().getId()).isEqualTo("movie-1");
-            assertThat(emission.getStartDateTime()).isEqualTo(startTime());
-            assertThat(emission.getBaseTicketPrice()).isEqualTo(Money.of("35.50"));
-            assertThat(emission.getCinemaHallId()).isEqualTo("hall-1");
-            assertThat(emission.getIsPositionFree()).containsExactlyEntriesOf(positionsMap());
+            assertThat(emission.id()).isEqualTo("emission-1");
+            assertThat(emission.movie().id()).isEqualTo("movie-1");
+            assertThat(emission.startDateTime()).isEqualTo(startTime());
+            assertThat(emission.baseTicketPrice()).isEqualTo(Money.of("35.50"));
+            assertThat(emission.cinemaHallId()).isEqualTo("hall-1");
+            assertThat(emission.isPositionFree()).containsExactlyEntriesOf(positionsMap());
         }
 
         @Test
@@ -111,7 +111,7 @@ class MovieEmissionDocumentMapperTest {
                     document("emission-2")
             ));
 
-            assertThat(emissions).extracting(MovieEmission::getId)
+            assertThat(emissions).extracting(MovieEmission::id)
                     .containsExactly("emission-1", "emission-2");
         }
     }

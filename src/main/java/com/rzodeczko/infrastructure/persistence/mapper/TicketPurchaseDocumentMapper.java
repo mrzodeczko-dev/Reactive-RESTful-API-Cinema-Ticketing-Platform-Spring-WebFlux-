@@ -11,12 +11,12 @@ public final class TicketPurchaseDocumentMapper {
     public static TicketPurchaseDocument toDocument(TicketPurchase p) {
         if (p == null) return null;
         return new TicketPurchaseDocument(
-                p.getId(),
-                UserDocumentMapper.toDocument(p.getUser()),
-                p.getPurchaseDate(),
-                MovieEmissionDocumentMapper.toDocument(p.getMovieEmission()),
-                TicketDocumentMapper.toDocuments(p.getTickets()),
-                p.getTicketGroupType());
+                p.id(),
+                UserDocumentMapper.toDocument(p.user()),
+                p.purchaseDate(),
+                MovieEmissionDocumentMapper.toDocument(p.movieEmission()),
+                TicketDocumentMapper.toDocuments(p.tickets()),
+                p.ticketGroupType());
     }
 
     public static TicketPurchase toDomain(TicketPurchaseDocument doc) {

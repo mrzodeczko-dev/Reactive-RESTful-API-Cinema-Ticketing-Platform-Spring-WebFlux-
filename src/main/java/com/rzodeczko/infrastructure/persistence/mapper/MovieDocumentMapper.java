@@ -13,11 +13,11 @@ public final class MovieDocumentMapper {
             return null;
         }
         return new MovieDocument(
-                movie.getId(),
-                movie.getName(),
+                movie.id(),
+                movie.name(),
                 movie.getGenre(),
-                movie.getDuration(),
-                movie.getPremiereDate());
+                movie.duration(),
+                movie.premiereDate());
     }
 
     public static Movie toDomain(MovieDocument doc) {

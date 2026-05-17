@@ -28,35 +28,19 @@ public record CinemaHall(
         return new Builder();
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public CinemaHall setId(String id) {
+    public CinemaHall withId(String id) {
         return new CinemaHall(id, positions, cinemaId, movieEmissions);
     }
 
-    public List<Position> getPositions() {
-        return positions;
-    }
-
-    public CinemaHall setPositions(List<Position> positions) {
+    public CinemaHall withPositions(List<Position> positions) {
         return new CinemaHall(id, positions, cinemaId, movieEmissions);
     }
 
-    public String getCinemaId() {
-        return cinemaId;
-    }
-
-    public CinemaHall setCinemaId(String cinemaId) {
+    public CinemaHall withCinemaId(String cinemaId) {
         return new CinemaHall(id, positions, cinemaId, movieEmissions);
     }
 
-    public List<MovieEmission> getMovieEmissions() {
-        return movieEmissions;
-    }
-
-    public CinemaHall setMovieEmissions(List<MovieEmission> movieEmissions) {
+    public CinemaHall withMovieEmissions(List<MovieEmission> movieEmissions) {
         return new CinemaHall(id, positions, cinemaId, movieEmissions);
     }
 
@@ -64,15 +48,15 @@ public record CinemaHall(
         if (movieEmissions == null) {
             return this;
         }
-        return setMovieEmissions(movieEmissions.stream()
-                .filter(movieEmission -> !Objects.equals(movieEmission.getId(), movieEmissionId))
+        return withMovieEmissions(movieEmissions.stream()
+                .filter(movieEmission -> !Objects.equals(movieEmission.id(), movieEmissionId))
                 .toList());
     }
 
     public CinemaHall addMovieEmission(MovieEmission movieEmission) {
         var updatedMovieEmissions = new ArrayList<>(movieEmissions);
         updatedMovieEmissions.add(movieEmission);
-        return setMovieEmissions(updatedMovieEmissions);
+        return withMovieEmissions(updatedMovieEmissions);
     }
 
     public static class Builder {
